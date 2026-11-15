@@ -2,6 +2,7 @@
 // (e conferido na própria API do gateway). O acesso pago só é liberado depois da verificação em duas etapas (2FA).
 import { aleatorio, cifrar, decifrar, hmacHex, iguais } from "./cripto.js";
 import { ErroLoja, acessoLiberado } from "./lojas.js";
+import { lerSegredo } from "../dev/cofre.js";
 import { conferirTotp, novoSegredo, uriOtp } from "./totp.js";
 
 export const PRECO_CENTAVOS = 4990;
@@ -41,6 +42,9 @@ async function http(url, op) {
   return d;
 }
 
+/** Token do Mercado Pago: o que foi guardado no Cofre do Painel Dev vale; sem ele, a variável do Worker. */
+export const tokenMercadoPago = (env) => lerSegredo(env, "MERCADOPAGO_ACCESS_TOKEN");
+
 export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.now(), pacoteEscolhido = "venus") {
   const pacote = pacoteDe(pacoteEscolhido);
   const preco = PACOTES[pacote].centavos;
@@ -56,14 +60,15 @@ export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.n
     });
     url = d.url || d.checkout_url || d.link;
   } else {
-    if (!env.MERCADOPAGO_ACCESS_TOKEN) throw new ErroLoja(503, "gateway_desligado", "O Mercado Pago da Vênus ainda não foi ligado neste servidor. O dono precisa enviar o token (veja o aviso nos Ajustes).");
+    const tokenMP = await tokenMercadoPago(env);
+    if (!tokenMP) throw new ErroLoja(503, "gateway_desligado", "O Mercado Pago da Vênus ainda não foi ligado neste servidor. O dono precisa enviar o token (veja o aviso nos Ajustes).");
     // assinatura mensal recorrente: a primeira cobrança só acontece quando os 7 dias grátis acabam
     const recorrente = { frequency: 1, frequency_type: "months", transaction_amount: preco / 100, currency_id: "BRL" };
     if ((loja.trial_fim || 0) > agora + 3_600_000) recorrente.start_date = new Date(loja.trial_fim).toISOString();
     const corpo = { reason: titulo, external_reference: id, back_url: origem, notification_url: `${origem}/assinatura/webhook/mercadopago`, auto_recurring: recorrente, status: "pending" };
     if (loja.email) corpo.payer_email = loja.email;
     const d = await http("https://api.mercadopago.com/preapproval", {
-      method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${env.MERCADOPAGO_ACCESS_TOKEN}` },
+      method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${tokenMP}` },
       body: JSON.stringify(corpo),
     });
     url = d.init_point;
@@ -118,7 +123,7 @@ export async function webhookMercadoPago(env, req, corpo, url) {
   const tipo = corpo?.type || corpo?.topic || url.searchParams.get("type") || url.searchParams.get("topic");
   if (!dataId || !["payment", "subscription_authorized_payment"].includes(tipo)) return { ignorado: true };
   if (!(await assinaturaMercadoPagoValida(env, req, dataId))) throw new ErroLoja(401, "assinatura", "Assinatura inválida.");
-  const cab = { headers: { authorization: `Bearer ${env.MERCADOPAGO_ACCESS_TOKEN}` } };
+  const cab = { headers: { authorization: `Bearer ${await tokenMercadoPago(env)}` } };
   if (tipo === "subscription_authorized_payment") {
     // cobrança de uma assinatura: confere na API do Mercado Pago, não no corpo do aviso
     const ap = await http(`https://api.mercadopago.com/authorized_payments/${encodeURIComponent(dataId)}`, cab);

@@ -147,7 +147,7 @@ async function ferramentas(env, agora = Date.now()) {
     { id: "chat", tipo: "servico", rotulo: "Chat com busca na web", executor: "Groq + Tavily (reserva Gemini)", configurado: !!env.GROQ_API_KEY && !!env.TAVILY_API_KEY, atividadeHora: chatHora },
     { id: "publicacao", tipo: "servico", rotulo: "Publicação automática de posts", executor: "Cron do Worker (a cada 10 min) → Instagram Graph API ou webhook", configurado: true, atividadeHora: postsHora },
     { id: "reverse", tipo: "servico", rotulo: "Reverse-sync de estoque", executor: "Webhooks da Nuvemshop e do Mercado Livre → D1", configurado: !!env.NUVEMSHOP_APP_ID || !!env.ML_APP_ID, atividadeHora: avisosHora },
-    { id: "cobranca", tipo: "servico", rotulo: "Cobrança e Plano Fundadores", executor: "InfinitePay e Mercado Pago (webhooks)", configurado: !!env.INFINITEPAY_HANDLE || !!env.MERCADOPAGO_ACCESS_TOKEN, atividadeHora: null },
+    { id: "cobranca", tipo: "servico", rotulo: "Cobrança e Plano Fundadores", executor: "InfinitePay e Mercado Pago (webhooks)", configurado: !!env.INFINITEPAY_HANDLE || !!(await lerSegredo(env, "MERCADOPAGO_ACCESS_TOKEN")), atividadeHora: null },
     { id: "id", tipo: "servico", rotulo: "Vetorial ID, sessões e sincronização", executor: "Worker + D1 (JWT HS256, regra 3/2)", configurado: !!(env.JWT_SEGREDO || env.CHAVE_COFRE), atividadeHora: null },
     { id: "cache", tipo: "servico", rotulo: "Cache vetorial das respostas", executor: "KV + Vectorize + Workers AI", configurado: !!env.CACHE, atividadeHora: null },
     { id: "limpeza", tipo: "servico", rotulo: "Limpeza diária (avisos, sessões, tráfego)", executor: "Cron do Worker (01:17 de Brasília)", configurado: true, atividadeHora: null },
