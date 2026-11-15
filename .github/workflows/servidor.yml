@@ -30,6 +30,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Conferir os segredos
+        env:
+          VENUS_GITHUB_LEITURA: ${{ secrets.VENUS_GITHUB_LEITURA }}
+        run: |
+          falta=""
+          [ -z "$CLOUDFLARE_API_TOKEN" ] && falta="$falta CLOUDFLARE_API_TOKEN"
+          [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && falta="$falta CLOUDFLARE_ACCOUNT_ID"
+          [ -z "$VENUS_GITHUB_LEITURA" ] && falta="$falta VENUS_GITHUB_LEITURA"
+          if [ -n "$falta" ]; then
+            echo "::error::Faltam os segredos:$falta (GitHub → Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
       # A Vênus web (/app) é montada a partir do código do Venus-core (privado), só em leitura. Mexeu na Vênus web? Rode esta publicação de novo (Actions › Run workflow).
       - name: Buscar o código da Vênus web (leitura)
         uses: actions/checkout@v4
@@ -42,16 +55,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Conferir os segredos
-        run: |
-          falta=""
-          [ -z "$CLOUDFLARE_API_TOKEN" ] && falta="$falta CLOUDFLARE_API_TOKEN"
-          [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && falta="$falta CLOUDFLARE_ACCOUNT_ID"
-          if [ -n "$falta" ]; then
-            echo "::error::Faltam os segredos:$falta (GitHub → Settings → Secrets and variables → Actions)."
-            exit 1
-          fi
 
       - name: Conferir o site (scripts e segredos)
         working-directory: .
