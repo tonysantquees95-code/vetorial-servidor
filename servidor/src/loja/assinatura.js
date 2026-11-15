@@ -50,7 +50,7 @@ async function http(url, op) {
 /** Token do Mercado Pago: o que foi guardado no Cofre do Painel Dev vale; sem ele, a variável do Worker. */
 export const tokenMercadoPago = (env) => lerSegredo(env, "MERCADOPAGO_ACCESS_TOKEN");
 
-export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.now(), pacoteEscolhido = "venus") {
+export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.now(), pacoteEscolhido = "venus", emailPagador = "") {
   const pacote = pacoteDe(pacoteEscolhido);
   const preco = PACOTES[pacote].centavos;
   const titulo = tituloDo(pacote);
@@ -71,7 +71,10 @@ export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.n
     const recorrente = { frequency: 1, frequency_type: "months", transaction_amount: preco / 100, currency_id: "BRL" };
     if ((loja.trial_fim || 0) > agora + 3_600_000) recorrente.start_date = new Date(loja.trial_fim).toISOString();
     const corpo = { reason: titulo, external_reference: id, back_url: origem, notification_url: `${origem}/assinatura/webhook/mercadopago`, auto_recurring: recorrente, status: "pending" };
-    if (loja.email) corpo.payer_email = loja.email;
+    // o Mercado Pago exige o e-mail de quem paga: o da loja ou, sem ele, o da conta (Vetorial ID) que pediu o link
+    let pagador = loja.email || emailPagador;
+    if (!pagador) { try { pagador = (await env.DB.prepare("SELECT email FROM usuarios WHERE loja = ? ORDER BY criado LIMIT 1").bind(loja.id).first())?.email || ""; } catch { /* sem tabela: segue sem e-mail */ } }
+    if (pagador) corpo.payer_email = pagador;
     const d = await http("https://api.mercadopago.com/preapproval", {
       method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${tokenMP}` },
       body: JSON.stringify(corpo),
