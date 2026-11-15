@@ -1,0 +1,273 @@
+name: Servidor (Cloudflare)
+
+# Publica o servidor da Vetorial Tech (pasta servidor/ e site/) no Cloudflare Workers, com o banco D1.
+# Este repositório só cuida do servidor: o app da Vênus (Venus-core, privado) fica separado e só é LIDO aqui, para montar a Vênus web em /app.
+# Precisa dos segredos do repositório: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID e
+# VENUS_GITHUB_LEITURA (token só de leitura do Venus-core: monta a Vênus web e dá ao Worker o canal de atualização).
+# Roteador de IA (opcionais): GROQ_API_KEY, DEEPSEEK_API_KEY, GEMINI_API_KEY, APP_TOKEN.
+# Opcionais, para a conversa (/chat): GROQ_API_KEY, TAVILY_API_KEY e GEMINI_API_KEY. Quando existem aqui,
+# são copiadas para o Worker; quando não, o Worker continua com as que já tiver salvas.
+on:
+  push:
+    branches: [main]
+    paths: ["servidor/**", "site/**", ".github/workflows/servidor.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: servidor
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: servidor
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4
+    steps:
+      - uses: actions/checkout@v4
+
+      # A Vênus web (/app) é montada a partir do código do Venus-core (privado), só em leitura. Mexeu na Vênus web? Rode esta publicação de novo (Actions › Run workflow).
+      - name: Buscar o código da Vênus web (leitura)
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/Venus-core
+          token: ${{ secrets.VENUS_GITHUB_LEITURA }}
+          path: venus-core
+          sparse-checkout: venus-apps
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Conferir os segredos
+        run: |
+          falta=""
+          [ -z "$CLOUDFLARE_API_TOKEN" ] && falta="$falta CLOUDFLARE_API_TOKEN"
+          [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && falta="$falta CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$falta" ]; then
+            echo "::error::Faltam os segredos:$falta (GitHub → Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Conferir o site (scripts e segredos)
+        working-directory: .
+        run: |
+          for f in site/*.js; do node --check "$f"; done
+          if grep -rEn "(APP_USR-|TEST-[0-9a-f]{8}|AIza[0-9A-Za-z_-]{20}|sk-[A-Za-z0-9]{20}|gsk_)" site; then echo "::error::Achei algo que parece chave no site."; exit 1; fi
+
+      # A Vênus web (a que o iPhone usa, instalável pela tela de início) vai junto com o servidor, em /app.
+      - name: Chave pública do selo de licença (embutida no aplicativo)
+        run: |
+          x=$(curl -fsS --retry 5 --retry-delay 5 https://venus-servidor.tonysantquees95.workers.dev/id/chave-publica | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);if(!/^[A-Za-z0-9_-]{43}$/.test(j.x))process.exit(1);console.log(j.x)})')
+          echo "VITE_SELO_CHAVE=$x" >> "$GITHUB_ENV"
+      - name: Montar a Vênus web em site/app
+        working-directory: venus-core/venus-apps
+        run: |
+          npm ci --no-audit --no-fund
+          VENUS_BASE=/app/ npm run build:web -w @venus/dois-em-um
+          rm -rf "$GITHUB_WORKSPACE/site/app"
+          cp -r apps/dois-em-um/dist "$GITHUB_WORKSPACE/site/app"
+          find "$GITHUB_WORKSPACE/site/app" -name '*.map' -delete
+          test -f "$GITHUB_WORKSPACE/site/app/index.html"
+
+      - name: Banco D1 (cria na primeira vez)
+        run: |
+          id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="venus") | .uuid' | head -1)
+          if [ -z "$id" ] || [ "$id" = "null" ]; then
+            $WRANGLER d1 create venus
+            id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="venus") | .uuid' | head -1)
+          fi
+          if [ -z "$id" ] || [ "$id" = "null" ]; then echo "::error::Não consegui criar ou achar o banco D1 'venus'."; exit 1; fi
+          sed -i "s/__D1_ID__/$id/" wrangler.toml
+          echo "Banco D1: $id"
+
+      - name: Atualizar as tabelas
+        run: $WRANGLER d1 migrations apply venus --remote
+
+      - name: Testes do servidor (IA, lojistas, canais e estoque)
+        working-directory: .
+        run: node --test servidor/teste/*.test.mjs
+
+      # Cache vetorial e limite por IP: tentam criar o que falta. Se a chave da Cloudflare não tiver
+      # permissão (KV, Vectorize), segue sem o cache: o servidor atual nunca deixa de ser publicado.
+      - name: Cache e limite do roteador de IA (opcional)
+        run: |
+          cp wrangler.toml wrangler.base.toml
+          kv=$($WRANGLER kv namespace list 2>/dev/null | jq -r '.[] | select(.title|test("venus-cache")) | .id' | head -1)
+          if [ -z "$kv" ]; then
+            $WRANGLER kv namespace create venus-cache >/dev/null 2>&1 || true
+            kv=$($WRANGLER kv namespace list 2>/dev/null | jq -r '.[] | select(.title|test("venus-cache")) | .id' | head -1)
+          fi
+          if [ -n "$kv" ] && [ "$kv" != "null" ]; then
+            printf '\n[[kv_namespaces]]\nbinding = "CACHE"\nid = "%s"\n' "$kv" >> wrangler.toml
+            $WRANGLER vectorize get venus-cache >/dev/null 2>&1 || $WRANGLER vectorize create venus-cache --dimensions=1024 --metric=cosine >/dev/null 2>&1 || true
+            if $WRANGLER vectorize get venus-cache >/dev/null 2>&1; then
+              printf '\n[ai]\nbinding = "AI"\n\n[[vectorize]]\nbinding = "VETORES"\nindex_name = "venus-cache"\n' >> wrangler.toml
+              echo "Cache vetorial: ligado"
+            else
+              echo "::warning::Sem Vectorize na conta: cache semântico desligado (o cache exato continua)."
+            fi
+          else
+            echo "::warning::Sem KV na conta: cache do roteador de IA desligado."
+          fi
+          printf '\n[[ratelimits]]\nname = "LIMITADOR"\nnamespace_id = "2001"\n\n  [ratelimits.simple]\n  limit = 30\n  period = 60\n' >> wrangler.toml
+          if ! $WRANGLER deploy --dry-run >/dev/null 2>&1; then
+            echo "::warning::Configuração extra recusada; publicando só o básico (sem cache nem limite)."
+            cp wrangler.base.toml wrangler.toml
+          fi
+          rm -f wrangler.base.toml
+
+      # Saves do Vortex na nuvem (R2). Se a conta não tiver R2 ligado, o resto do servidor continua igual
+      # e o Vortex avisa que a nuvem de saves ainda não está disponível.
+      - name: Nuvem de saves do Vortex (R2, opcional)
+        run: |
+          cp wrangler.toml wrangler.sem-r2.toml
+          if $WRANGLER r2 bucket list 2>/dev/null | grep -q "venus-saves" || $WRANGLER r2 bucket create venus-saves >/dev/null 2>&1; then
+            printf '\n[[r2_buckets]]\nbinding = "SAVES"\nbucket_name = "venus-saves"\n' >> wrangler.toml
+            if $WRANGLER deploy --dry-run >/dev/null 2>&1; then echo "Saves na nuvem: ligado"; else echo "::warning::Configuração do R2 recusada; saves na nuvem desligados."; cp wrangler.sem-r2.toml wrangler.toml; fi
+          else
+            echo "::warning::Sem R2 na conta (ative em Cloudflare → R2): saves na nuvem desligados."
+          fi
+          rm -f wrangler.sem-r2.toml
+
+      # Voxix (chat para gamers): a caixa de entrada de cada pessoa é um Durable Object (plano grátis: classe com SQLite) e o ditado
+      # usa o Workers AI (Whisper). Se a conta recusar qualquer um, o servidor segue sem eles e o Voxix avisa que está indisponível.
+      - name: Chat ao vivo do Voxix (Durable Object, opcional)
+        run: |
+          cp wrangler.toml wrangler.sem-voxix.toml
+          printf '\n[[durable_objects.bindings]]\nname = "VOXIX_CAIXA"\nclass_name = "CaixaVoxix"\n\n[[migrations]]\ntag = "voxix-1"\nnew_sqlite_classes = ["CaixaVoxix"]\n' >> wrangler.toml
+          if $WRANGLER deploy --dry-run >/dev/null 2>&1; then echo "Voxix ao vivo: ligado"; else echo "::warning::Configuração do Durable Object recusada; Voxix ao vivo desligado."; cp wrangler.sem-voxix.toml wrangler.toml; fi
+          rm -f wrangler.sem-voxix.toml
+      - name: Ditado do Voxix (Workers AI, opcional)
+        run: |
+          if ! grep -q '^\[ai\]' wrangler.toml; then
+            cp wrangler.toml wrangler.sem-ai.toml
+            printf '\n[ai]\nbinding = "AI"\n' >> wrangler.toml
+            if $WRANGLER deploy --dry-run >/dev/null 2>&1; then echo "Ditado do Voxix: ligado"; else echo "::warning::Workers AI recusado; ditado pelo servidor desligado."; cp wrangler.sem-ai.toml wrangler.toml; fi
+            rm -f wrangler.sem-ai.toml
+          fi
+
+      - name: Publicar
+        run: |
+          $WRANGLER deploy | tee deploy.txt
+          url=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.txt | head -1)
+          echo "ENDERECO=$url" >> "$GITHUB_ENV"
+          echo "### Servidor da Vênus no ar" >> "$GITHUB_STEP_SUMMARY"
+          echo "Endereço: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Token do canal de atualização
+        env:
+          LEITURA: ${{ secrets.VENUS_GITHUB_LEITURA }}
+        run: |
+          if [ -z "$LEITURA" ]; then
+            echo "::warning::Sem o segredo VENUS_GITHUB_LEITURA: o canal de atualização responde 503 até ele existir."
+          else
+            printf '%s' "$LEITURA" | $WRANGLER secret put GITHUB_TOKEN
+          fi
+
+      - name: Chaves da conversa (Groq, Tavily, Gemini)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          for nome in GROQ_API_KEY TAVILY_API_KEY GEMINI_API_KEY; do
+            valor="${!nome}"
+            if [ -n "$valor" ]; then
+              printf '%s' "$valor" | $WRANGLER secret put "$nome"
+            else
+              echo "::notice::$nome não está nos segredos do repositório; o Worker usa a que já tiver salva."
+            fi
+          done
+
+      - name: Chaves extras do roteador de IA (DeepSeek e token do app)
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          APP_TOKEN: ${{ secrets.APP_TOKEN }}
+        run: |
+          for nome in DEEPSEEK_API_KEY APP_TOKEN; do
+            valor="${!nome}"
+            if [ -n "$valor" ]; then
+              printf '%s' "$valor" | $WRANGLER secret put "$nome"
+            else
+              echo "::notice::$nome não está nos segredos do repositório; o Worker usa a que já tiver salva (sem DeepSeek, /v1 usa a Groq como reserva)."
+            fi
+          done
+
+      - name: Envio de códigos (recuperação de senha por e-mail e SMS)
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_REMETENTE: ${{ secrets.EMAIL_REMETENTE }}
+          TWILIO_SID: ${{ secrets.TWILIO_SID }}
+          TWILIO_TOKEN: ${{ secrets.TWILIO_TOKEN }}
+          TWILIO_DE: ${{ secrets.TWILIO_DE }}
+        run: |
+          for nome in RESEND_API_KEY EMAIL_REMETENTE TWILIO_SID TWILIO_TOKEN TWILIO_DE; do
+            valor="${!nome}"
+            if [ -n "$valor" ]; then
+              printf '%s' "$valor" | $WRANGLER secret put "$nome"
+            else
+              echo "::notice::$nome não está nos segredos do repositório; sem ele o canal de recuperação correspondente fica desligado."
+            fi
+          done
+
+      - name: Cofre e chaves das plataformas (Nuvemshop, Mercado Livre)
+        env:
+          CHAVE_COFRE: ${{ secrets.CHAVE_COFRE }}
+          NUVEMSHOP_APP_ID: ${{ secrets.NUVEMSHOP_APP_ID }}
+          NUVEMSHOP_APP_SECRET: ${{ secrets.NUVEMSHOP_APP_SECRET }}
+          ML_APP_ID: ${{ secrets.ML_APP_ID }}
+          ML_APP_SECRET: ${{ secrets.ML_APP_SECRET }}
+          MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
+          MERCADOPAGO_WEBHOOK_SECRET: ${{ secrets.MERCADOPAGO_WEBHOOK_SECRET }}
+          INFINITEPAY_HANDLE: ${{ secrets.INFINITEPAY_HANDLE }}
+        run: |
+          # Sem o segredo CHAVE_COFRE, usa uma chave derivada da chave da Cloudflare (estável enquanto ela não mudar).
+          if [ -z "$CHAVE_COFRE" ]; then
+            CHAVE_COFRE=$(printf 'venus-cofre|%s' "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -d' ' -f1)
+            echo "::notice::Sem o segredo CHAVE_COFRE: usando uma chave derivada. Crie CHAVE_COFRE nos segredos para fixá-la."
+          fi
+          export CHAVE_COFRE
+          for nome in CHAVE_COFRE NUVEMSHOP_APP_ID NUVEMSHOP_APP_SECRET ML_APP_ID ML_APP_SECRET MERCADOPAGO_ACCESS_TOKEN MERCADOPAGO_WEBHOOK_SECRET INFINITEPAY_HANDLE; do
+            valor="${!nome}"
+            if [ -n "$valor" ]; then
+              printf '%s' "$valor" | $WRANGLER secret put "$nome"
+            else
+              echo "::notice::$nome não está nos segredos do repositório; essa plataforma fica desligada até existir."
+            fi
+          done
+
+      # Painel Dev da Vetorial Tech: o convite do primeiro acesso do administrador. Use o segredo DEV_CONVITE do
+      # repositório; sem ele, sai um código derivado (estável), mostrado no resumo desta execução (só quem tem acesso ao repositório vê).
+      - name: Convite do Painel Dev
+        env:
+          DEV_CONVITE: ${{ secrets.DEV_CONVITE }}
+        run: |
+          derivado=no
+          if [ -z "$DEV_CONVITE" ]; then
+            DEV_CONVITE=$(printf 'venus-dev-convite|%s' "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -c1-16)
+            derivado=sim
+          fi
+          printf '%s' "$DEV_CONVITE" | $WRANGLER secret put DEV_CONVITE
+          if [ "$derivado" = "sim" ]; then
+            echo "Convite do Painel Dev (repositório privado): $DEV_CONVITE"
+            echo "### Painel Dev: convite do primeiro acesso" >> "$GITHUB_STEP_SUMMARY"
+            echo "Código: \`$DEV_CONVITE\` (só é usado uma vez, para criar a senha do administrador; para trocar, crie o segredo DEV_CONVITE no repositório)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Conferir se está no ar
+        run: |
+          # na primeira publicação o certificado do endereço novo leva alguns minutos
+          for i in $(seq 1 20); do
+            if curl -fsS "$ENDERECO/saude"; then echo; break; fi
+            echo "ainda não respondeu ($i), esperando…"; sleep 15
+          done
+          curl -sS "$ENDERECO/atualizacao?app=venus" | head -c 300; echo
+          curl -sS "$ENDERECO/atualizacao?app=robo" | head -c 300; echo
+          curl -sS "$ENDERECO/v1/rotas"; echo
+          curl -sS "$ENDERECO/canais"; echo
+          curl -sS -X POST "$ENDERECO/chat" -H 'content-type: application/json' -d '{"message":"oi"}' | head -c 300; echo

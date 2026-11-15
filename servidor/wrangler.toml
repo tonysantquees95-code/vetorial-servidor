@@ -1,0 +1,44 @@
+# Servidor da Vênus (Cloudflare Workers + D1). Publicado sozinho pelo GitHub (.github/workflows/servidor.yml).
+name = "venus-servidor"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+workers_dev = true
+
+# Site de vendas da Vênus (pasta site/ na raiz do repositório), servido pelo próprio Worker.
+# Os arquivos têm prioridade; qualquer outro endereço (/id, /v/loja, /saude…) continua indo para o código.
+[assets]
+directory = "../site"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "venus"
+database_id = "__D1_ID__" # o workflow troca pelo id real
+migrations_dir = "migrations"
+
+# limpeza diária dos avisos antigos (01:17 em Brasília)
+[triggers]
+crons = ["17 4 * * *", "*/10 * * * *"]
+
+# ---------------------------------------------------------------------------
+# Roteador de IA (/v1/chat, /v1/ocr). Segredos (GROQ_API_KEY, DEEPSEEK_API_KEY, GEMINI_API_KEY, APP_TOKEN)
+# são enviados pelo workflow a partir dos segredos do repositório. Os bindings de cache (KV, Vectorize, AI)
+# e o limite por IP são acrescentados pelo workflow (servidor.yml) quando a conta permite; sem eles
+# o roteador funciona do mesmo jeito, só sem cache.
+# ---------------------------------------------------------------------------
+[vars]
+# Origens do app web/PWA/Capacitor. Acrescente aqui o endereço do PWA quando publicado.
+ORIGENS_PERMITIDAS = "app://venus,https://venus-servidor.tonysantquees95.workers.dev,https://localhost,capacitor://localhost,http://localhost,http://localhost:5173,http://localhost:5174,http://localhost:5175"
+MODELO_GROQ = "openai/gpt-oss-120b"
+MODELO_GROQ_RAPIDO = "openai/gpt-oss-20b"
+MODELO_DEEPSEEK = "deepseek-chat"
+MODELO_DEEPSEEK_RACIOCINIO = "deepseek-reasoner"
+# Gemini: somente multimodal e OCR (segundo modelo = reserva dentro da própria família Gemini)
+MODELO_GEMINI = "gemini-3.8-flash"
+MODELO_GEMINI_RESERVA = "gemini-flash-lite-latest"
+MODELO_EMBEDDING = "@cf/baai/bge-m3"
+CACHE_TTL_SEGUNDOS = "86400"
+CACHE_LIMIAR = "0.93"
+
+# Domínio curto da Vetorial Tech (vetorial.tech/sualoja). Quando o domínio estiver ligado a este Worker
+# (Cloudflare → Workers → Domínios e rotas), troque por "vetorial.tech"; vazio = usa /v/sualoja no endereço do Worker.
+# DOMINIO_CURTO = "vetorial.tech"

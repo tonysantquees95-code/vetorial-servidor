@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minha conta · Vênus</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#070914">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<header class="topo"><div class="wrap">
+  <a class="marca" href="index.html"><img src="venus.png" alt="">VÊNUS</a>
+  <nav><a href="index.html">Início</a><a href="#" id="sair" hidden>Sair</a></nav>
+</div></header>
+
+<main class="conta-caixa">
+  <div id="carregando" class="aviso">Verificando o seu login…</div>
+
+  <div id="deslogado" hidden>
+    <h1 style="font-size:34px">Entre com o seu <em>Vetorial ID</em></h1>
+    <p style="color:var(--suave)">Uma conta só para a Vênus no celular, no computador e em outros aparelhos. Novo por aqui? Crie a conta no mesmo lugar e ganhe <b>7 dias grátis</b>.</p>
+    <a class="btn" id="entrar" href="#">Entrar ou criar conta</a>
+  </div>
+
+  <div id="logado" hidden>
+    <div class="perfil"><div class="av" id="inicial">V</div><div><b id="nome"></b><br><small id="email"></small></div></div>
+
+    <div class="aviso ok" id="estado"></div>
+    <div class="aviso al" id="liberar" hidden><b>Pagamento recebido!</b> Para liberar o acesso, abra a Vênus e confirme com o código da verificação em duas etapas.</div>
+
+    <div id="acoes">
+      <h2 class="s">Escolha o seu pacote</h2>
+      <p style="color:var(--suave);margin:0">🎁 Os <b>7 dias grátis</b> incluem Vênus, Vindex e Vortex. A primeira cobrança só acontece quando o teste acabar. Pagamento mensal recorrente pelo Mercado Pago.</p>
+      <div class="escolha" id="pacotes">
+        <div class="plano" data-pacote="venus"><h3>Vênus</h3><div class="v">R$ 49,90<small>/mês</small></div><button class="btn sec">Assinar</button></div>
+        <div class="plano" data-pacote="venus_vindex"><h3>Vênus + Vindex</h3><div class="v">R$ 70<small>/mês</small></div><button class="btn sec">Assinar</button></div>
+        <div class="plano" data-pacote="venus_vortex"><h3>Vênus + Vortex</h3><div class="v">R$ 70<small>/mês</small></div><button class="btn sec">Assinar</button></div>
+        <div class="plano" data-pacote="completo"><h3>Completo</h3><div class="v">R$ 100<small>/mês</small></div><button class="btn">Assinar</button></div>
+        <div class="plano" data-pacote="vortex"><h3>Vortex (sem a Vênus)</h3><div class="v">R$ 24,90<small>/mês</small></div><button class="btn sec">Assinar</button></div>
+        <div class="plano" data-pacote="vindex"><h3>Vindex (sem a Vênus)</h3><div class="v">R$ 34,90<small>/mês</small></div><button class="btn sec">Assinar</button></div>
+        <div class="plano" data-pacote="vindex_vortex"><h3>Vindex + Vortex</h3><div class="v">R$ 50<small>/mês</small></div><button class="btn sec">Assinar</button></div>
+      </div>
+      <p class="nota" id="msg" role="status"></p>
+    </div>
+
+    <h2 class="s">Meu perfil</h2>
+    <form id="perfil" class="faixa" style="gap:10px">
+      <input class="campo" id="novo-nome" maxlength="80" placeholder="Seu nome" style="flex:1;min-width:200px" aria-label="Seu nome">
+      <button class="btn sec" type="submit">Salvar nome</button>
+    </form>
+    <p class="nota" id="msg-perfil" role="status"></p>
+
+    <h2 class="s">Baixar os aplicativos</h2>
+    <div class="faixa" style="justify-content:flex-start">
+      <a class="btn sec" id="dl-android2" href="#">Vênus · Android</a>
+      <a class="btn sec" id="dl-windows2" href="#">Vênus · Windows</a>
+      <a class="btn sec" id="dl-vindex-a" href="#">Vindex · Android</a>
+      <a class="btn sec" id="dl-vindex-w" href="#">Vindex · Windows</a>
+    </div>
+
+    <h2 class="s">1. Instale e entre</h2>
+    <div class="passos">
+      <div class="passo"><div><h4>Baixe a Vênus</h4><p><a id="dl-android" href="#">Android</a> · <a id="dl-windows" href="#">Windows</a>. Abra e toque em <b>Entrar com o Vetorial ID</b>.</p></div></div>
+      <div class="passo"><div><h4>Use a mesma conta em todo lugar</h4><p>O cadastro da sua empresa acompanha você: celular, computador ou outro celular.</p></div></div>
+    </div>
+
+    <h2 class="s">2. Atendimento no WhatsApp</h2>
+    <div class="aviso ok"><b>Prometido e funcionando.</b> A Vênus responde seus clientes no WhatsApp automaticamente, com as informações e o estoque da sua loja. Cadastre os dados da empresa e ative o atendimento no aplicativo.</div>
+
+    <h2 class="s">3. Instagram e a mudança da Meta</h2>
+    <div class="aviso al"><b>Importante:</b> a Meta unificou as suas APIs. Por isso ainda <b>não prometemos atendimento automático no Instagram nem no Messenger</b>. O atendimento automático que garantimos é o do WhatsApp.</div>
+    <p style="color:var(--suave)">O que continua funcionando no Instagram, pela API tradicional, é a <b>publicação e o agendamento</b> de posts e stories, com as legendas e artes que a Vênus gera. Para ligar:</p>
+    <div class="passos">
+      <div class="passo"><div><h4>Tenha uma conta profissional</h4><p>No Instagram, mude o perfil para <b>Comercial</b> ou <b>Criador de conteúdo</b>.</p></div></div>
+      <div class="passo"><div><h4>Pegue o ID da conta e o token de acesso</h4><p>Eles são gerados no painel de desenvolvedores da Meta, na API do Instagram, para a sua conta.</p></div></div>
+      <div class="passo"><div><h4>Informe na Vênus</h4><p>Na Central de Marketing, escolha o destino <b>Instagram</b> e cole os dois. Depois é só aprovar a fila de posts ou agendar.</p></div></div>
+    </div>
+    <div class="aviso">Cada imagem de post precisa estar em um endereço público (https). Os produtos da sua vitrine já servem.</div>
+
+    <h2 class="s">4. Não tem loja? Crie a sua pela Vênus</h2>
+    <div class="passos">
+      <div class="passo"><div><h4>Monte a identidade</h4><p>Crie o logo, escolha a cor e o nome. A vitrine usa tudo isso.</p></div></div>
+      <div class="passo"><div><h4>Cadastre produtos e estoque</h4><p>Preço, foto e quantidade. A vitrine mostra só o que está disponível.</p></div></div>
+      <div class="passo"><div><h4>Defina o WhatsApp dos pedidos</h4><p>Em <b>Vitrine e links curtos › Personalizar</b>. É para lá que os pedidos vão.</p></div></div>
+      <div class="passo"><div><h4>Conecte o pagamento</h4><p>Coloque a chave do <b>Mercado Pago</b> ou a InfiniteTag da <b>InfinitePay</b>. A Vênus gera links de pagamento, Pix e QR Code para cobrar seus clientes.</p></div></div>
+      <div class="passo"><div><h4>Divulgue o link</h4><p>Abra a vitrine, copie o link e compartilhe. Dá para criar links curtos e um cartão de visita com QR Code.</p></div></div>
+    </div>
+
+    <h2 class="s">5. Já tem loja?</h2>
+    <p style="color:var(--suave)">Conecte seus canais de venda (como Nuvemshop e Mercado Livre) em <b>Central da loja</b>. O estoque fica único e a Vênus cuida das respostas e da divulgação.</p>
+  </div>
+</main>
+
+<footer><div class="wrap"><b>VETORIAL TECH</b></div></footer>
+<script src="config.js"></script>
+<script src="conta.js"></script>
+</body>
+</html>
