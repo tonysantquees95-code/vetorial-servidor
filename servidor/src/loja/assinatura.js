@@ -38,7 +38,12 @@ async function http(url, op) {
   const t = await r.text();
   let d = {};
   try { d = t ? JSON.parse(t) : {}; } catch (e) {}
-  if (!r.ok) throw new ErroLoja(502, "gateway_erro", `O gateway respondeu ${r.status}.`);
+  if (!r.ok) {
+    // o motivo que o próprio gateway deu (as respostas de erro dele não trazem chaves): ajuda a achar o que está errado no pedido
+    const causa = Array.isArray(d.cause) && d.cause[0] ? (d.cause[0].description || d.cause[0].code) : "";
+    const motivo = [d.message, causa].filter((x) => typeof x === "string" && x).join(" — ").slice(0, 240);
+    throw new ErroLoja(502, "gateway_erro", `O gateway respondeu ${r.status}.${motivo ? ` Motivo: ${motivo}` : ""}`);
+  }
   return d;
 }
 
