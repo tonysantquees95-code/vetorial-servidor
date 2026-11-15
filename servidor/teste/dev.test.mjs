@@ -408,3 +408,15 @@ test("DeepSeek lê a chave do cofre (cifrada) e, sem ela, do segredo do Worker",
     assert.equal(cabecalho, "Bearer sk-do-cofre-456789");
   } finally { globalThis.fetch = orig; }
 });
+
+test("atalhos de Voxix, Velox, Drive e Painel Dev levam ao download certo", async () => {
+  const u = new URL("https://v.test/x");
+  for (const c of ["/voxix", "/voxix/android", "/voxix/windows", "/velox", "/velox/android", "/velox/windows", "/drive", "/drive/android", "/paineldev/android", "/paineldev/windows"]) assert.equal(ehAtalho(c), true, c);
+  for (const c of ["/drive/arquivos", "/voxix/perfil", "/drive/windows", "/velox/mac"]) assert.equal(ehAtalho(c), false, c);
+  assert.equal(responderAtalho(u, "/voxix/android").headers.get("location"), "https://v.test/atualizacao?app=voxix-android&baixar=1");
+  assert.equal(responderAtalho(u, "/velox/windows").headers.get("location"), "https://v.test/atualizacao?app=velox-windows&baixar=1");
+  assert.equal(responderAtalho(u, "/drive/android").headers.get("location"), "https://v.test/atualizacao?app=drive-android&baixar=1");
+  assert.equal(responderAtalho(u, "/paineldev/windows").headers.get("location"), "https://v.test/atualizacao?app=paineldev-windows&baixar=1");
+  assert.match(await responderAtalho(u, "/voxix").text(), /Voxix[\s\S]*\/voxix\/windows/);
+  assert.doesNotMatch(await responderAtalho(u, "/drive").text(), /windows/);
+});

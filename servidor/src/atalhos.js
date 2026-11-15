@@ -1,4 +1,4 @@
-// Atalhos curtos e fáceis de digitar: /venus (página de download), /venus/android, /venus/windows e /paineldev.
+// Atalhos curtos e fáceis de digitar: /venus (página de download), /venus/android, /venus/windows e /paineldev. Também /voxix, /velox, /drive e /paineldev/android|windows.
 export const PAINEL_DEV = "https://tonysantquees95-code.github.io/vetorial-dev-center/";
 
 export const VORTEX_BAIXAR = "https://github.com/tonysantquees95-code/Vortex/releases/latest/download";
@@ -6,7 +6,7 @@ export const VORTEX_BAIXAR = "https://github.com/tonysantquees95-code/Vortex/rel
 export const VINDEX_BAIXAR = "https://github.com/tonysantquees95-code/Vindex-/releases/latest/download";
 
 export function ehAtalho(caminho) {
-  return /^\/(venus|vindex|vortex)(\/(android|windows|web))?$|^\/venus\/mac$|^\/paineldev$/i.test(caminho.toLowerCase());
+  return /^\/(venus|vindex|vortex)(\/(android|windows|web))?$|^\/venus\/mac$|^\/paineldev(\/(android|windows))?$|^\/(voxix|velox)(\/(android|windows))?$|^\/drive(\/android)?$/i.test(caminho.toLowerCase());
 }
 
 const pagina = (origem) => `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vênus · Vetorial Tech</title>
@@ -26,6 +26,19 @@ const paginaVortex = (origem) => `<!doctype html><html lang="pt-BR"><head><meta 
 
 const paginaVindex = (origem) => pagina(origem).replace("<h1>Vênus</h1><p>Assistente e central da sua loja. Baixe o app:</p>", "<h1>Vindex</h1><p>Otimizador e organizador de arquivos. Baixe o app:</p>").replace(`${origem}/venus/android`, `${origem}/vindex/android`).replace(`${origem}/venus/windows`, `${origem}/vindex/windows`).replace("<title>Vênus", "<title>Vindex").replace(/<a href="[^"]*\/venus\/mac">[^<]*<\/a>/, "").replace(/<div class="q">[\s\S]*?<\/div>\n?/g, "").replace(/<a href="[^"]*\/app\/">[^<]*<\/a>/, "");
 
+/** Páginas curtas de download dos apps que só têm atalho (Voxix, Velox, Vetorial Drive). */
+const APPS_COM_PAGINA = {
+  voxix: { nome: "Voxix", frase: "Gaming chat da Vetorial Tech. Baixe o app:", cor: "#ef2b3d", botoes: [["android", "Baixar para Android"], ["windows", "Baixar para Windows"]] },
+  velox: { nome: "Velox", frase: "Busca e central gamer. Baixe o app:", cor: "#19e3ff", botoes: [["android", "Baixar para Android"], ["windows", "Baixar para Windows"]] },
+  drive: { nome: "Vetorial Drive", frase: "Seus arquivos na nuvem da Vetorial Tech. Baixe o app:", cor: "#7c3aed", botoes: [["android", "Baixar para Android"]] },
+};
+const paginaDoApp = (origem, id) => {
+  const a = APPS_COM_PAGINA[id];
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${a.nome} · Vetorial Tech</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#04040a;color:#e8ecf4;font:16px system-ui,sans-serif}main{max-width:420px;padding:24px;text-align:center}h1{margin:0 0 6px;text-shadow:0 0 24px ${a.cor}}p{color:#9aa6bd}a{display:block;margin:10px 0;padding:14px;border-radius:12px;background:${a.cor};color:#fff;text-decoration:none;font-weight:700}</style>
+<body><main><h1>${a.nome}</h1><p>${a.frase}</p>${a.botoes.map(([plat, rot]) => `<a href="${origem}/${id}/${plat}">${rot}</a>`).join("")}</main></body></html>`;
+};
+
 /** Resposta do atalho: a página /venus, ou um redirecionamento para o download / painel. */
 export function responderAtalho(url, caminho) {
   const c = caminho.toLowerCase();
@@ -36,6 +49,9 @@ export function responderAtalho(url, caminho) {
   if (c === "/vortex/windows") return Response.redirect(`${VORTEX_BAIXAR}/VortexSetup.exe`, 302);
   if (c === "/vortex" || c === "/vortex/web") return new Response(paginaVortex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
   if (c === "/vindex") return new Response(paginaVindex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
+  const m = /^\/(voxix|velox|drive|paineldev)\/(android|windows)$/.exec(c);
+  if (m) return Response.redirect(`${origem}/atualizacao?app=${m[1] === "drive" ? "drive" : m[1]}-${m[2]}&baixar=1`, 302);
+  if (c === "/voxix" || c === "/velox" || c === "/drive") return new Response(paginaDoApp(origem, c.slice(1)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
   if (c === "/venus/web") return Response.redirect(`${origem}/app/`, 302);
   if (c === "/paineldev") return Response.redirect(PAINEL_DEV, 302);
   if (c === "/venus") return new Response(pagina(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
