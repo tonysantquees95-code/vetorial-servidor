@@ -73,7 +73,7 @@ export async function tratarId(req, env, url, caminho) {
     const ctx = await validarSessao(env, req, {});
     if (caminho === "/id/ping" && req.method === "POST") {
       const l = await licenca(env, ctx.usuario, origem, false, undefined, undefined, ctx.dispositivo);
-      return json({ ok: true, ativa: true, selo: l.selo, perfil: ctx.usuario.atualizado || 0, licenca: { acesso: l.acesso, renovar: !!l.renovar } });
+      return json({ ok: true, ativa: true, selo: l.selo, perfil: ctx.usuario.atualizado || 0, admin: ehAdmin(env, ctx.usuario.email), licenca: { acesso: l.acesso, renovar: !!l.renovar } });
     }
     if (caminho === "/id/verificar" && req.method === "GET") { // para o Vindex e o Vortex validarem o login
       return json({ usuario: perfilPublico(ctx.usuario), app: null, sessao: ctx.sessao, licenca: await licenca(env, ctx.usuario, origem, false, undefined, undefined, ctx.dispositivo) });
