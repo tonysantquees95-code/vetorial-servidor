@@ -19,8 +19,8 @@ const APPS = {
   "vortex-android": { repo: REPO_DO_VORTEX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /\.apk$/i.test(n), publico: true },
   "vortex-windows": { repo: REPO_DO_VORTEX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /\.exe$/i.test(n), publico: true },
   "drive-android": { repo: REPO_DO_DRIVE, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VetorialDrive\.apk$/i.test(n) },
-  "voxix-android": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Voxix\.apk$/i.test(n) },
-  "voxix-windows": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VoxixSetup\.exe$/i.test(n) },
+  "voxix-android": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Voxix\.apk$/i.test(n), publico: true },
+  "voxix-windows": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VoxixSetup\.exe$/i.test(n), publico: true },
   "velox-android": { repo: REPO_DO_VELOX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Velox\.apk$/i.test(n), publico: true },
   "velox-windows": { repo: REPO_DO_VELOX, tag: /^windows-1\.(\d+)$/, arquivo: (n) => /^Velox-Instalador-.*\.exe$/i.test(n), publico: true },
 };
