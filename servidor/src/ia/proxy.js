@@ -57,7 +57,8 @@ export async function tratarProxyIA(req, env, ctx, caminho, { validar = validarS
 
   const saida = {};
   for (const c of CAMPOS) if (corpo[c] !== undefined) saida[c] = corpo[c];
-  saida.stream = false;
+  // em fluxo (SSE) só quando o app pede: o corpo da Groq passa direto, sem esperar a resposta inteira
+  saida.stream = corpo.stream === true;
   if (typeof saida.max_tokens === "number") saida.max_tokens = Math.min(saida.max_tokens, MAX_SAIDA);
   if (typeof saida.max_completion_tokens === "number") saida.max_completion_tokens = Math.min(saida.max_completion_tokens, MAX_SAIDA);
   if (saida.max_tokens === undefined && saida.max_completion_tokens === undefined) saida.max_completion_tokens = MAX_SAIDA;

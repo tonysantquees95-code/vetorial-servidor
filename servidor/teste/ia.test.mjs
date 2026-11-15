@@ -232,10 +232,15 @@ test("/ia/v1: só com Vetorial ID, só modelos conhecidos, chave da Groq fica no
   assert.equal((await ok.json()).choices[0].message.content, "oi!");
   const enviado = JSON.parse(chamadas[0].init.body);
   assert.equal(chamadas[0].init.headers.authorization, "Bearer gsk_SEGREDO_GROQ");
-  assert.equal(enviado.stream, false);
+  assert.equal(enviado.stream, true); // o app pediu fluxo: a Groq recebe stream, o corpo passa direto
   assert.equal(enviado.max_tokens, 4096);
   assert.equal(enviado.intruso, undefined);
   assert.ok(enviado.tools);
+
+  // sem pedir fluxo, a resposta continua inteira (apps antigos)
+  mockFetch({ "api.groq.com/openai/v1/chat/completions": () => new Response(JSON.stringify({ choices: [{ message: { content: "oi!" } }] }), { status: 200 }) });
+  assert.equal((await pedir({ model: MODELOS[0], messages: [{ role: "user", content: "oi" }] }, logado)).status, 200);
+  assert.equal(JSON.parse(chamadas[0].init.body).stream, false);
 
   mockFetch({ "api.groq.com": () => new Response(JSON.stringify({ error: { message: "rate" } }), { status: 429 }) });
   assert.equal((await pedir({ model: MODELOS[1], messages: [{ role: "user", content: "oi" }] }, logado)).status, 429);
