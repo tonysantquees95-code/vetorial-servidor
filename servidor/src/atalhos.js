@@ -28,7 +28,7 @@ const paginaVindex = (origem) => pagina(origem).replace("<h1>Vênus</h1><p>Assis
 
 /** Páginas curtas de download dos apps que só têm atalho (Voxix, Velox, Vetorial Drive). */
 const APPS_COM_PAGINA = {
-  voxix: { nome: "Voxix", frase: "Gaming chat da Vetorial Tech. Baixe o app:", cor: "#ef2b3d", botoes: [["android", "Baixar para Android"], ["windows", "Baixar para Windows"]] },
+  voxix: { nome: "Voxix", frase: "Gaming chat da Vetorial Tech. Em breve: o download ainda não está liberado.", cor: "#ef2b3d", botoes: [] },
   velox: { nome: "Velox", frase: "Busca e central gamer. Baixe o app:", cor: "#19e3ff", botoes: [["android", "Baixar para Android"], ["windows", "Baixar para Windows"]] },
   drive: { nome: "Vetorial Drive", frase: "Seus arquivos na nuvem da Vetorial Tech. Baixe o app:", cor: "#7c3aed", botoes: [["android", "Baixar para Android"]] },
 };
@@ -49,6 +49,7 @@ export function responderAtalho(url, caminho) {
   if (c === "/vortex/windows") return Response.redirect(`${VORTEX_BAIXAR}/VortexSetup.exe`, 302);
   if (c === "/vortex" || c === "/vortex/web") return new Response(paginaVortex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
   if (c === "/vindex") return new Response(paginaVindex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
+  if (c === "/voxix/android" || c === "/voxix/windows") return Response.redirect(`${origem}/voxix`, 302); // ainda não liberado: volta para a página "em breve"
   const m = /^\/(voxix|velox|drive|paineldev)\/(android|windows)$/.exec(c);
   if (m) return Response.redirect(`${origem}/atualizacao?app=${m[1] === "drive" ? "drive" : m[1]}-${m[2]}&baixar=1`, 302);
   if (c === "/voxix" || c === "/velox" || c === "/drive") return new Response(paginaDoApp(origem, c.slice(1)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });

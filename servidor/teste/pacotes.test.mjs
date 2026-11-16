@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { bancoDeTeste } from "./d1.mjs";
 import { registrarLoja } from "../src/loja/lojas.js";
-import { PACOTES, appsLiberados, estadoDaAssinatura, iniciarCobranca, confirmarPagamento, pacoteDe } from "../src/loja/assinatura.js";
+import { PACOTES, PROMO, appsLiberados, estadoDaAssinatura, iniciarCobranca, confirmarPagamento, pacoteDe, precoDoPacote } from "../src/loja/assinatura.js";
 
 process.removeAllListeners("warning");
 const DIA = 86_400_000;
@@ -29,6 +29,7 @@ test("teste grátis libera Vindex e Vortex; depois vale só o pacote pago", () =
 
 test("cobrança recorrente usa o valor do pacote e guarda o pacote no pagamento", async () => {
   const env = mk();
+  env.PROMO_FIM = "2020-01-01T00:00:00Z"; // promoção encerrada: valem os preços normais
   const l = await registrarLoja(env, { nome: "Loja" });
   const antes = globalThis.fetch;
   const corpos = [];
@@ -96,6 +97,7 @@ test("Mercado Pago: erro de conta de teste misturada com real vira explicação 
 
 test("Pix/débito avulso: cria preferência só com Pix e débito; a 1ª vez espera o 2FA e as seguintes somam 30 dias sozinhas", async () => {
   const env = mk();
+  env.PROMO_FIM = "2020-01-01T00:00:00Z";
   const l = await registrarLoja(env, { nome: "Loja" });
   const antes = globalThis.fetch;
   const pedidos = [];
@@ -124,5 +126,41 @@ test("Pix/débito avulso: cria preferência só com Pix e débito; a 1ª vez esp
     // o mesmo aviso de novo não soma duas vezes
     assert.equal(await confirmarPagamento(env, c2.id, 4990, "p2", agora), true);
     assert.equal((await env.DB.prepare("SELECT ativo_ate FROM lojas WHERE id = ?").bind(l.id).first()).ativo_ate, depois.ativo_ate);
+  } finally { globalThis.fetch = antes; }
+});
+
+test("promoção de lançamento: suíte a R$ 49,90 com 6 cobranças, preço travado por 6 meses para quem assinou, normal depois", async () => {
+  const env = mk();
+  const fim = Date.parse("2026-12-16T23:59:59-03:00");
+  const dentro = fim - 10 * DIA;
+  const l = await registrarLoja(env, { nome: "Loja" });
+  const outra = await registrarLoja(env, { nome: "Outra" });
+  const antes = globalThis.fetch;
+  const corpos = [];
+  globalThis.fetch = async (url, op) => { corpos.push(JSON.parse(op.body)); return new Response(JSON.stringify({ init_point: "https://mp.exemplo/x" }), { status: 201 }); };
+  try {
+    const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first();
+    // dentro da promoção: o completo custa 49,90, os outros pacotes seguem normais
+    assert.deepEqual((({ centavos, promo }) => ({ centavos, promo }))(await precoDoPacote(env, loja, "completo", dentro)), { centavos: 4990, promo: true });
+    assert.equal((await precoDoPacote(env, loja, "venus_vindex", dentro)).centavos, 7000);
+    const c = await iniciarCobranca(env, loja, "mercadopago", "https://v.test", dentro, "completo", "a@b.com");
+    assert.equal(corpos[0].auto_recurring.transaction_amount, 49.9);
+    assert.equal(corpos[0].auto_recurring.repetitions, PROMO.meses);
+    assert.equal(c.valorCentavos, 4990);
+    // o estado mostra o preço de promoção e o preço cheio
+    const e = await estadoDaAssinatura(env, loja, dentro);
+    assert.equal(e.promocao.meses, 6);
+    assert.deepEqual(e.pacotes.find((p) => p.chave === "completo"), { chave: "completo", nome: "Vênus + Vindex + Vortex", precoCentavos: 4990, precoCheioCentavos: 10000, promocao: true });
+    // pagou durante a promoção: depois do fim, o preço continua 49,90 por 6 meses
+    await confirmarPagamento(env, c.id, 4990, "m1", dentro);
+    const depois = fim + 20 * DIA;
+    assert.equal((await precoDoPacote(env, loja, "completo", depois)).centavos, 4990);
+    assert.equal((await precoDoPacote(env, loja, "completo", depois)).promo, true);
+    // passados os 6 meses do primeiro pagamento: preço normal
+    assert.equal((await precoDoPacote(env, loja, "completo", dentro + 200 * DIA)).centavos, 10000);
+    // quem nunca assinou na promoção paga o preço normal depois do fim
+    const lojaOutra = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(outra.id).first();
+    assert.equal((await precoDoPacote(env, lojaOutra, "completo", depois)).centavos, 10000);
+    assert.equal((await estadoDaAssinatura(env, lojaOutra, depois)).promocao, null);
   } finally { globalThis.fetch = antes; }
 });

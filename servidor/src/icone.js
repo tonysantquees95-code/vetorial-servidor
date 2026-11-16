@@ -1,12 +1,13 @@
 // Os ícones da suíte no site vêm direto do repositório de cada app: se o ícone mudar no app (Vindex ou Vortex),
 // o site passa a mostrar o novo sozinho, sem copiar arquivo. A Vênus usa o arquivo do próprio site.
-//   GET /icone/vindex.png | /icone/vortex.png | /icone/venus.png | /icone/velox.png
+//   GET /icone/vindex.png | /icone/vortex.png | /icone/venus.png | /icone/velox.png | /icone/voxix.png
 const FONTES = {
   vindex: "https://raw.githubusercontent.com/tonysantquees95-code/Vindex-/main/app/assets/icon-only.png",
   vortex: "https://raw.githubusercontent.com/tonysantquees95-code/Vortex/main/app/assets/icon-only.png",
+  voxix: "https://raw.githubusercontent.com/tonysantquees95-code/voxix/main/app/assets/icon-only.png",
 };
 const TTL_S = 600;
-export const ehRotaIcone = (c) => /^\/icone\/(venus|vindex|vortex|velox)\.png$/.test(c);
+export const ehRotaIcone = (c) => /^\/icone\/(venus|vindex|vortex|velox|voxix)\.png$/.test(c);
 
 export async function tratarIcone(req, url, caminho) {
   const app = /^\/icone\/(\w+)\.png$/.exec(caminho)[1];

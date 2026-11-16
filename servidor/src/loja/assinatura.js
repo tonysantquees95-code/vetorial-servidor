@@ -21,6 +21,28 @@ export const PACOTES = {
   vindex: { nome: "Vindex", centavos: 3490, apps: { vindex: true, vortex: false } },
   vindex_vortex: { nome: "Vindex + Vortex", centavos: 5000, apps: { vindex: true, vortex: true } },
 };
+/**
+ * Promoção de lançamento: a suíte completa (Vênus + Vindex + Vortex) a R$ 49,90 por mês para quem assinar até o fim da promoção;
+ * quem assina nesse período mantém os R$ 49,90 por 6 meses (no cartão, a assinatura tem 6 cobranças; no Pix/débito, o preço fica travado).
+ * Depois disso valem os preços normais. A data do fim pode ser mudada pela variável PROMO_FIM (ex.: 2026-12-16T23:59:59-03:00).
+ */
+export const PROMO = { pacote: "completo", centavos: 4990, meses: 6 };
+const PROMO_FIM_PADRAO = Date.parse("2026-12-16T23:59:59-03:00");
+export const promocaoFim = (env) => { const t = Date.parse(String(env?.PROMO_FIM || "")); return Number.isFinite(t) ? t : PROMO_FIM_PADRAO; };
+
+function maisMeses(t, n) { const d = new Date(t); d.setUTCMonth(d.getUTCMonth() + n); return d.getTime(); }
+
+/** Preço mensal deste pacote para esta loja agora: o da promoção (aberta ou travada por 6 meses) ou o normal. */
+export async function precoDoPacote(env, loja, pacote, agora = Date.now()) {
+  const cheio = PACOTES[pacote].centavos;
+  if (pacote !== PROMO.pacote) return { centavos: cheio, promo: false, cheio };
+  if (agora <= promocaoFim(env)) return { centavos: PROMO.centavos, promo: true, cheio };
+  const r = await env.DB.prepare("SELECT MIN(atualizado) AS t FROM pagamentos WHERE loja = ? AND pacote = ? AND valor_centavos = ? AND status IN ('pago','liberado') AND criado <= ?")
+    .bind(loja.id, PROMO.pacote, PROMO.centavos, promocaoFim(env)).first();
+  if (r && r.t && agora < maisMeses(r.t, PROMO.meses)) return { centavos: PROMO.centavos, promo: true, cheio, travadoAte: maisMeses(r.t, PROMO.meses) };
+  return { centavos: cheio, promo: false, cheio };
+}
+
 export const pacoteDe = (chave) => (Object.prototype.hasOwnProperty.call(PACOTES, chave) ? chave : "venus");
 const tituloDo = (pacote) => (pacote === "venus" ? titulo : `${PACOTES[pacote].nome} — Plano mensal`);
 
@@ -58,7 +80,7 @@ export const tokenMercadoPago = (env) => lerSegredo(env, "MERCADOPAGO_ACCESS_TOK
  */
 export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.now(), pacoteEscolhido = "venus", emailPagador = "", forma = "recorrente") {
   const pacote = pacoteDe(pacoteEscolhido);
-  const preco = PACOTES[pacote].centavos;
+  const { centavos: preco, promo } = await precoDoPacote(env, loja, pacote, agora);
   const titulo = tituloDo(pacote);
   if (!["infinitepay", "mercadopago"].includes(gateway)) throw new ErroLoja(400, "gateway_invalido", "Use infinitepay ou mercadopago.");
   const avulso = forma === "avulso";
@@ -92,6 +114,7 @@ export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.n
     }
     // assinatura mensal recorrente: a primeira cobrança só acontece quando os 7 dias grátis acabam
     const recorrente = { frequency: 1, frequency_type: "months", transaction_amount: preco / 100, currency_id: "BRL" };
+    if (promo) recorrente.repetitions = PROMO.meses; // preço de promoção: 6 cobranças; depois a pessoa assina de novo pelo preço normal
     if ((loja.trial_fim || 0) > agora + 3_600_000) recorrente.start_date = new Date(loja.trial_fim).toISOString();
     const corpo = { reason: titulo, external_reference: id, back_url: origem, notification_url: `${origem}/assinatura/webhook/mercadopago`, auto_recurring: recorrente, status: "pending" };
     // o Mercado Pago exige o e-mail de quem paga: o da loja ou, sem ele, o da conta (Vetorial ID) que pediu o link
@@ -225,7 +248,8 @@ export async function estadoDaAssinatura(env, loja, agora = Date.now()) {
   return {
     plano: loja.plano, precoCentavos: PRECO_CENTAVOS, diasDeTeste: 7,
     pacote: pacoteDe(loja.pacote), apps: appsLiberados(loja, agora),
-    pacotes: Object.entries(PACOTES).map(([chave, p]) => ({ chave, nome: p.nome, precoCentavos: p.centavos })),
+    pacotes: await Promise.all(Object.entries(PACOTES).map(async ([chave, p]) => { const pr = await precoDoPacote(env, loja, chave, agora); return { chave, nome: p.nome, precoCentavos: pr.centavos, precoCheioCentavos: p.centavos, promocao: pr.promo }; })),
+    promocao: agora <= promocaoFim(env) ? { fim: promocaoFim(env), meses: PROMO.meses, pacote: PROMO.pacote, precoCentavos: PROMO.centavos } : null,
     emTeste: agora < loja.trial_fim && agora >= (loja.ativo_ate || 0), diasDeTesteRestantes: trialRestante, diasPagosRestantes: pagoRestante,
     fimDoAcesso: Math.max(loja.trial_fim || 0, loja.ativo_ate || 0),
     acesso: agora < Math.max(loja.trial_fim || 0, loja.ativo_ate || 0), // conta ativa (vale para o Vindex e o Vortex)
