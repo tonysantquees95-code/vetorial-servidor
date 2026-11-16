@@ -146,6 +146,12 @@ test("o app envia o catálogo da loja e a vitrine mostra (dados do site conectad
   const h2 = await (await chamar(env, "GET", `/v/${l.slug}`)).text();
   assert.ok(h2.includes("Outro") && !h2.includes("Conjunto Renda"));
   assert.equal((await (await chamar(env, "GET", "/loja/vitrine", l.token)).json()).itensDoApp, 1);
+  // a web lê a lista para editar e mandar de volta inteira
+  const lista = await (await chamar(env, "GET", "/loja/vitrine/itens", l.token)).json();
+  assert.equal(lista.produtos.length, 1);
+  assert.equal(lista.produtos[0].sku, "1");
+  assert.equal(lista.produtos[0].preco_centavos, 500);
+  assert.match(lista.url, new RegExp(l.slug));
 });
 
 test("foto do catálogo interno vai reduzida para o servidor e aparece na vitrine", async () => {

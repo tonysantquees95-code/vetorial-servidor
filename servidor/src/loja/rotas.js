@@ -248,6 +248,11 @@ export async function tratarLoja(req, env, ctx, url, caminho) {
       const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM vitrine_itens WHERE loja = ?").bind(loja.id).first();
       return json({ url: endereco(env, req, loja.slug), titulo: loja.titulo, descricao: loja.descricao, cor: loja.cor, logo: loja.logo, whatsapp: loja.whatsapp, itensDoApp: n.n });
     }
+    if (caminho === "/loja/vitrine/itens" && req.method === "GET") {
+      // os produtos que o lojista mandou (do celular ou do computador): a web edita e manda a lista inteira de volta
+      const { results } = await env.DB.prepare("SELECT sku, nome, preco_centavos, promocao_centavos, estoque, categoria, imagem, descricao FROM vitrine_itens WHERE loja = ? ORDER BY nome LIMIT 500").bind(loja.id).all();
+      return json({ url: endereco(env, req, loja.slug), produtos: results });
+    }
     if (caminho === "/links" && req.method === "GET") {
       const { results } = await env.DB.prepare("SELECT codigo, destino, rotulo, cliques, criado FROM links WHERE loja = ? ORDER BY criado DESC LIMIT 200").bind(loja.id).all();
       const base = new URL(endereco(env, req, "x")).origin;
