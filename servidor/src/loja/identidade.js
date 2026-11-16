@@ -3,7 +3,7 @@ import { ErroLoja } from "./lojas.js";
 
 const LIMITE_HTML = 600_000;
 const LIMITE_CSS = 300_000;
-const LIMITE_LOGO = 140_000;
+const LIMITE_LOGO = 100_000; // vira data URL de até ~135 mil letras: cabe no cadastro da loja (limite 150 mil)
 
 export function siteSeguro(entrada) {
   let t = String(entrada || "").trim();
@@ -61,7 +61,7 @@ async function texto(f, url, limite) {
 }
 const base64 = (bytes) => { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(s); };
 
-/** Lê nome, descrição, cor principal e logo (PNG, JPEG ou WebP até 140 KB) do site. */
+/** Lê nome, descrição, cor principal e logo (PNG, JPEG ou WebP até 100 KB) do site. */
 export async function lerIdentidade(entrada, f = fetch) {
   const url = siteSeguro(entrada);
   let html;
