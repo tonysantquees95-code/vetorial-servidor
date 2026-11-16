@@ -52,12 +52,17 @@ async function http(url, op) {
 /** Token do Mercado Pago: o que foi guardado no Cofre do Painel Dev vale; sem ele, a variável do Worker. */
 export const tokenMercadoPago = (env) => lerSegredo(env, "MERCADOPAGO_ACCESS_TOKEN");
 
-export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.now(), pacoteEscolhido = "venus", emailPagador = "") {
+/**
+ * forma "recorrente": assinatura mensal no cartão de crédito (renova sozinha).
+ * forma "avulso": paga 30 dias por Pix ou cartão de débito, sem renovação automática: vencendo, a pessoa paga mais 30 dias quando puder.
+ */
+export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.now(), pacoteEscolhido = "venus", emailPagador = "", forma = "recorrente") {
   const pacote = pacoteDe(pacoteEscolhido);
   const preco = PACOTES[pacote].centavos;
   const titulo = tituloDo(pacote);
   if (!["infinitepay", "mercadopago"].includes(gateway)) throw new ErroLoja(400, "gateway_invalido", "Use infinitepay ou mercadopago.");
-  const id = `ass_${loja.id}_${aleatorio(4)}`;
+  const avulso = forma === "avulso";
+  const id = `${avulso ? "avu" : "ass"}_${loja.id}_${aleatorio(4)}`;
   let url;
   if (gateway === "infinitepay") {
     if (!env.INFINITEPAY_HANDLE) throw new ErroLoja(503, "gateway_desligado", "A InfinitePay ainda não foi configurada neste servidor.");
@@ -69,6 +74,22 @@ export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.n
   } else {
     const tokenMP = await tokenMercadoPago(env);
     if (!tokenMP) throw new ErroLoja(503, "gateway_desligado", "O Mercado Pago da Vênus ainda não foi ligado neste servidor. O dono precisa enviar o token (veja o aviso nos Ajustes).");
+    if (avulso) {
+      // pagamento único de 30 dias: só Pix e débito (sem cartão de crédito e sem boleto); o aviso do pagamento chega pelo mesmo webhook
+      const pref = await http("https://api.mercadopago.com/checkout/preferences", {
+        method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${tokenMP}` },
+        body: JSON.stringify({
+          items: [{ id: pacote, title: `${tituloDo(pacote)} · 30 dias`, quantity: 1, currency_id: "BRL", unit_price: preco / 100 }],
+          external_reference: id, notification_url: `${origem}/assinatura/webhook/mercadopago`,
+          back_urls: { success: origem, failure: origem, pending: origem }, auto_return: "approved",
+          payment_methods: { excluded_payment_types: [{ id: "credit_card" }, { id: "ticket" }, { id: "atm" }] },
+        }),
+      });
+      url = pref.init_point;
+      if (!url) throw new ErroLoja(502, "gateway_sem_link", "O gateway não devolveu o link de pagamento.");
+      await env.DB.prepare("INSERT INTO pagamentos (id, loja, gateway, valor_centavos, status, criado, atualizado, pacote) VALUES (?, ?, ?, ?, 'aguardando', ?, ?, ?)").bind(id, loja.id, gateway, preco, agora, agora, pacote).run();
+      return { id, url, valorCentavos: preco, pacote, forma };
+    }
     // assinatura mensal recorrente: a primeira cobrança só acontece quando os 7 dias grátis acabam
     const recorrente = { frequency: 1, frequency_type: "months", transaction_amount: preco / 100, currency_id: "BRL" };
     if ((loja.trial_fim || 0) > agora + 3_600_000) recorrente.start_date = new Date(loja.trial_fim).toISOString();
@@ -85,7 +106,7 @@ export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.n
   }
   if (!url) throw new ErroLoja(502, "gateway_sem_link", "O gateway não devolveu o link de pagamento.");
   await env.DB.prepare("INSERT INTO pagamentos (id, loja, gateway, valor_centavos, status, criado, atualizado, pacote) VALUES (?, ?, ?, ?, 'aguardando', ?, ?, ?)").bind(id, loja.id, gateway, preco, agora, agora, pacote).run();
-  return { id, url, valorCentavos: preco, pacote };
+  return { id, url, valorCentavos: preco, pacote, forma };
 }
 
 /** Marca o pagamento como pago (uma vez só) e deixa a liberação esperando o 2FA. */
@@ -100,6 +121,18 @@ export async function confirmarPagamento(env, id, valorCentavos, refGateway, ago
     const ate = Math.max(agora, (loja && loja.ativo_ate) || 0) + DIAS_DO_PLANO * DIA;
     await env.DB.prepare("UPDATE lojas SET ativo_ate = ?, plano = 'fundadores', pacote = ? WHERE id = ?").bind(ate, pacoteDe(p.pacote), p.loja).run();
     return true;
+  }
+  // Pix/débito avulso de quem já teve o acesso liberado uma vez (2FA feito): soma mais 30 dias na hora, sem pedir o código de novo
+  if (String(p.id).startsWith("avu_") && p.status === "aguardando") {
+    const loja = await env.DB.prepare("SELECT ativo_ate FROM lojas WHERE id = ?").bind(p.loja).first();
+    if (loja && (loja.ativo_ate || 0) > 0) {
+      const ate = Math.max(agora, loja.ativo_ate) + DIAS_DO_PLANO * DIA;
+      await env.DB.batch([
+        env.DB.prepare("UPDATE lojas SET ativo_ate = ?, plano = 'fundadores', pacote = ? WHERE id = ?").bind(ate, pacoteDe(p.pacote), p.loja),
+        env.DB.prepare("UPDATE pagamentos SET status = 'liberado', ref_gateway = ?, atualizado = ? WHERE id = ?").bind(String(refGateway || ""), agora, p.id),
+      ]);
+      return true;
+    }
   }
   await env.DB.prepare("UPDATE pagamentos SET status = 'pago', ref_gateway = ?, atualizado = ? WHERE id = ? AND status = 'aguardando'").bind(String(refGateway || ""), agora, id).run();
   return true;

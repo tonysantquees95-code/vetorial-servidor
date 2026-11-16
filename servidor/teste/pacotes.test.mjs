@@ -93,3 +93,36 @@ test("Mercado Pago: erro de conta de teste misturada com real vira explicação 
     await assert.rejects(() => iniciarCobranca(env, loja, "mercadopago", "https://v.test"), (e) => e.codigo === "mp_teste_e_real" || /PRODUÇÃO/.test(e.message));
   } finally { globalThis.fetch = antes; }
 });
+
+test("Pix/débito avulso: cria preferência só com Pix e débito; a 1ª vez espera o 2FA e as seguintes somam 30 dias sozinhas", async () => {
+  const env = mk();
+  const l = await registrarLoja(env, { nome: "Loja" });
+  const antes = globalThis.fetch;
+  const pedidos = [];
+  globalThis.fetch = async (url, op) => { pedidos.push({ url, corpo: JSON.parse(op.body) }); return new Response(JSON.stringify({ init_point: "https://mp.exemplo/pagar" }), { status: 201 }); };
+  try {
+    const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first();
+    const c = await iniciarCobranca(env, loja, "mercadopago", "https://v.test", Date.now(), "completo", "a@b.com", "avulso");
+    assert.match(c.id, /^avu_/);
+    assert.equal(c.forma, "avulso");
+    assert.match(pedidos[0].url, /checkout\/preferences$/);
+    assert.equal(pedidos[0].corpo.items[0].unit_price, 100);
+    const excluidos = pedidos[0].corpo.payment_methods.excluded_payment_types.map((x) => x.id);
+    assert.ok(excluidos.includes("credit_card") && !excluidos.includes("pix"));
+    // primeira vez: fica "pago" esperando a liberação com o 2FA
+    assert.equal(await confirmarPagamento(env, c.id, 10000, "p1"), true);
+    assert.equal((await env.DB.prepare("SELECT status FROM pagamentos WHERE id = ?").bind(c.id).first()).status, "pago");
+    // já liberada antes (ativo_ate): o próximo avulso soma 30 dias sozinho
+    const agora = Date.now();
+    await env.DB.prepare("UPDATE lojas SET ativo_ate = ? WHERE id = ?").bind(agora + 86_400_000, l.id).run();
+    const loja2 = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first();
+    const c2 = await iniciarCobranca(env, loja2, "mercadopago", "https://v.test", agora, "venus", "a@b.com", "avulso");
+    assert.equal(await confirmarPagamento(env, c2.id, 4990, "p2", agora), true);
+    const depois = await env.DB.prepare("SELECT ativo_ate, pacote FROM lojas WHERE id = ?").bind(l.id).first();
+    assert.equal(depois.ativo_ate, agora + 86_400_000 + 30 * 86_400_000);
+    assert.equal((await env.DB.prepare("SELECT status FROM pagamentos WHERE id = ?").bind(c2.id).first()).status, "liberado");
+    // o mesmo aviso de novo não soma duas vezes
+    assert.equal(await confirmarPagamento(env, c2.id, 4990, "p2", agora), true);
+    assert.equal((await env.DB.prepare("SELECT ativo_ate FROM lojas WHERE id = ?").bind(l.id).first()).ativo_ate, depois.ativo_ate);
+  } finally { globalThis.fetch = antes; }
+});
