@@ -3,6 +3,8 @@ import { aleatorio, sha256Hex } from "./cripto.js";
 
 export const DIAS_DE_TESTE = 7;
 export const MAX_CANAIS = 3;
+/** Lojas por conta (a principal e as extras), todas na mesma assinatura. */
+export const MAX_LOJAS = 3;
 /** O teste de 7 dias vale só para quem se inscreve até esta data (1 mês depois do lançamento da trava). Dá para mudar sem publicar: env TESTE_GRATIS_ATE (ms). */
 export const TESTE_GRATIS_ATE_PADRAO = Date.parse("2026-12-13T00:00:00-03:00");
 /** Contas com teste por rede (IP): uma casa ou um escritório pode ter mais de uma pessoa. */
@@ -53,6 +55,11 @@ export const emailAdmin = (env) => String(env.ADMIN_EMAIL || "").trim().toLowerC
 const SEM_FIM = 4102444800000; // 2100-01-01
 export async function comPrivilegios(env, loja) {
   if (!loja) return loja;
+  // loja extra: a assinatura (teste, plano pago, pacote) é a da loja principal
+  if (loja.matriz) {
+    const m = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(loja.matriz).first();
+    if (m) { const p = await comPrivilegios(env, m); return { ...loja, plano: p.plano, trial_fim: p.trial_fim, ativo_ate: p.ativo_ate, pacote: p.pacote, totp_ativo: p.totp_ativo }; }
+  }
   try {
     const u = await env.DB.prepare("SELECT email FROM usuarios WHERE loja = ?").bind(loja.id).first();
     if (u && String(u.email || "").trim().toLowerCase() === emailAdmin(env)) return { ...loja, ativo_ate: SEM_FIM, plano: "dono" };
@@ -72,6 +79,13 @@ async function lojaDoPedidoBruta(env, req) {
     const ctx = await validarSessao(env, req);
     const l = ctx.usuario.loja ? await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(ctx.usuario.loja).first() : null;
     if (!l) throw new ErroLoja(404, "sem_loja", "Essa conta ainda não tem loja.");
+    // várias lojas na mesma conta: o app diz qual está aberta (x-loja); só vale uma loja extra desta conta
+    const alvo = String(req.headers.get("x-loja") || "");
+    if (alvo && alvo !== l.id) {
+      const f = await env.DB.prepare("SELECT * FROM lojas WHERE id = ? AND matriz = ?").bind(alvo, l.id).first();
+      if (!f) throw new ErroLoja(403, "loja_invalida", "Essa loja não é da sua conta.");
+      return f;
+    }
     return l;
   }
   const m = /^Bearer\s+(vl_[a-f0-9]{48})$/.exec(req.headers.get("authorization") || "");
@@ -92,4 +106,27 @@ export const PACOTES_SEM_VENUS = new Set(["vindex", "vortex", "vindex_vortex"]);
 export function acessoLiberado(loja, agora = Date.now()) {
   const pago = agora < (loja.ativo_ate || 0) && !PACOTES_SEM_VENUS.has(loja.pacote);
   return agora < (loja.trial_fim || 0) || pago;
+}
+
+/** As lojas da conta: a principal primeiro, depois as extras. */
+export async function lojasDaConta(env, loja) {
+  const principalId = loja.matriz || loja.id;
+  const { results } = await env.DB.prepare("SELECT id, nome, slug, titulo, cor, matriz FROM lojas WHERE id = ? OR matriz = ? ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END, criado").bind(principalId, principalId, principalId).all();
+  return results.map((l) => ({ id: l.id, nome: l.nome, slug: l.slug, titulo: l.titulo, cor: l.cor, principal: l.id === principalId, ativa: l.id === loja.id }));
+}
+
+/** Cria uma loja extra (outro site, outro nicho) na mesma conta e assinatura. Os dados dela ficam separados (produtos, vitrine, BI, links). */
+export async function criarLojaExtra(env, loja, { nome, slug }, agora = Date.now()) {
+  const principalId = loja.matriz || loja.id;
+  const nomeFinal = String(nome || "").trim().slice(0, 80);
+  if (!nomeFinal) throw new ErroLoja(400, "nome_obrigatorio", "Dê um nome para a loja.");
+  const existentes = await lojasDaConta(env, loja);
+  if (existentes.length >= MAX_LOJAS) throw new ErroLoja(409, "limite_de_lojas", `Cada conta pode ter até ${MAX_LOJAS} lojas.`);
+  const id = aleatorio(8);
+  let slugFinal = slugDe(slug || nomeFinal) || `loja-${id.slice(0, 6)}`;
+  if (await env.DB.prepare("SELECT 1 AS x FROM lojas WHERE slug = ?").bind(slugFinal).first()) slugFinal = `${slugFinal.slice(0, 25)}-${id.slice(0, 5)}`;
+  // sem token próprio: a loja extra só é acessada pelo login da conta
+  await env.DB.prepare("INSERT INTO lojas (id, token_hash, nome, slug, criado, trial_fim, plano, ativo_ate, dispositivo, ip_hash, matriz) VALUES (?, ?, ?, ?, ?, 0, 'filial', 0, '', '', ?)")
+    .bind(id, await sha256Hex(`filial:${aleatorio(24)}`), nomeFinal, slugFinal, agora, principalId).run();
+  return { id, nome: nomeFinal, slug: slugFinal };
 }

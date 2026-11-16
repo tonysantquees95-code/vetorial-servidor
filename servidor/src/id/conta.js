@@ -230,6 +230,7 @@ export async function listarDispositivos(env, ctx, agora = Date.now()) {
 }
 
 // ------------------------------------------------------------------ sincronização (última escrita vence, com versão)
+export const chaveDeSync = (c) => CHAVES_SYNC.has(c) || /^empresa-[a-f0-9]{6,16}$/.test(String(c)); // "empresa-<loja>": o cadastro de cada loja extra
 export const CHAVES_SYNC = new Set(["tema", "preferencias", "modo", "sessoes", "catalogo", "marketing", "empresa", "ideiaspost", "postagens", "stories", "instagram", "velox", "velox-tema", "velox-senhas"]);
 const MAX_DOC = 64_000;
 
@@ -239,7 +240,7 @@ export async function lerSync(env, ctx, desde = 0) {
 }
 
 export async function gravarSync(env, ctx, chave, valor, versaoBase, agora = Date.now()) {
-  if (!CHAVES_SYNC.has(chave)) throw new ErroId(400, "chave_invalida", "Esse dado não é sincronizado.");
+  if (!chaveDeSync(chave)) throw new ErroId(400, "chave_invalida", "Esse dado não é sincronizado.");
   const texto = JSON.stringify(valor ?? null);
   if (texto.length > MAX_DOC) throw new ErroId(413, "doc_grande", "Esse dado é grande demais para sincronizar.");
   const atual = await env.DB.prepare("SELECT versao, valor FROM sync_docs WHERE usuario = ? AND chave = ?").bind(ctx.usuario.id, chave).first();

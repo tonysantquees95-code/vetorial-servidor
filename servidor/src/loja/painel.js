@@ -21,13 +21,14 @@ svg{width:100%;height:auto;background:var(--painel);border-radius:16px;border:1p
 </div><script>
 (function(){
 var T=null;try{T=localStorage.getItem("venus_token")}catch(e){}
+var hl=location.hash.match(/l=([a-f0-9]{6,16})/);var LJ="";try{LJ=hl?hl[1]:(location.hash.indexOf("t=")>=0?"":(localStorage.getItem("venus_loja")||""));localStorage.setItem("venus_loja",LJ)}catch(e){LJ=hl?hl[1]:""}
 var h=location.hash.match(/t=((?:vl_[a-f0-9]{48})|(?:eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]+))/);if(h){T=h[1];try{localStorage.setItem("venus_token",T)}catch(e){}history.replaceState(null,"",location.pathname)}
 var $=function(i){return document.getElementById(i)};
 var R=function(c){return (c/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})};
 function el(t,txt,cls){var e=document.createElement(t);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e}
 function card(pai,rot,val,cls){var c=el("div",null,"c");c.appendChild(el("small",rot));c.appendChild(el("b",val,cls));pai.appendChild(c)}
 function limpa(n){while(n.firstChild)n.removeChild(n.firstChild)}
-function api(p){return fetch(p,{headers:{authorization:"Bearer "+T}}).then(function(r){if(r.status===401){T=null;try{localStorage.removeItem("venus_token")}catch(e){}throw new Error("token")}return r.json()})}
+function api(p){var hd={authorization:"Bearer "+T};if(LJ)hd["x-loja"]=LJ;return fetch(p,{headers:hd}).then(function(r){if(r.status===401){T=null;try{localStorage.removeItem("venus_token")}catch(e){}throw new Error("token")}return r.json()})}
 function grafico(serie){var s=$("grafico");limpa(s);var W=600,H=220,L=8,B=24,max=1;serie.forEach(function(d){max=Math.max(max,d.bruto,d.taxas)});
 var n=serie.length,w=(W-L*2)/n;var NS="http://www.w3.org/2000/svg";
 serie.forEach(function(d,i){[["bruto","#E36BD0",0],["taxas","#F5B93A",1]].forEach(function(k){var hh=(H-B-10)*d[k[0]]/max;var r=document.createElementNS(NS,"rect");r.setAttribute("x",L+i*w+k[2]*(w/2-1));r.setAttribute("y",H-B-hh);r.setAttribute("width",Math.max(1,w/2-2));r.setAttribute("height",hh);r.setAttribute("rx","2");r.setAttribute("fill",k[1]);var t=document.createElementNS(NS,"title");t.textContent=d.dia+" · "+k[0]+": "+R(d[k[0]]);r.appendChild(t);s.appendChild(r)})});

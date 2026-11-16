@@ -190,3 +190,58 @@ test("nuvemshop: normaliza produto com variações e pedido cancelado", () => {
   assert.equal(nuvemshop.statusDoPedido({ status: "open", payment_status: "refunded" }), "reembolsado");
   assert.equal(nuvemshop.statusDoPedido({ status: "cancelled" }), "cancelado");
 });
+
+test("até 3 lojas na mesma conta: dados separados, assinatura da principal e limite", async () => {
+  const { bancoDeTeste } = await import("./d1.mjs");
+  const { criarLojaExtra, lojasDaConta, lojaDoPedido, comPrivilegios, MAX_LOJAS } = await import("../src/loja/lojas.js");
+  const { acessoLiberado } = await import("../src/loja/lojas.js");
+  const env = { DB: bancoDeTeste(), CHAVE_COFRE: "chave-de-teste-bem-longa-123" };
+  const principal = await registrarLoja(env, { nome: "Desejo" });
+  const row = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(principal.id).first();
+  const tech = await criarLojaExtra(env, row, { nome: "Tecnologia Já" });
+  const casa = await criarLojaExtra(env, row, { nome: "Casa & Cia" });
+  assert.equal(MAX_LOJAS, 3);
+  await assert.rejects(() => criarLojaExtra(env, row, { nome: "Quarta" }), (e) => e.codigo === "limite_de_lojas");
+  await assert.rejects(() => criarLojaExtra(env, row, { nome: " " }), (e) => e.codigo === "nome_obrigatorio");
+  const lista = await lojasDaConta(env, row);
+  assert.deepEqual(lista.map((l) => [l.nome, l.principal]), [["Desejo", true], ["Tecnologia Já", false], ["Casa & Cia", false]]);
+  assert.notEqual(tech.slug, casa.slug);
+  // a loja extra herda o teste/assinatura da principal
+  const filial = await comPrivilegios(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(tech.id).first());
+  assert.equal(filial.trial_fim, row.trial_fim);
+  assert.equal(acessoLiberado(filial), acessoLiberado(row));
+  // listar a partir de uma loja extra mostra a mesma conta, com ela marcada como aberta
+  const daTech = await lojasDaConta(env, filial);
+  assert.equal(daTech.length, 3);
+  assert.equal(daTech.find((l) => l.ativa).nome, "Tecnologia Já");
+});
+
+test("com o login da conta, o cabeçalho x-loja escolhe a loja e os dados não se misturam", async () => {
+  const { cadastrar } = await import("../src/id/conta.js");
+  const { criarLojaExtra } = await import("../src/loja/lojas.js");
+  const env = ENV();
+  const T0 = Date.now();
+  const u = await cadastrar(env, { email: "toni@exemplo.com", senha: "senha-forte-1", nome: "Toni", dispositivo: { id: "aparelho-toni-xxxxxxxx", nome: "PC", plataforma: "windows" } }, T0);
+  const principal = await registrarLoja(env, { nome: "Desejo" });
+  await env.DB.prepare("UPDATE usuarios SET loja = ? WHERE id = ?").bind(principal.id, u.usuario.id).run();
+  const row = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(principal.id).first();
+  const tech = await criarLojaExtra(env, row, { nome: "Tecnologia" });
+  const outra = await registrarLoja(env, { nome: "De outra pessoa" });
+  const ch = (metodo, caminho, corpo, loja) => tratarLoja(new Request(`https://v.test${caminho}`, { method: metodo, headers: { authorization: `Bearer ${u.token}`, "content-type": "application/json", ...(loja ? { "x-loja": loja } : {}) }, body: corpo ? JSON.stringify(corpo) : undefined }), env, undefined, new URL(`https://v.test${caminho}`), caminho);
+  // produto na loja extra
+  assert.equal((await ch("PUT", "/loja/vitrine/itens", { produtos: [{ sku: "t1", nome: "Fone", preco_centavos: 9900 }] }, tech.id)).status, 200);
+  // a principal continua vazia; a extra tem o produto
+  assert.equal((await (await ch("GET", "/loja/vitrine/itens")).json()).produtos.length, 0);
+  assert.equal((await (await ch("GET", "/loja/vitrine/itens", null, tech.id)).json()).produtos[0].sku, "t1");
+  // a vitrine pública da loja extra funciona (acesso herdado da principal)
+  const pub = await tratarLoja(new Request(`https://v.test/v/${tech.slug}`), env, undefined, new URL(`https://v.test/v/${tech.slug}`), `/v/${tech.slug}`);
+  assert.ok((await pub.text()).includes("Fone"));
+  // loja de outra conta não pode ser aberta
+  assert.equal((await ch("GET", "/loja/vitrine/itens", null, outra.id)).status, 403);
+  // listar e criar pelas rotas
+  const l = await (await ch("GET", "/loja/lojas", null, tech.id)).json();
+  assert.equal(l.lojas.length, 2);
+  assert.equal(l.lojas.find((x) => x.ativa).nome, "Tecnologia");
+  assert.equal((await ch("POST", "/loja/lojas", { nome: "Casa" })).status, 201);
+  assert.equal((await ch("POST", "/loja/lojas", { nome: "Quarta" })).status, 409);
+});

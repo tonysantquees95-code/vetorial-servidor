@@ -2,7 +2,8 @@
 import { conector } from "../canais/index.js";
 import { ErroCanal } from "../canais/comum.js";
 import { hmacHex, iguais, segredoDoCanal } from "./cripto.js";
-import { acessoLiberado, comPrivilegios, ErroLoja, lojaDoPedido, registrarLoja } from "./lojas.js";
+import { lerIdentidade } from "./identidade.js";
+import { acessoLiberado, comPrivilegios, criarLojaExtra, ErroLoja, lojaDoPedido, lojasDaConta, MAX_LOJAS, registrarLoja } from "./lojas.js";
 import { endereco, esc, html, corValida, lerAtributos, paginaDaVitrine, paginaDoProduto, RESERVADAS, urlHttps, validarCodigo, soDigitos } from "./vitrine.js";
 import { aleatorio } from "./cripto.js";
 import { ehServico, tratarServico } from "./servicos.js";
@@ -185,6 +186,21 @@ export async function tratarLoja(req, env, ctx, url, caminho) {
 
     // ---------- do lojista (token da loja)
     const loja = await lojaDoPedido(env, req);
+    if (caminho === "/loja/identidade" && req.method === "GET") return json(await lerIdentidade(url.searchParams.get("site")));
+    if (caminho === "/loja/lojas" && req.method === "GET") return json({ lojas: await lojasDaConta(env, loja), max: MAX_LOJAS });
+    if (caminho === "/loja/lojas" && req.method === "POST") {
+      exigeAcesso(loja);
+      const d = await corpoJson(req);
+      const nova = await criarLojaExtra(env, loja, { nome: d.nome, slug: d.slug });
+      return json({ ...nova, url: endereco(env, req, nova.slug) }, 201);
+    }
+    if (caminho === "/loja/lojas/atual" && req.method === "PUT") {
+      const d = await corpoJson(req);
+      const nome = String(d.nome || "").trim().slice(0, 80);
+      if (!nome) throw new ErroLoja(400, "nome_obrigatorio", "Dê um nome para a loja.");
+      await env.DB.prepare("UPDATE lojas SET nome = ? WHERE id = ?").bind(nome, loja.id).run();
+      return json({ ok: true });
+    }
     if (caminho === "/loja/eu" && req.method === "GET") {
       return json({ id: loja.id, nome: loja.nome, slug: loja.slug, plano: loja.plano, trialFim: loja.trial_fim, ativoAte: loja.ativo_ate, acesso: acessoLiberado(loja) });
     }
