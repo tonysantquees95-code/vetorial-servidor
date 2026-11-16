@@ -82,3 +82,14 @@ test("Vortex e Vindex vendidos sozinhos: liberam só o app, não a Vênus", () =
   assert.equal(acessoLiberado({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "venus_vortex" }, agora), true);
   assert.equal(acessoLiberado({ trial_fim: agora + DIA, ativo_ate: 0, pacote: "vortex" }, agora), true);
 });
+
+test("Mercado Pago: erro de conta de teste misturada com real vira explicação clara", async () => {
+  const env = mk();
+  const l = await registrarLoja(env, { nome: "Loja" });
+  const antes = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ message: "Both payer and collector must be real or test users" }), { status: 400 });
+  try {
+    const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first();
+    await assert.rejects(() => iniciarCobranca(env, loja, "mercadopago", "https://v.test"), (e) => e.codigo === "mp_teste_e_real" || /PRODUÇÃO/.test(e.message));
+  } finally { globalThis.fetch = antes; }
+});

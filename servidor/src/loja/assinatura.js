@@ -42,6 +42,8 @@ async function http(url, op) {
     // o motivo que o próprio gateway deu (as respostas de erro dele não trazem chaves): ajuda a achar o que está errado no pedido
     const causa = Array.isArray(d.cause) && d.cause[0] ? (d.cause[0].description || d.cause[0].code) : "";
     const motivo = [d.message, causa].filter((x) => typeof x === "string" && x).join(" — ").slice(0, 240);
+    // regra do Mercado Pago: token de teste só aceita pagador de teste, e token de produção só aceita pagador real
+    if (/real or test users/i.test(motivo)) throw new ErroLoja(502, "mp_teste_e_real", "O Mercado Pago recusou: quem paga e quem recebe precisam ser os dois contas reais ou os dois contas de teste. Para cobrar de verdade, o dono precisa guardar o token de PRODUÇÃO (Painel Dev › Cofre) e pagar com um e-mail diferente do da conta que recebe.");
     throw new ErroLoja(502, "gateway_erro", `O gateway respondeu ${r.status}.${motivo ? ` Motivo: ${motivo}` : ""}`);
   }
   return d;
