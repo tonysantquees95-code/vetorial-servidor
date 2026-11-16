@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Voxix · Chat para gamers (em breve)</title>
+<meta name="description" content="O Voxix é o chat para gamers da Vetorial Tech: conversas, grupos, salas de texto e de voz, com o seu Vetorial ID. Em breve.">
+<meta name="theme-color" content="#070914">
+<meta property="og:title" content="Voxix · Chat para gamers (em breve)">
+<meta property="og:description" content="O Voxix é o chat para gamers da Vetorial Tech: conversas, grupos, salas de texto e de voz, com o seu Vetorial ID. Em breve.">
+<meta property="og:image" content="/icone/voxix.png">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<header class="topo"><div class="wrap">
+  <a class="marca" href="./"><img src="logo-vetorial.png" alt="">VETORIAL TECH</a>
+  <nav><a class="ocultar" href="./">Vênus</a><a class="ocultar" href="vindex.html">Vindex</a><a class="ocultar" href="vortex.html">Vortex</a><a class="ocultar" href="velox.html">Velox · grátis</a><a class="ocultar" href="voxix.html">Voxix · em breve</a><a class="btn p" id="entrar-topo" href="conta.html">Entrar</a></nav>
+</div></header>
+<main>
+<section class="hero"><div class="wrap">
+  <div>
+    <span class="etiqueta">Em breve · na suíte Vetorial Tech</span>
+    <h1>O <em>chat dos gamers</em>, feito para quem joga.</h1>
+    <p class="sub">O Voxix junta conversas, grupos e salas de texto e de voz num app só, para Android e Windows. Você entra com o mesmo Vetorial ID dos outros apps da suíte, escolhe o seu apelido e já está no meio da turma.</p>
+    <div class="cta"><a class="btn sec" href="#funcoes">Ver o que ele vai fazer</a></div>
+    <p class="nota"><b>Ainda não está disponível para baixar.</b> Estamos nos últimos ajustes: assim que sair, ele aparece aqui e na suíte.</p>
+  </div>
+  <div class="selo-app"><img src="/icone/voxix.png" alt="Ícone do Voxix" width="260" height="260"></div>
+</div></section>
+
+<section id="funcoes"><div class="wrap">
+  <div class="titulo rev"><h2>Tudo o que o <em>Voxix</em> vai fazer</h2><p>Em breve</p></div>
+  <div class="grade">
+    <div class="cartao rev"><div class="ic">💬</div><h3>Conversas privadas ao vivo</h3><p>Fale com os amigos em tempo real, de um jogo para o outro, no celular ou no computador.</p></div>
+    <div class="cartao rev"><div class="ic">👥</div><h3>Grupos e salas de texto</h3><p>Reúna a turma do seu jogo favorito, convide por link ou código e veja quem está online.</p></div>
+    <div class="cartao rev"><div class="ic">🎙️</div><h3>Salas de voz</h3><p>Salas de voz ao vivo criadas pelos próprios usuários, para jogar conversando.</p></div>
+    <div class="cartao rev"><div class="ic">🗣️</div><h3>Ditado: a fala vira texto</h3><p>Sem áudio gravado nem vídeo: você fala e o Voxix escreve a mensagem para você.</p></div>
+    <div class="cartao rev"><div class="ic">🛡️</div><h3>Bloqueio e denúncia</h3><p>Bloqueie quem incomoda e denuncie abusos. Tudo pensado para a conversa ficar saudável.</p></div>
+    <div class="cartao rev"><div class="ic">🔒</div><h3>Histórico no seu aparelho</h3><p>As suas mensagens ficam guardadas no seu aparelho; o servidor só segura o que ainda não foi entregue.</p></div>
+    <div class="cartao rev"><div class="ic">🖼️</div><h3>Fotos e arquivos leves</h3><p>Compartilhe imagens e arquivos pequenos sem pesar a conversa.</p></div>
+    <div class="cartao rev"><div class="ic">⌨️</div><h3>Teclado do Voxix</h3><p>Use o teclado do próprio Voxix ou o do seu celular, o que for mais confortável.</p></div>
+    <div class="cartao rev"><div class="ic">🪪</div><h3>Um login para toda a suíte</h3><p>Entre com o Vetorial ID, o mesmo da Vênus, do Vindex e do Vortex.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap" style="max-width:760px">
+  <div class="titulo rev"><h2>Perguntas <em>frequentes</em></h2></div>
+  <details class="rev"><summary>Quando o Voxix sai?</summary><p>Em breve. Ainda não há data fechada: quando estiver pronto, o download aparece aqui e na página da suíte.</p></details>
+  <details class="rev"><summary>Vai ser pago?</summary><p>Ainda vamos anunciar. Quando o Voxix sair, os valores e as condições aparecem nesta página.</p></details>
+  <details class="rev"><summary>Em quais aparelhos?</summary><p>No Android e no Windows, com o mesmo Vetorial ID.</p></details>
+  <details class="rev"><summary>Como fico sabendo?</summary><p>Fique de olho nesta página e na <a href="./">página da suíte</a>: o Voxix entra por lá.</p></details>
+</div></section>
+</main>
+
+<footer><div class="wrap"><b>VETORIAL TECH</b><br><a href="./">Vênus</a> · <a href="vindex.html">Vindex</a> · <a href="vortex.html">Vortex</a> · <a href="velox.html">Velox</a> · <a href="voxix.html">Voxix</a><br><small>© <span id="ano"></span> Vetorial Tech</small></div></footer>
+
+<script src="config.js"></script>
+<script>
+  document.getElementById("ano").textContent = new Date().getFullYear();
+  document.getElementById("entrar-topo").href = VENUS.entrar("conta.html");
+</script>
+<script>
+  (() => {
+    const els = document.querySelectorAll(".rev");
+    if (!("IntersectionObserver" in window)) { els.forEach((e) => e.classList.add("v")); return; }
+    const o = new IntersectionObserver((l) => l.forEach((x) => { if (x.isIntersecting) { x.target.classList.add("v"); o.unobserve(x.target); } }), { threshold: 0.12 });
+    els.forEach((e) => o.observe(e));
+  })();
+</script>
+</body>
+</html>

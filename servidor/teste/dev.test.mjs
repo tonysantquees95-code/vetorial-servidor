@@ -414,12 +414,10 @@ test("atalhos de Voxix, Velox, Drive e Painel Dev levam ao download certo", asyn
   for (const c of ["/voxix", "/voxix/android", "/voxix/windows", "/velox", "/velox/android", "/velox/windows", "/drive", "/drive/android", "/paineldev/android", "/paineldev/windows"]) assert.equal(ehAtalho(c), true, c);
   for (const c of ["/drive/arquivos", "/voxix/perfil", "/drive/windows", "/velox/mac"]) assert.equal(ehAtalho(c), false, c);
   // o Voxix ainda não foi liberado para baixar: os atalhos voltam para a página "em breve"
-  assert.equal(responderAtalho(u, "/voxix/android").headers.get("location"), "https://v.test/voxix");
+  assert.equal(responderAtalho(u, "/voxix/android").headers.get("location"), "https://v.test/voxix.html");
+  assert.equal(responderAtalho(u, "/voxix").headers.get("location"), "https://v.test/voxix.html");
   assert.equal(responderAtalho(u, "/velox/windows").headers.get("location"), "https://v.test/atualizacao?app=velox-windows&baixar=1");
   assert.equal(responderAtalho(u, "/drive/android").headers.get("location"), "https://v.test/atualizacao?app=drive-android&baixar=1");
   assert.equal(responderAtalho(u, "/paineldev/windows").headers.get("location"), "https://v.test/atualizacao?app=paineldev-windows&baixar=1");
-  const paginaVoxix = await responderAtalho(u, "/voxix").text();
-  assert.match(paginaVoxix, /Voxix[\s\S]*Em breve/);
-  assert.doesNotMatch(paginaVoxix, /\/voxix\/(android|windows)/);
   assert.doesNotMatch(await responderAtalho(u, "/drive").text(), /windows/);
 });

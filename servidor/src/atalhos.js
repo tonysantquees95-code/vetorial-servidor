@@ -49,7 +49,7 @@ export function responderAtalho(url, caminho) {
   if (c === "/vortex/windows") return Response.redirect(`${VORTEX_BAIXAR}/VortexSetup.exe`, 302);
   if (c === "/vortex" || c === "/vortex/web") return new Response(paginaVortex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
   if (c === "/vindex") return new Response(paginaVindex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
-  if (c === "/voxix/android" || c === "/voxix/windows") return Response.redirect(`${origem}/voxix`, 302); // ainda não liberado: volta para a página "em breve"
+  if (c === "/voxix" || c === "/voxix/android" || c === "/voxix/windows") return Response.redirect(`${origem}/voxix.html`, 302); // ainda não liberado: vai para a página "em breve"
   const m = /^\/(voxix|velox|drive|paineldev)\/(android|windows)$/.exec(c);
   if (m) return Response.redirect(`${origem}/atualizacao?app=${m[1] === "drive" ? "drive" : m[1]}-${m[2]}&baixar=1`, 302);
   if (c === "/voxix" || c === "/velox" || c === "/drive") return new Response(paginaDoApp(origem, c.slice(1)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
