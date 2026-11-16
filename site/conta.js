@@ -31,6 +31,22 @@
     return j;
   }
 
+  const reais = (c) => "R$ " + (c % 100 ? (c / 100).toFixed(2).replace(".", ",") : String(c / 100));
+  /** Preços vindos do servidor (promoção de lançamento inclusa), iguais aos da página principal. */
+  function precos(l) {
+    (l && l.pacotes || []).forEach((p) => {
+      const card = document.querySelector(`#pacotes .plano[data-pacote="${p.chave}"]`);
+      const v = card && card.querySelector(".v");
+      if (!v) return;
+      v.innerHTML = "";
+      if (p.promocao && p.precoCheioCentavos) { const r = document.createElement("s"); r.style.cssText = "display:block;font-size:.45em;line-height:1.2;opacity:.6"; r.textContent = reais(p.precoCheioCentavos); v.appendChild(r); }
+      const n = document.createElement("span"); n.style.whiteSpace = "nowrap"; n.textContent = reais(p.precoCentavos);
+      const m = document.createElement("small"); m.textContent = "/mês"; n.appendChild(m); v.appendChild(n);
+    });
+    const aviso = $("promo");
+    if (aviso && l && l.promocao) { aviso.hidden = false; aviso.textContent = `🎉 Promoção de lançamento: a suíte completa por ${reais(l.promocao.precoCentavos)}/mês. Quem assinar até ${new Date(l.promocao.fim).toLocaleDateString("pt-BR")} mantém esse preço por ${l.promocao.meses} meses.`; }
+  }
+
   function estado(l) {
     const e = $("estado");
     $("liberar").hidden = !(l && l.pagamentoAguardandoLiberacao);
@@ -53,6 +69,7 @@
       $("inicial").textContent = String(u.nome || u.email || "V").trim().charAt(0).toUpperCase();
       $("novo-nome").value = u.nome || "";
       estado(c.licenca);
+      precos(c.licenca);
       document.querySelectorAll("#pacotes .plano").forEach((p) => p.classList.toggle("sel", p.dataset.pacote === escolhido));
       mostrar("l");
     } catch (e) {
