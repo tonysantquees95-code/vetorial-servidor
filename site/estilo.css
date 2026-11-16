@@ -100,3 +100,4 @@ footer a{color:var(--suave)}
 .vitrine .exemplo{font-size:11px;color:var(--suave);margin-left:auto;font-weight:500;border:1px solid var(--borda);border-radius:99px;padding:2px 10px}
 .grat-mini{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:99px;background:#8ff0b41f;border:1px solid #8ff0b466;color:var(--verde);font-size:12px;font-weight:700;vertical-align:middle}
 .marca img{border-radius:8px}
+.aviso ol{margin:10px 0 0;padding-left:22px}.aviso li{margin:4px 0}.aviso.protect{text-align:left;max-width:760px;margin:22px auto 0}

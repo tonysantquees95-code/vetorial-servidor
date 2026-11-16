@@ -7,3 +7,5 @@ window.VENUS = {
 window.VENUS.entrar = (destino) => `${window.VENUS.api}/id?voltar=${encodeURIComponent(new URL(destino || "conta.html", location.href).href)}`;
 window.VENUS.baixarAndroid = `${window.VENUS.api}/atualizacao?app=venus&baixar=1`;
 window.VENUS.baixarWindows = `${window.VENUS.api}/atualizacao?app=windows&baixar=1`;
+window.VENUS.baixarMac = `${window.VENUS.api}/atualizacao?app=mac&baixar=1`;
+window.VENUS.web = `${window.VENUS.api}/app/`;

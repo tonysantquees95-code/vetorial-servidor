@@ -14,6 +14,10 @@
   $("dl-windows").href = A.baixarWindows;
   $("dl-android2").href = A.baixarAndroid;
   $("dl-windows2").href = A.baixarWindows;
+  $("dl-mac").href = A.baixarMac;
+  $("dl-mac2").href = A.baixarMac;
+  $("dl-web").href = A.web;
+  $("dl-web2").href = A.web;
   $("dl-vindex-a").href = A.api + "/vindex/android";
   $("dl-vindex-w").href = A.api + "/vindex/windows";
   const escolhido = new URLSearchParams(location.search).get("pacote") || "";
