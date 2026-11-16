@@ -22,6 +22,12 @@ const RESERVADOS = new Set(["admin", "administrador", "voxix", "vetorial", "supo
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS" };
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS } });
 
+/** Página do link de convite (https://…/voxix/entrar/CODIGO): mostra o código para colar no Voxix. Não mostra nada da comunidade. */
+export function paginaDoConvite(codigo) {
+  const html = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Convite do Voxix</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0714;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:24px"><main style="max-width:360px"><h1 style="margin:0 0 8px">Você foi convidado para uma comunidade no Voxix</h1><p style="color:#b9aecb">Abra o Voxix, toque em <b>Comunidades › Entrar com convite</b> e cole este link ou use o código:</p><p style="font-size:34px;letter-spacing:6px;font-weight:800;margin:16px 0">${codigo}</p></main></body></html>`;
+  return new Response(html, { status: 200, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
+}
+
 export function apelidoValido(a) {
   const s = String(a || "").trim().toLowerCase();
   if (!/^[a-z0-9_]{3,20}$/.test(s)) throw new ErroLoja(400, "apelido_invalido", "O apelido tem de 3 a 20 letras minúsculas, números ou _ (sem espaço nem acento).");
@@ -128,6 +134,8 @@ export async function transcrever(env, usuario, bytes, tipo, agora = Date.now())
 export async function tratarVoxix(req, env, url, caminho) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   try {
+    const conv = /^\/voxix\/entrar\/([A-HJ-NP-Z2-9]{8})$/i.exec(caminho);
+    if (conv && req.method === "GET") return paginaDoConvite(conv[1].toUpperCase());
     // o WebSocket do navegador não manda cabeçalhos: o token vai na URL
     let pedido = req;
     if ((caminho === "/voxix/ws" || /^\/voxix\/salas\/[A-Za-z0-9]+\/ws$/.test(caminho)) && url.searchParams.get("token")) pedido = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get("token")}` } });

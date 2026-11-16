@@ -219,3 +219,13 @@ test("sala: expulsar derruba as conexões da pessoa; encerrar fecha todo mundo e
   assert.equal(a.fechada, 4002);
   assert.equal(s.dados.size, 0);
 });
+
+test("link de convite: a página mostra o código e rejeita o que não é código", async () => {
+  const { tratarVoxix } = await import("../src/voxix/rotas.js");
+  const ok = await tratarVoxix(new Request("https://x/voxix/entrar/abcd2345"), ENV(), new URL("https://x/voxix/entrar/abcd2345"), "/voxix/entrar/abcd2345");
+  assert.equal(ok.status, 200);
+  assert.match(ok.headers.get("content-type"), /text\/html/);
+  assert.match(await ok.text(), /ABCD2345/);
+  const mau = await tratarVoxix(new Request("https://x/voxix/entrar/%3Cscript%3E"), ENV(), new URL("https://x/voxix/entrar/%3Cscript%3E"), "/voxix/entrar/%3Cscript%3E");
+  assert.notEqual(mau.status, 200);
+});

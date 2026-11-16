@@ -63,7 +63,7 @@ export class SalaVoxix {
     if (!jaEstava) this.transmitir({ t: "entrou", pessoa: { apelido: pessoa.apelido, nome: pessoa.nome } }, ws);
   }
 
-  /** Uma mensagem de uma conexão: valida, guarda e manda para todos (inclusive quem mandou, que usa o idLocal como confirmação). */
+  /** Uma mensagem de uma conexão: valida, guarda e manda para os outros; quem mandou recebe a confirmação com o idLocal. */
   async receber(ws, d, agora = Date.now()) {
     const eu = ws.deserializeAttachment?.();
     if (!eu || !d || typeof d !== "object") return;
@@ -83,7 +83,7 @@ export class SalaVoxix {
     await this.state.storage.put(PREFIXO + id, mensagem);
     const guardadas = await this.state.storage.list({ prefix: PREFIXO, limit: HISTORICO_MAX + 20 });
     if (guardadas.size > HISTORICO_MAX) await this.state.storage.delete([...guardadas.keys()].slice(0, guardadas.size - HISTORICO_MAX));
-    this.transmitir({ t: "msg", mensagem, idLocal: undefined });
+    this.transmitir({ t: "msg", mensagem }, ws); // quem mandou recebe só a confirmação (abaixo)
     // quem mandou recebe a mesma mensagem com o idLocal, para trocar a "enviando…" pela definitiva
     try { ws.send(JSON.stringify({ t: "confirmada", idLocal, mensagem })); } catch { /* ok */ }
   }
