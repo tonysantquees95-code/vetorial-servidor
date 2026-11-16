@@ -40,6 +40,7 @@ import { publicarVencidos } from "./loja/publicar.js";
 import { appConhecido, escolherVersao } from "./atualizacao.js";
 
 export { CaixaVoxix } from "./voxix/caixa.js";
+export { SalaVoxix } from "./voxix/sala.js";
 
 const REPO = "tonysantquees95-code/Venus-core";
 const CABECALHOS = { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*" };

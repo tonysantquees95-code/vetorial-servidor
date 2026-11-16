@@ -7,15 +7,17 @@
 //   GET  /voxix/ws?token=                 → WebSocket: fila de mensagens e entrega ao vivo
 //   GET/POST/DELETE /voxix/bloqueios      → bloquear e desbloquear
 //   POST /voxix/denuncias {apelido, motivo, trecho?} → fila de revisão
+//   /voxix/comunidades…, /voxix/convites/…, /voxix/salas/…/ws → comunidades, salas e convites (ver comunidades.js)
 //   POST /voxix/transcrever               → ditado (áudio curto vira texto; o áudio não é guardado)
 import { ErroLoja } from "../loja/lojas.js";
 import { aleatorio } from "../loja/cripto.js";
 import { ErroId, validarSessao } from "../id/conta.js";
+import { tratarComunidades } from "./comunidades.js";
 
 export const ehRotaVoxix = (c) => c.startsWith("/voxix/");
 export const MAX_TEXTO = 2000;
 export const MAX_AUDIO = 1_000_000; // ~1 MB: ditado curto
-export const LIMITE_DIARIO = { denuncia: 20, transcricao: 60, mensagem: 3000 };
+export const LIMITE_DIARIO = { denuncia: 20, transcricao: 60, mensagem: 3000, comunidade: 10 };
 const RESERVADOS = new Set(["admin", "administrador", "voxix", "vetorial", "suporte", "moderador", "sistema", "root", "ajuda", "oficial"]);
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS" };
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS } });
@@ -128,7 +130,7 @@ export async function tratarVoxix(req, env, url, caminho) {
   try {
     // o WebSocket do navegador não manda cabeçalhos: o token vai na URL
     let pedido = req;
-    if (caminho === "/voxix/ws" && url.searchParams.get("token")) pedido = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get("token")}` } });
+    if ((caminho === "/voxix/ws" || /^\/voxix\/salas\/[A-Za-z0-9]+\/ws$/.test(caminho)) && url.searchParams.get("token")) pedido = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get("token")}` } });
     const ctx = await validarSessao(env, pedido, {});
     const u = ctx.usuario.id;
     if (caminho === "/voxix/perfil" && req.method === "GET") { const p = await perfilDe(env, u); return json(p ? { apelido: p.apelido, nome: p.nome } : { apelido: null, nomeSugerido: ctx.usuario.nome || "" }); }
@@ -153,6 +155,9 @@ export async function tratarVoxix(req, env, url, caminho) {
       if (!env.VOXIX_CAIXA) throw new ErroLoja(503, "indisponivel", "O chat ao vivo ainda não está ligado no servidor.");
       return await env.VOXIX_CAIXA.get(env.VOXIX_CAIXA.idFromName(u)).fetch(new Request("https://caixa/ws", req));
     }
+    const com = await tratarComunidades(req, env, url, caminho, u, gastar);
+    if (com instanceof Response) return com;
+    if (com) return json(com.dados, com.status || 200);
     return json({ error: "não encontrado" }, 404);
   } catch (e) {
     if (e instanceof ErroLoja || e instanceof ErroId) return json({ error: e.message, codigo: e.codigo, ...(e.dados || {}) }, e.status);

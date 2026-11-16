@@ -142,7 +142,7 @@ jobs:
       - name: Chat ao vivo do Voxix (Durable Object, opcional)
         run: |
           cp wrangler.toml wrangler.sem-voxix.toml
-          printf '\n[[durable_objects.bindings]]\nname = "VOXIX_CAIXA"\nclass_name = "CaixaVoxix"\n\n[[migrations]]\ntag = "voxix-1"\nnew_sqlite_classes = ["CaixaVoxix"]\n' >> wrangler.toml
+          printf '\n[[durable_objects.bindings]]\nname = "VOXIX_CAIXA"\nclass_name = "CaixaVoxix"\n\n[[durable_objects.bindings]]\nname = "VOXIX_SALA"\nclass_name = "SalaVoxix"\n\n[[migrations]]\ntag = "voxix-1"\nnew_sqlite_classes = ["CaixaVoxix"]\n\n[[migrations]]\ntag = "voxix-2"\nnew_sqlite_classes = ["SalaVoxix"]\n' >> wrangler.toml
           if $WRANGLER deploy --dry-run >/dev/null 2>&1; then echo "Voxix ao vivo: ligado"; else echo "::warning::Configuração do Durable Object recusada; Voxix ao vivo desligado."; cp wrangler.sem-voxix.toml wrangler.toml; fi
           rm -f wrangler.sem-voxix.toml
       - name: Ditado do Voxix (Workers AI, opcional)
