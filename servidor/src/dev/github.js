@@ -187,10 +187,17 @@ export function estadoGeral(builds) {
   return "ok";
 }
 
+/** Último motivo de falha ao ler as versões (releases) de cada repositório. */
+export const falhaDasVersoes = new Map();
+
 export async function listaDeVersoes(env, repo) {
   return comCache(`releases:${repo}`, 300, async () => {
-    const r = await gh(env, `/repos/${repo}/releases?per_page=100`);
-    return r.ok ? await r.json() : null;
+    let r;
+    try { r = await gh(env, `/repos/${repo}/releases?per_page=100`); } catch (e) { falhaDasVersoes.set(repo, String((e && e.message) || e).slice(0, 80)); return undefined; }
+    if (r.ok) { falhaDasVersoes.delete(repo); return await r.json(); }
+    const msg = String(((await r.json().catch(() => ({}))) || {}).message || "").slice(0, 110);
+    falhaDasVersoes.set(repo, `o GitHub respondeu ${r.status}: ${msg}`);
+    return undefined; // falha não vai para o cache
   });
 }
 

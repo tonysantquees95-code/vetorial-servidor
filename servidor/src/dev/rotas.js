@@ -4,7 +4,7 @@ import { verificar } from "../id/jwt.js";
 import { ErroLoja } from "../loja/lojas.js";
 import { TABELA } from "../ia/roteador.js";
 import { criarAdmin, emailAdmin, entrarAdmin, exigirAdmin } from "./admin.js";
-import { PROJETOS, REPO_VALIDO, apksDoProjeto, buildsDoRepo, falhaDosBuilds, estadoGeral, linkDoApk, progressoDoBuild, listaDeVersoes, metricasDoRepo } from "./github.js";
+import { PROJETOS, REPO_VALIDO, apksDoProjeto, buildsDoRepo, falhaDosBuilds, falhaDasVersoes, estadoGeral, linkDoApk, progressoDoBuild, listaDeVersoes, metricasDoRepo } from "./github.js";
 import { bi, esquecerProvedores, listarTrafego } from "./uso.js";
 import * as cofre from "./cofre.js";
 import { lerSegredo } from "./cofre.js";
@@ -54,12 +54,15 @@ async function painel(env) {
     // o GitHub às vezes demora ou recusa na primeira chamada: nenhuma falha dele derruba o painel inteiro
     try {
       const [metricas, builds, versoes] = await Promise.all([metricasDoRepo(env, repo), buildsDoRepo(env, repo), listaDeVersoes(env, repo)]);
-      const apks = apksDoProjeto(p, versoes).map(({ _id, ...a }) => ({ ...a, baixar: a.versao ? `/dev/apk?app=${a.app}` : null }));
+      const apks = apksDoProjeto(p, versoes || []).map(({ _id, ...a }) => ({ ...a, baixar: a.versao ? `/dev/apk?app=${a.app}` : null }));
       const compilando = await progressoDoBuild(env, repo, builds);
-      return { ...base, conectado: true, ...(builds ? {} : { aviso: `Não consegui ler os builds do GitHub (${falhaDosBuilds.get(repo) || "sem resposta"}).` }), metricas, builds: builds || [], estadoBuild: estadoGeral(builds), apks, compilando };
+      const avisos = [];
+      if (!versoes) avisos.push(`Não consegui ler as versões publicadas (${falhaDasVersoes.get(repo) || "sem resposta"}).`);
+      if (!builds) avisos.push(`Não consegui ler os builds do GitHub (${falhaDosBuilds.get(repo) || "sem resposta"}).`);
+      return { ...base, conectado: true, ...(avisos.length ? { aviso: avisos.join(" ") } : {}), metricas, builds: builds || [], estadoBuild: estadoGeral(builds), apks, compilando };
     } catch (e) {
       console.error("dev painel", p.id, e && e.message ? e.message : e);
-      return { ...base, conectado: true, aviso: "Não consegui ler o GitHub agora. Toque em atualizar.", metricas: null, builds: [], estadoBuild: "desconhecido", apks: [] };
+      return { ...base, conectado: true, aviso: `Não consegui ler o GitHub agora (${String((e && e.message) || e).slice(0, 100)}). Toque em atualizar.`, metricas: null, builds: [], estadoBuild: "desconhecido", apks: [] };
     }
   }));
   return { gerado: Date.now(), admin: emailAdmin(env), projetos };
