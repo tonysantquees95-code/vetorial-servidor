@@ -436,3 +436,21 @@ test("painel: ?rapido=1 não chama o GitHub e ?projeto=id traz só aquele projet
     assert.deepEqual(um.projetos.map((p) => p.id), ["vyntem"]);
   } finally { globalThis.fetch = antes; }
 });
+
+test("usuários: por aplicativo, dispositivos e uso agora, e pagante ou só grátis", async () => {
+  const env = ENV();
+  const a = await admin(env);
+  await cadastrar(env, { email: "v@x.com", senha: "senha-forte-1", nome: "Vera", dispositivo: disp(5), app: "vyntem" });
+  await cadastrar(env, { email: "w@x.com", senha: "senha-forte-1", nome: "Wagner", dispositivo: disp(6), app: "velox" });
+  const r = await chamar(env, a.token, "/dev/usuarios");
+  assert.equal(r.status, 200);
+  const vera = r.d.usuarios.find((u) => u.email === "v@x.com");
+  assert.equal(vera.nome, "Vera");
+  assert.deepEqual([vera.apps.vyntem.dispositivos, vera.apps.vyntem.ativas], [1, 1]);
+  assert.equal(vera.apps.velox, undefined);
+  assert.ok(["teste", "gratis"].includes(vera.situacao) && vera.pagante === false);
+  assert.ok(r.d.total >= 3 && r.d.usandoAgora >= 2 && r.d.apps.includes("voxix"));
+  // só o dono do painel vê
+  const l = await cadastrar(env, { email: "z@x.com", senha: "senha-forte-1", dispositivo: disp(7) });
+  assert.notEqual((await chamar(env, l.token, "/dev/usuarios")).status, 200);
+});

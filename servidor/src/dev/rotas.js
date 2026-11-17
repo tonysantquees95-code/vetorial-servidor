@@ -175,6 +175,35 @@ async function dispositivos(env, agora = Date.now()) {
   };
 }
 
+// ------------------------------------------------------------------ usuários (quem usa os produtos, por aplicativo)
+const APPS_DO_PAINEL = ["venus", "vindex", "vortex", "vyntem", "velox", "drive", "voxix"];
+async function usuarios(env, agora = Date.now()) {
+  const q = async (sql, ...a) => (await env.DB.prepare(sql).bind(...a).all()).results;
+  const [contas, devs, sess] = await Promise.all([
+    q("SELECT u.id, u.email, u.nome, u.telefone, u.criado, u.rec_pin_hash AS rec, l.plano, l.pacote, l.ativo_ate AS ativoAte, l.trial_fim AS trialFim FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja ORDER BY u.criado DESC LIMIT 500"),
+    q("SELECT usuario, app, COUNT(*) AS n, MAX(ultimo) AS ultimo FROM dispositivos GROUP BY usuario, app"),
+    q("SELECT s.id AS sessao, s.usuario, s.app, d.nome, d.plataforma, s.ultimo_ping AS ultimoPing FROM sessoes s JOIN dispositivos d ON d.id = s.dispositivo WHERE s.encerrada = 0 AND s.ultimo_ping > ? ORDER BY s.ultimo_ping DESC LIMIT 1000", agora - TTL_ATIVA_MS),
+  ]);
+  const lista = contas.map((c) => {
+    const situacao = c.plano === "dono" ? "dono" : agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
+    const apps = {};
+    for (const d of devs.filter((x) => x.usuario === c.id)) apps[d.app] = { dispositivos: d.n, ativas: 0, ultimo: d.ultimo };
+    for (const s of sess.filter((x) => x.usuario === c.id)) (apps[s.app] ||= { dispositivos: 0, ativas: 0, ultimo: 0 }).ativas++;
+    return {
+      id: c.id, email: c.email, nome: c.nome, telefone: c.telefone, criado: c.criado, recuperacao: !!c.rec,
+      situacao, pagante: situacao === "pagante" || situacao === "dono", pacote: situacao === "pagante" ? c.pacote : "", ativoAte: c.ativoAte || 0,
+      apps, sessoes: sess.filter((x) => x.usuario === c.id).map(({ usuario, ...resto }) => resto),
+    };
+  });
+  const por = (f) => lista.filter(f).length;
+  return {
+    agora, apps: APPS_DO_PAINEL, maxDispositivos: MAX_DISPOSITIVOS, maxAtivas: MAX_ATIVAS,
+    total: lista.length, pagantes: por((u) => u.pagante), emTeste: por((u) => u.situacao === "teste"), soGratis: por((u) => u.situacao === "gratis"),
+    usandoAgora: por((u) => u.sessoes.length > 0), semRecuperacao: por((u) => !u.recuperacao),
+    usuarios: lista,
+  };
+}
+
 // ------------------------------------------------------------------ cache vetorial
 async function estadoDoCache(env, agora = Date.now()) {
   const r = await env.DB.prepare("SELECT COALESCE(SUM(cache), 0) AS acertos, COALESCE(SUM(requisicoes), 0) AS chamadas FROM dev_uso_ia WHERE hora > ?").bind(Math.floor(agora / 3_600_000) - 24).first();
@@ -230,6 +259,7 @@ export async function tratarDev(req, env, url, caminho) {
     if (caminho === "/dev/bi" && req.method === "GET") return json(await bi(env, Number(url.searchParams.get("dias")) || 30, agora));
     if (caminho === "/dev/ferramentas" && req.method === "GET") return json(await ferramentas(env, agora));
     if (caminho === "/dev/trafego" && req.method === "GET") return json(await listarTrafego(env, { desde: Number(url.searchParams.get("desde")) || 0, limite: Number(url.searchParams.get("limite")) || 60 }, agora));
+    if (caminho === "/dev/usuarios" && req.method === "GET") return json(await usuarios(env, agora));
     if (caminho === "/dev/dispositivos" && req.method === "GET") return json(await dispositivos(env, agora));
     if (caminho === "/dev/apk" && req.method === "GET") return json(await apk(env, url.searchParams.get("app") || ""));
     if (caminho === "/dev/cache" && req.method === "GET") return json(await estadoDoCache(env, agora));
