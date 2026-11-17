@@ -5,6 +5,7 @@
 //   POST /ia/v1/chat/completions   (mesmo corpo da OpenAI: messages, tools, response_format…)
 import { validarSessao } from "../id/conta.js";
 import { contaComAcesso, MSG_SEM_ACESSO } from "../id/acesso.js";
+import { chavesGemini, trocaDeChave } from "./chaves.js";
 
 const GROQ = "https://api.groq.com/openai/v1";
 export const MODELOS = [
@@ -76,9 +77,10 @@ export async function tratarProxyIA(req, env, ctx, caminho, { validar = validarS
 // Gemini da Vênus: o app manda o pedido do Gemini como sempre, mas para cá, com o token do Vetorial ID;
 // a chave do Google fica só no servidor. Serve PDF, áudio, foto, busca em notas e memória (embeddings).
 async function tratarGemini(req, env, caminho) {
-  if (!env.GEMINI_API_KEY) return erro(503, "O Gemini do servidor não está configurado.");
+  const chaves = chavesGemini(env);
+  if (!chaves.length) return erro(503, "O Gemini do servidor não está configurado.");
   if (req.method === "GET" && caminho === "models") {
-    const r = await fetch(`${GEMINI}/models?pageSize=200`, { headers: { "x-goog-api-key": env.GEMINI_API_KEY } }).catch(() => null);
+    const r = await fetch(`${GEMINI}/models?pageSize=200`, { headers: { "x-goog-api-key": chaves[0] } }).catch(() => null);
     if (!r) return erro(502, "Não consegui falar com o Gemini agora.");
     return new Response(r.body, { status: r.status, headers: { "content-type": r.headers.get("content-type") || "application/json", "cache-control": "no-store" } });
   }
@@ -87,10 +89,15 @@ async function tratarGemini(req, env, caminho) {
   const bruto = await req.arrayBuffer();
   if (bruto.byteLength > MAX_CORPO_GEMINI) return erro(413, "Arquivo grande demais.");
   let r;
-  try {
-    r = await fetch(`${GEMINI}/${caminho}`, { method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" }, body: bruto });
-  } catch {
-    return erro(502, "Não consegui falar com o Gemini agora.");
+  for (const chave of chaves) {
+    try {
+      r = await fetch(`${GEMINI}/${caminho}`, { method: "POST", headers: { "x-goog-api-key": chave, "content-type": "application/json" }, body: bruto });
+    } catch {
+      r = undefined;
+      continue;
+    }
+    if (!trocaDeChave(r.status)) break; // ok ou erro do pedido: não adianta trocar de chave
   }
+  if (!r) return erro(502, "Não consegui falar com o Gemini agora.");
   return new Response(r.body, { status: r.status, headers: { "content-type": r.headers.get("content-type") || "application/json", "cache-control": "no-store" } });
 }

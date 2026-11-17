@@ -10,6 +10,8 @@
  *
  * Segredos (wrangler secret): GROQ_API_KEY, TAVILY_API_KEY, GEMINI_API_KEY. Nada disso vai para o app.
  */
+import { chavesGemini, trocaDeChave } from "./ia/chaves.js";
+
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 // mesma ordem de preferência do app (SegundaIA); os dois aceitam Tool Calling
 const GROQ_MODELOS = ["openai/gpt-oss-120b", "llama-3.3-70b-versatile"];
@@ -172,7 +174,8 @@ async function perguntarGroq(mensagens, env) {
 
 // ------------------------------------------------------------------ Gemini (reserva)
 async function perguntarGemini(mensagens, env) {
-  if (!env.GEMINI_API_KEY) throw new ErroDoProvedor("gemini", 500, "GEMINI_API_KEY ausente");
+  const chaves = chavesGemini(env);
+  if (!chaves.length) throw new ErroDoProvedor("gemini", 500, "GEMINI_API_KEY ausente");
   const sistemaExtra = mensagens.filter((m) => m.role === "system").map((m) => m.content).join("\n");
   const contents = mensagens
     .filter((m) => m.role !== "system")
@@ -187,11 +190,16 @@ async function perguntarGemini(mensagens, env) {
   let ultimo;
   for (const modelo of GEMINI_MODELOS) {
     try {
-      const r = await buscar(geminiUrl(modelo), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: corpo,
-      });
+      let r;
+      for (const chave of chaves) {
+        r = await buscar(geminiUrl(modelo), {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": chave },
+          body: corpo,
+        }).catch(() => null);
+        if (r && !trocaDeChave(r.status)) break;
+      }
+      if (!r) throw new ErroDoProvedor("gemini", 502, "sem resposta");
       if (!r.ok) throw new ErroDoProvedor("gemini", r.status, await r.text());
       const d = await r.json();
       const cand = d.candidates && d.candidates[0];

@@ -1,6 +1,7 @@
 // Chamadas aos provedores. As chaves vêm de `env` (segredos do Worker) e nunca saem daqui.
 import { ErroHttp } from "./roteador.js";
 import { lerSegredo } from "../dev/cofre.js";
+import { chavesGemini } from "./chaves.js";
 
 const TEMPO_PADRAO = 12_000; // conversa normal responde em 1-3 s; passou disso, vai logo para o provedor de reserva
 const TEMPO_RACIOCINIO = 110_000;
@@ -92,7 +93,8 @@ export async function deepseek(env, p) {
 }
 
 export async function gemini(env, p) {
-  if (!env.GEMINI_API_KEY) throw new ErroProvedor("gemini", 0, true, "sem_chave");
+  const chaves = chavesGemini(env);
+  if (!chaves.length) throw new ErroProvedor("gemini", 0, true, "sem_chave");
   const contents = p.mensagens.map((m, i) => {
     const parts = [{ text: m.texto }];
     if (i === p.mensagens.length - 1) {
@@ -109,13 +111,24 @@ export async function gemini(env, p) {
   let ultimo;
   for (const modelo of modelos) {
     try {
-      const dados = await postar(
-        "gemini",
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`,
-        { "x-goog-api-key": env.GEMINI_API_KEY }, // chave em cabeçalho: não aparece em URL/log
-        corpo,
-        20_000
-      );
+      let dados, falha;
+      for (const chave of chaves) {
+        try {
+          dados = await postar(
+            "gemini",
+            `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`,
+            { "x-goog-api-key": chave }, // chave em cabeçalho: não aparece em URL/log
+            corpo,
+            20_000
+          );
+          falha = undefined;
+          break;
+        } catch (e) {
+          falha = e;
+          if (!(e instanceof ErroProvedor) || !e.recuperavel) break; // erro do pedido: outra chave não resolve
+        }
+      }
+      if (falha) throw falha;
       const texto = (dados?.candidates?.[0]?.content?.parts ?? []).map((x) => x.text ?? "").join("").trim();
       if (!texto) throw new ErroProvedor("gemini", 502, true, dados?.promptFeedback?.blockReason ? "bloqueado" : "resposta_vazia");
       return { texto, uso: dados.usageMetadata ?? null, modelo };
