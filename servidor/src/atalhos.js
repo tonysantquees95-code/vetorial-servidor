@@ -6,7 +6,7 @@ export const VORTEX_BAIXAR = "https://github.com/tonysantquees95-code/Vortex/rel
 export const VINDEX_BAIXAR = "https://github.com/tonysantquees95-code/Vindex-/releases/latest/download";
 
 export function ehAtalho(caminho) {
-  return /^\/(venus|vindex|vortex)(\/(android|windows|web))?$|^\/venus\/mac$|^\/paineldev(\/(android|windows))?$|^\/(voxix|velox)(\/(android|windows))?$|^\/drive(\/android)?$/i.test(caminho.toLowerCase());
+  return /^\/(venus|vindex|vortex)(\/(android|windows|web))?$|^\/venus\/mac$|^\/paineldev(\/(android|windows))?$|^\/(voxix|velox|vyntem)(\/(android|windows))?$|^\/drive(\/android)?$/i.test(caminho.toLowerCase());
 }
 
 const pagina = (origem) => `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vênus · Vetorial Tech</title>
@@ -30,6 +30,7 @@ const paginaVindex = (origem) => pagina(origem).replace("<h1>Vênus</h1><p>Assis
 const APPS_COM_PAGINA = {
   voxix: { nome: "Voxix", frase: "Gaming chat da Vetorial Tech. Em breve: o download ainda não está liberado.", cor: "#ef2b3d", botoes: [] },
   velox: { nome: "Velox", frase: "Busca e central gamer. Baixe o app:", cor: "#19e3ff", botoes: [["android", "Baixar para Android"], ["windows", "Baixar para Windows"]] },
+  vyntem: { nome: "Vyntem", frase: "Finanças com inteligência artificial. Baixe o app:", cor: "#22E3C4", botoes: [["android", "Baixar para Android"], ["windows", "Baixar para Windows"]] },
   drive: { nome: "Vetorial Drive", frase: "Seus arquivos na nuvem da Vetorial Tech. Baixe o app:", cor: "#7c3aed", botoes: [["android", "Baixar para Android"]] },
 };
 const paginaDoApp = (origem, id) => {
@@ -50,9 +51,9 @@ export function responderAtalho(url, caminho) {
   if (c === "/vortex" || c === "/vortex/web") return new Response(paginaVortex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
   if (c === "/vindex") return new Response(paginaVindex(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
   if (c === "/voxix" || c === "/voxix/android" || c === "/voxix/windows") return Response.redirect(`${origem}/voxix.html`, 302); // ainda não liberado: vai para a página "em breve"
-  const m = /^\/(voxix|velox|drive|paineldev)\/(android|windows)$/.exec(c);
+  const m = /^\/(voxix|velox|vyntem|drive|paineldev)\/(android|windows)$/.exec(c);
   if (m) return Response.redirect(`${origem}/atualizacao?app=${m[1] === "drive" ? "drive" : m[1]}-${m[2]}&baixar=1`, 302);
-  if (c === "/voxix" || c === "/velox" || c === "/drive") return new Response(paginaDoApp(origem, c.slice(1)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
+  if (c === "/voxix" || c === "/velox" || c === "/vyntem" || c === "/drive") return new Response(paginaDoApp(origem, c.slice(1)), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
   if (c === "/venus/web") return Response.redirect(`${origem}/app/`, 302);
   if (c === "/paineldev") return Response.redirect(PAINEL_DEV, 302);
   if (c === "/venus") return new Response(pagina(origem), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });

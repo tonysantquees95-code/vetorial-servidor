@@ -6,6 +6,7 @@ export const REPO_VORTEX = "tonysantquees95-code/Vortex";
 export const REPO_VELOX = "tonysantquees95-code/velox-gaming-search";
 export const REPO_DRIVE = "tonysantquees95-code/vetorial-drive";
 export const REPO_VOXIX = "tonysantquees95-code/voxix";
+export const REPO_VYNTEM = "tonysantquees95-code/Vyntem";
 export const REPO_DEV_CENTER = "tonysantquees95-code/vetorial-dev-center";
 
 /** Projetos do ecossistema. Vindex e Vortex ganham repositório pelo painel (dev_config "repo:<id>") ou pela variável do Worker. */
@@ -45,6 +46,10 @@ export const PROJETOS = [
   { id: "voxix", nome: "Voxix · Chat para gamers", repo: REPO_VOXIX, descricao: "Chat para gamers: conversas privadas ao vivo com apelido, bloqueio, denúncia e ditado por microfone (Android e Windows).", apks: [
       { app: "voxix-android", rotulo: "Voxix (Android)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Voxix\.apk$/i.test(n) },
       { app: "voxix-windows", rotulo: "Voxix (Windows)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VoxixSetup\.exe$/i.test(n) },
+    ] },
+  { id: "vyntem", nome: "Vyntem · Finanças com IA", repo: REPO_VYNTEM, descricao: "Controle de gastos com inteligência artificial: lança por frase ou foto da nota, contas, cartões, calendário e gráficos (Android e Windows).", apks: [
+      { app: "vyntem-android", rotulo: "Vyntem (Android)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Vyntem\.apk$/i.test(n) },
+      { app: "vyntem-windows", rotulo: "Vyntem (Windows)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VyntemSetup\.exe$/i.test(n) },
     ] },
 ];
 
