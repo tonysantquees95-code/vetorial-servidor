@@ -1,9 +1,11 @@
-// Voxix (chat para gamers) — rotas do servidor. Login = Vetorial ID. Aqui só moram perfis (apelido), bloqueios, denúncias e a
-// entrega das mensagens; o histórico fica no aparelho de cada pessoa.
+// Voxix (chat para gamers) — rotas do servidor. Login = Vetorial ID. Aqui moram perfis (apelido), bloqueios, denúncias, a
+// entrega ao vivo e o histórico das conversas (guardado no banco, igual em todos os aparelhos da conta).
 //   GET  /voxix/perfil                    → { apelido, nome } (ou { apelido: null })
 //   PUT  /voxix/perfil {apelido, nome}    → cria o perfil (o apelido não muda depois)
 //   GET  /voxix/buscar?apelido=           → { apelido, nome } da pessoa (só busca exata, nada de lista)
 //   POST /voxix/mensagens {para, corpo, idLocal} → entrega na caixa de quem recebe
+//   GET  /voxix/historico?desde=&limite=  → mensagens da conta (enviadas e recebidas) depois de "desde"
+//   DELETE /voxix/conversas/<apelido>     → apaga a conversa só para quem pediu
 //   GET  /voxix/ws?token=                 → WebSocket: fila de mensagens e entrega ao vivo
 //   GET/POST/DELETE /voxix/bloqueios      → bloquear e desbloquear
 //   POST /voxix/denuncias {apelido, motivo, trecho?} → fila de revisão
@@ -79,6 +81,8 @@ export async function enviar(env, usuario, d, agora = Date.now()) {
   await gastar(env, usuario, "mensagem", agora);
   const id = agora.toString(36).padStart(9, "0") + aleatorio(5);
   const bloqueado = await env.DB.prepare("SELECT 1 AS x FROM voxix_bloqueios WHERE usuario = ? AND bloqueado = ?").bind(alvo.usuario, usuario).first();
+  // o histórico fica no banco; a mensagem de quem foi bloqueado fica só para quem escreveu (entregue = 0)
+  await env.DB.prepare("INSERT INTO voxix_mensagens (id, de, para, corpo, tipo, criado, entregue) VALUES (?, ?, ?, ?, 'texto', ?, ?)").bind(id, usuario, alvo.usuario, texto, agora, bloqueado ? 0 : 1).run();
   // quem foi bloqueado não descobre: a mensagem "sai", mas não chega
   if (!bloqueado) {
     const caixa = env.VOXIX_CAIXA;
@@ -88,6 +92,34 @@ export async function enviar(env, usuario, d, agora = Date.now()) {
     if (!resp.ok) throw new ErroLoja(429, resp.codigo || "caixa_cheia", "A caixa dessa pessoa está cheia. Tente mais tarde.");
   }
   return { ok: true, id, criado: agora, idLocal: typeof d.idLocal === "string" ? d.idLocal.slice(0, 40) : undefined };
+}
+
+export const HISTORICO_LOTE = 300;
+
+/** Mensagens da conta (que escrevi e que recebi) depois de "desde", da mais antiga para a mais nova. `mais` = ainda há outras. */
+export async function historico(env, usuario, { desde = 0, limite = HISTORICO_LOTE } = {}) {
+  const de = Math.max(0, Number(desde) || 0);
+  const n = Math.min(HISTORICO_LOTE, Math.max(1, Number(limite) || HISTORICO_LOTE));
+  const { results } = await env.DB.prepare(
+    `SELECT m.id, m.corpo, m.tipo, m.criado, m.de = ?1 AS minha,
+            o.apelido AS apelido, o.nome AS nome
+       FROM voxix_mensagens m
+       JOIN voxix_perfis o ON o.usuario = CASE WHEN m.de = ?1 THEN m.para ELSE m.de END
+       LEFT JOIN voxix_limpezas l ON l.usuario = ?1 AND l.outro = o.usuario
+      WHERE (m.de = ?1 OR (m.para = ?1 AND m.entregue = 1))
+        AND m.criado > ?2 AND (l.ate IS NULL OR m.criado > l.ate)
+      ORDER BY m.criado ASC, m.id ASC LIMIT ?3`
+  ).bind(usuario, de, n + 1).all();
+  const mais = results.length > n;
+  return { mensagens: results.slice(0, n).map((r) => ({ id: r.id, minha: r.minha === 1, apelido: r.apelido, nome: r.nome, corpo: r.corpo, tipo: r.tipo, criado: r.criado })), mais };
+}
+
+/** "Apagar conversa": some só para quem pediu (o outro lado continua vendo). */
+export async function limparConversa(env, usuario, apelido, agora = Date.now()) {
+  const alvo = await perfilPorApelido(env, apelidoValido(apelido));
+  if (!alvo) throw new ErroLoja(404, "pessoa_inexistente", "Não achei ninguém com esse apelido.");
+  await env.DB.prepare("INSERT INTO voxix_limpezas (usuario, outro, ate) VALUES (?, ?, ?) ON CONFLICT(usuario, outro) DO UPDATE SET ate = excluded.ate").bind(usuario, alvo.usuario, agora).run();
+  return { ok: true };
 }
 
 export async function bloquear(env, usuario, apelido, agora = Date.now()) {
@@ -149,6 +181,9 @@ export async function tratarVoxix(req, env, url, caminho) {
       return json({ apelido: a.apelido, nome: a.nome });
     }
     if (caminho === "/voxix/mensagens" && req.method === "POST") return json(await enviar(env, u, await corpo(req)), 201);
+    if (caminho === "/voxix/historico" && req.method === "GET") return json(await historico(env, u, { desde: url.searchParams.get("desde"), limite: url.searchParams.get("limite") }));
+    const lim = /^\/voxix\/conversas\/([A-Za-z0-9_]{3,20})$/.exec(caminho);
+    if (lim && req.method === "DELETE") return json(await limparConversa(env, u, lim[1]));
     if (caminho === "/voxix/bloqueios" && req.method === "GET") return json(await listarBloqueios(env, u));
     if (caminho === "/voxix/bloqueios" && req.method === "POST") return json(await bloquear(env, u, (await corpo(req)).apelido));
     const m = /^\/voxix\/bloqueios\/([A-Za-z0-9_]{3,20})$/.exec(caminho);

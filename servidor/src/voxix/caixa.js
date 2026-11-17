@@ -1,5 +1,5 @@
 // Caixa de entrada de cada pessoa no Voxix (Durable Object, uma por usuário).
-// O servidor NÃO guarda histórico: a mensagem espera aqui só até o aparelho confirmar (ack) e então é apagada.
+// A fila daqui é só a entrega ao vivo: espera até o aparelho confirmar (ack) e então é apagada. O histórico das conversas fica no D1 (voxix_mensagens).
 // Com o app aberto, a entrega é na hora pelo WebSocket; fechado, a fila espera até VALIDADE_MS.
 export const MAX_FILA = 500;
 export const VALIDADE_MS = 7 * 86_400_000;

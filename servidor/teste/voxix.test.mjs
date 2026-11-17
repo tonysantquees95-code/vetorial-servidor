@@ -152,3 +152,40 @@ test("rotas: exigem login, e o perfil/busca/mensagem funcionam pela API", async 
   assert.equal((await chamar(c.token, "GET", "/voxix/ws")).status, 409); // sem perfil não abre o chat ao vivo
   assert.equal((await chamar(b.token, "GET", "/voxix/ws")).status, 426); // com perfil mas sem pedido de WebSocket, a caixa recusa
 });
+
+test("histórico no servidor: igual nos dois lados, bloqueio e apagar só para quem pediu", async () => {
+  const { historico, limparConversa } = await import("../src/voxix/rotas.js");
+  const env = ENV();
+  const ana = await pessoa(env, "ana@h.com", "ana");
+  const beto = await pessoa(env, "beto@h.com", "beto");
+  const m1 = await enviar(env, ana.id, { para: "beto", corpo: "oi beto" }, T0 + 1);
+  await enviar(env, beto.id, { para: "ana", corpo: "oi ana" }, T0 + 2);
+  const deAna = await historico(env, ana.id);
+  assert.deepEqual(deAna.mensagens.map((m) => [m.apelido, m.minha, m.corpo]), [["beto", true, "oi beto"], ["beto", false, "oi ana"]]);
+  assert.equal(deAna.mensagens[0].id, m1.id); // o id do histórico é o mesmo que a fila entrega: não duplica
+  const deBeto = await historico(env, beto.id, { desde: T0 + 1 });
+  assert.deepEqual(deBeto.mensagens.map((m) => m.corpo), ["oi ana"]);
+  // apagar a conversa só some para quem apagou
+  await limparConversa(env, ana.id, "beto", T0 + 3);
+  assert.equal((await historico(env, ana.id)).mensagens.length, 0);
+  assert.equal((await historico(env, beto.id)).mensagens.length, 2);
+  await enviar(env, beto.id, { para: "ana", corpo: "voltei" }, T0 + 4);
+  assert.deepEqual((await historico(env, ana.id)).mensagens.map((m) => m.corpo), ["voltei"]);
+  // quem foi bloqueado vê a própria mensagem, mas ela não aparece para quem bloqueou
+  await bloquear(env, beto.id, "ana");
+  await enviar(env, ana.id, { para: "beto", corpo: "me responde" }, T0 + 5);
+  assert.ok((await historico(env, ana.id)).mensagens.some((m) => m.corpo === "me responde"));
+  assert.ok(!(await historico(env, beto.id)).mensagens.some((m) => m.corpo === "me responde"));
+});
+
+test("histórico em lotes", async () => {
+  const { historico } = await import("../src/voxix/rotas.js");
+  const env = ENV();
+  const a = await pessoa(env, "a@h.com", "alfa");
+  await pessoa(env, "b@h.com", "bravo");
+  for (let i = 0; i < 5; i++) await enviar(env, a.id, { para: "bravo", corpo: `m${i}` }, T0 + 10 + i);
+  const l1 = await historico(env, a.id, { limite: 3 });
+  assert.equal(l1.mensagens.length, 3); assert.equal(l1.mais, true);
+  const l2 = await historico(env, a.id, { desde: l1.mensagens.at(-1).criado, limite: 3 });
+  assert.deepEqual(l2.mensagens.map((m) => m.corpo), ["m3", "m4"]); assert.equal(l2.mais, false);
+});
