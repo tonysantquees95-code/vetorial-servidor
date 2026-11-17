@@ -41,16 +41,19 @@ export async function repoDoProjeto(env, projeto, cfg) {
 // ------------------------------------------------------------------ projetos
 export const progressoDasFases = (fases) => (fases.length ? Math.round(fases.reduce((s, f) => s + f.progresso, 0) / fases.length) : 100);
 
-async function painel(env) {
+// O Cloudflare limita as consultas externas de cada chamada do Worker: por isso o app pede a lista rápida (sem GitHub)
+// e depois cada projeto numa chamada própria (?projeto=id). Sem parâmetro, devolve todos de uma vez (versões antigas do app).
+async function painel(env, { projeto, rapido } = {}) {
   const cfg = await configuracoes(env);
   const { results: todasFases } = await env.DB.prepare("SELECT id, projeto, titulo, progresso, status, ordem FROM dev_fases ORDER BY projeto, ordem, id").all();
   const comToken = !!env.GITHUB_TOKEN;
-  const projetos = await Promise.all(PROJETOS.map(async (p) => {
+  const projetos = await Promise.all(PROJETOS.filter((p) => !projeto || p.id === projeto).map(async (p) => {
     const repo = await repoDoProjeto(env, p, cfg);
     const fases = todasFases.filter((f) => f.projeto === p.id);
     const base = { id: p.id, nome: p.nome, descricao: p.descricao, repo: repo || null, urlRepo: repo ? `https://github.com/${repo}` : null, fases, progresso: progressoDasFases(fases), fasesConcluidas: fases.filter((f) => f.status === "concluida").length };
     if (!repo) return { ...base, conectado: false, metricas: null, builds: [], estadoBuild: "desconhecido", apks: [] };
     if (!comToken) return { ...base, conectado: false, aviso: "O Worker está sem o token de leitura do GitHub (VENUS_GITHUB_LEITURA).", metricas: null, builds: [], estadoBuild: "desconhecido", apks: [] };
+    if (rapido) return { ...base, conectado: true, metricas: null, builds: [], estadoBuild: "desconhecido", apks: [] };
     // o GitHub às vezes demora ou recusa na primeira chamada: nenhuma falha dele derruba o painel inteiro
     try {
       const [metricas, builds, versoes] = await Promise.all([metricasDoRepo(env, repo), buildsDoRepo(env, repo), listaDeVersoes(env, repo)]);
@@ -223,7 +226,7 @@ export async function tratarDev(req, env, url, caminho) {
     const ctx = await exigirAdmin(env, req, agora);
     if (caminho === "/dev/eu" && req.method === "GET") return json({ email: ctx.usuario.email, nome: ctx.usuario.nome, papel: "superadmin", sessao: ctx.sessao });
     if (caminho === "/dev/sair" && req.method === "POST") { await encerrarSessao(env, ctx.usuario.id, ctx.sessao, "saiu"); return json({ ok: true }); }
-    if (caminho === "/dev/painel" && req.method === "GET") return json(await painel(env));
+    if (caminho === "/dev/painel" && req.method === "GET") return json(await painel(env, { projeto: url.searchParams.get("projeto") || "", rapido: url.searchParams.get("rapido") === "1" }));
     if (caminho === "/dev/bi" && req.method === "GET") return json(await bi(env, Number(url.searchParams.get("dias")) || 30, agora));
     if (caminho === "/dev/ferramentas" && req.method === "GET") return json(await ferramentas(env, agora));
     if (caminho === "/dev/trafego" && req.method === "GET") return json(await listarTrafego(env, { desde: Number(url.searchParams.get("desde")) || 0, limite: Number(url.searchParams.get("limite")) || 60 }, agora));

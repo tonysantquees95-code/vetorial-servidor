@@ -421,3 +421,18 @@ test("atalhos de Voxix, Velox, Drive e Painel Dev levam ao download certo", asyn
   assert.equal(responderAtalho(u, "/paineldev/windows").headers.get("location"), "https://v.test/atualizacao?app=paineldev-windows&baixar=1");
   assert.doesNotMatch(await responderAtalho(u, "/drive").text(), /windows/);
 });
+
+test("painel: ?rapido=1 não chama o GitHub e ?projeto=id traz só aquele projeto", async () => {
+  const chamadas = [];
+  const antes = globalThis.fetch;
+  globalThis.fetch = async (u) => { chamadas.push(String(u)); return new Response("[]", { status: 200 }); };
+  try {
+    const env = ENV({ GITHUB_TOKEN: "t" });
+    const a = await admin(env);
+    const rapido = (await chamar(env, a.token, "/dev/painel?rapido=1")).d;
+    assert.equal(rapido.projetos.length, PROJETOS.length);
+    assert.equal(chamadas.filter((c) => c.includes("api.github.com")).length, 0);
+    const um = (await chamar(env, a.token, "/dev/painel?projeto=vyntem")).d;
+    assert.deepEqual(um.projetos.map((p) => p.id), ["vyntem"]);
+  } finally { globalThis.fetch = antes; }
+});
