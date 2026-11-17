@@ -132,7 +132,7 @@ export async function lerSegredo(env, nome) {
   return env[nome] || "";
 }
 
-const CHAVES_DE_IA = ["GROQ_API_KEY", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "DEEPSEEK_API_KEY", "TAVILY_API_KEY", "GITHUB_TOKEN"]; // GITHUB_TOKEN: o Painel Dev lê o GitHub com o token do cofre
+const CHAVES_DE_IA = ["GROQ_API_KEY", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "DEEPSEEK_API_KEY", "TAVILY_API_KEY"];
 const VALIDADE_CHAVES_MS = 5 * 60_000;
 let cacheChaves = { ate: 0, valores: null };
 

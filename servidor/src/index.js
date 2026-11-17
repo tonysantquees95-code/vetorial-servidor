@@ -87,7 +87,7 @@ export default {
       if (ehRotaVoxix(caminho)) return await tratarVoxix(req, env, url, caminho);
       if (ehRotaCofre(caminho)) return await tratarCofre(req, env, url, caminho);
       if (ehRotaIcone(caminho) && req.method === "GET") return await tratarIcone(req, url, caminho);
-      if (ehRotaDev(caminho)) return await tratarDev(req, await comChavesDoCofre(env), url, caminho); // o token do GitHub do cofre vale mais que o do Worker
+      if (ehRotaDev(caminho)) return await tratarDev(req, env, url, caminho);
       if (ehRotaDaLoja(caminho) || (env.DOMINIO_CURTO && url.hostname === env.DOMINIO_CURTO && req.method === "GET" && /^\/[a-z0-9-]{3,32}(\/[^/]+)?$/.test(caminho) && !["/saude", "/atualizacao"].includes(caminho))) {
         return await tratarLoja(req, env, ctx, url, caminho);
       }
