@@ -435,3 +435,15 @@ test("conta antiga define a recuperação logada (pede a senha atual)", async ()
   assert.equal((await q({ ...REC, senhaAtual: "senha-forte-1" })).ok, true);
   assert.equal((await q(null, "GET")).configurada, true);
 });
+
+test("Vindex antigo (sem app) cai em vindex pelo identificador; reinstalação do mesmo celular não vira aparelho a mais", async () => {
+  const env = ENV();
+  await cadastrar(env, { email: "a@exemplo.com", senha: "senha-forte-1", nome: "A", dispositivo: { id: "vindex-android-abc12345", nome: "Celular (Vindex)", plataforma: "android" } , recuperacao: REC });
+  assert.equal((await env.DB.prepare("SELECT app FROM dispositivos").first()).app, "vindex");
+  const cel = (id) => ({ id, nome: "moto g75 5G", plataforma: "android" });
+  await entrar(env, { email: "a@exemplo.com", senha: "senha-forte-1", dispositivo: cel("aaaaaaaa1"), app: "venus" });
+  await env.DB.prepare("UPDATE sessoes SET ultimo_ping = ?").bind(Date.now() - 3_600_000).run(); // a instalação antiga está parada
+  await entrar(env, { email: "a@exemplo.com", senha: "senha-forte-1", dispositivo: cel("bbbbbbbb2"), app: "venus" }); // reinstalou: novo id, mesmo modelo
+  const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM dispositivos WHERE app = 'venus'").first();
+  assert.equal(n.n, 1);
+});

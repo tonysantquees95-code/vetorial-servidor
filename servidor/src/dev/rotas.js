@@ -1,5 +1,5 @@
 // Rotas do Painel Dev: /dev/* (só o superadministrador, exceto entrar, primeiro acesso e telemetria do Vindex).
-import { ErroId, encerrarSessao, tokenDoPedido, validarSessao, MAX_ATIVAS, MAX_DISPOSITIVOS, TTL_ATIVA_MS } from "../id/conta.js";
+import { ErroId, encerrarSessao, removerDispositivo, tokenDoPedido, validarSessao, MAX_ATIVAS, MAX_DISPOSITIVOS, TTL_ATIVA_MS } from "../id/conta.js";
 import { verificar } from "../id/jwt.js";
 import { ErroLoja } from "../loja/lojas.js";
 import { TABELA } from "../ia/roteador.js";
@@ -191,19 +191,23 @@ async function usuarios(env, agora = Date.now()) {
   const q = async (sql, ...a) => (await env.DB.prepare(sql).bind(...a).all()).results;
   const [contas, devs, sess] = await Promise.all([
     q("SELECT u.id, u.email, u.nome, u.telefone, u.criado, u.rec_pin_hash AS rec, l.plano, l.pacote, l.ativo_ate AS ativoAte, l.trial_fim AS trialFim, u.bloqueado FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja ORDER BY u.criado DESC LIMIT 500"),
-    q("SELECT usuario, app, COUNT(*) AS n, MAX(ultimo) AS ultimo FROM dispositivos GROUP BY usuario, app"),
-    q("SELECT s.id AS sessao, s.usuario, s.app, d.nome, d.plataforma, s.ultimo_ping AS ultimoPing FROM sessoes s JOIN dispositivos d ON d.id = s.dispositivo WHERE s.encerrada = 0 AND s.ultimo_ping > ? ORDER BY s.ultimo_ping DESC LIMIT 1000", agora - TTL_ATIVA_MS),
+    q("SELECT id, usuario, app, nome, plataforma, criado, ultimo FROM dispositivos ORDER BY ultimo DESC LIMIT 3000"),
+    q("SELECT s.id AS sessao, s.usuario, s.app, s.dispositivo AS dispositivoId, d.nome, d.plataforma, s.ultimo_ping AS ultimoPing FROM sessoes s JOIN dispositivos d ON d.id = s.dispositivo WHERE s.encerrada = 0 AND s.ultimo_ping > ? ORDER BY s.ultimo_ping DESC LIMIT 1000", agora - TTL_ATIVA_MS),
   ]);
   const lista = contas.map((c) => {
     const admin = ehAdmin(env, c.email) || c.plano === "dono";
     const situacao = admin ? "admin" : agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
     const apps = {};
-    for (const d of devs.filter((x) => x.usuario === c.id)) apps[d.app] = { dispositivos: d.n, ativas: 0, ultimo: d.ultimo };
-    for (const s of sess.filter((x) => x.usuario === c.id)) (apps[s.app] ||= { dispositivos: 0, ativas: 0, ultimo: 0 }).ativas++;
+    for (const d of devs.filter((x) => x.usuario === c.id)) {
+      const a = (apps[d.app] ||= { dispositivos: 0, ativas: 0, ultimo: 0, aparelhos: [] });
+      a.dispositivos++; a.ultimo = Math.max(a.ultimo, d.ultimo);
+      a.aparelhos.push({ id: d.id, nome: d.nome, plataforma: d.plataforma, criado: d.criado, ultimo: d.ultimo, emUso: sess.some((s) => s.usuario === c.id && s.dispositivoId === d.id) });
+    }
+    for (const s of sess.filter((x) => x.usuario === c.id)) (apps[s.app] ||= { dispositivos: 0, ativas: 0, ultimo: 0, aparelhos: [] }).ativas++;
     return {
       id: c.id, email: c.email, nome: c.nome, telefone: c.telefone, criado: c.criado, recuperacao: !!c.rec,
       situacao, admin, bloqueado: !!c.bloqueado, pagante: situacao === "pagante", pacote: situacao === "pagante" ? c.pacote : "", ativoAte: c.ativoAte || 0,
-      apps, sessoes: sess.filter((x) => x.usuario === c.id).map(({ usuario, ...resto }) => resto),
+      apps, sessoes: sess.filter((x) => x.usuario === c.id).map(({ usuario, dispositivoId, ...resto }) => resto),
     };
   });
   const por = (f) => lista.filter(f).length;
@@ -286,6 +290,8 @@ export async function tratarDev(req, env, url, caminho) {
       if (m[1] === ctx.sessao) throw new ErroLoja(400, "sessao_atual", "Para sair deste aparelho use Sair.");
       return json({ ok: await encerrarSessao(env, s.usuario, m[1], "encerrada_pelo_admin") });
     }
+    m = /^\/dev\/usuarios\/([a-f0-9]{16,64})\/aparelhos\/([a-f0-9]{64})$/.exec(caminho);
+    if (m && req.method === "DELETE") return json({ ok: await removerDispositivo(env, m[1], m[2]) });
     m = /^\/dev\/usuarios\/([a-f0-9]{16,64})(?:\/(bloquear|desbloquear))?$/.exec(caminho);
     if (m) {
       const alvo = await env.DB.prepare("SELECT u.id, u.email, u.loja, l.plano, l.ativo_ate AS ativoAte FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja WHERE u.id = ?").bind(m[1]).first();

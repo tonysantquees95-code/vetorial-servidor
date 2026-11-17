@@ -10,8 +10,9 @@ export const TTL_ATIVA_MS = 5 * 60_000; // sem ping por 5 minutos = sessão inat
 /** Cada aplicativo tem os seus próprios limites. O Velox é gratuito e público: não entra na conta de limites. */
 export const APPS_COM_LIMITE = new Set(["venus", "vindex", "vortex", "vyntem"]);
 const APPS_DE_LOGIN = new Set([...APPS_COM_LIMITE, "velox", "drive", "voxix"]);
-export function appDeLogin(app) {
-  const a = String(app || "venus").trim().toLowerCase();
+export function appDeLogin(app, dispositivoId = "") {
+  // versões antigas do Vindex não diziam o app: o identificador do aparelho começa com "vindex-"
+  const a = String(app || (String(dispositivoId).startsWith("vindex-") ? "vindex" : "venus")).trim().toLowerCase();
   const n = a === "venus-windows" || a === "venus-ios" ? "venus" : a;
   if (!APPS_DE_LOGIN.has(n)) throw new ErroId(400, "app_invalido", "Aplicativo desconhecido.");
   return n;
@@ -114,7 +115,7 @@ export async function encerrarSessao(env, usuario, sessao, motivo = "encerrada")
 
 export async function entrar(env, { email, senha, dispositivo, encerrar, remover, app: appPedido }, agora = Date.now()) {
   email = emailLimpo(email);
-  const app = appDeLogin(appPedido);
+  const app = appDeLogin(appPedido, dispositivo && dispositivo.id);
   const d = lerDispositivo(dispositivo);
   await limitarTentativas(env, `login:${email}`, agora);
   const u = await env.DB.prepare("SELECT * FROM usuarios WHERE email = ?").bind(email).first();
@@ -134,6 +135,14 @@ export async function entrar(env, { email, senha, dispositivo, encerrar, remover
         throw new ErroId(409, "limite_dispositivos", "Você já tem 3 aparelhos vinculados a este aplicativo. Remova um para vincular este, ou cancele.", { dispositivos: results, opcoes: ["remover_dispositivo", "cancelar"], maxDispositivos: MAX_DISPOSITIVOS, app });
       }
       await removerDispositivo(env, u.id, remover);
+    }
+    // celular reinstalado ou app reassinado ganha identificador novo: o registro antigo do mesmo modelo, parado, sai (não conta como mais um aparelho)
+    if (d.plataforma === "android" || d.plataforma === "ios") {
+      const velhos = await env.DB.prepare("SELECT id FROM dispositivos WHERE usuario = ? AND app = ? AND nome = ? AND plataforma = ?").bind(u.id, app, d.nome, d.plataforma).all();
+      for (const v of velhos.results) {
+        const ativo = await env.DB.prepare("SELECT 1 AS x FROM sessoes WHERE dispositivo = ? AND encerrada = 0 AND ultimo_ping > ?").bind(v.id, agora - TTL_ATIVA_MS).first();
+        if (!ativo) await removerDispositivo(env, u.id, v.id);
+      }
     }
     await env.DB.prepare("INSERT INTO dispositivos (id, usuario, nome, plataforma, criado, ultimo, app) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(devId, u.id, d.nome, d.plataforma, agora, agora, app).run();
   } else {
