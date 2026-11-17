@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { extrairJson, validarLancamento, promptTexto, passouDoLimite, _zerarLimites, tratarFinancas } from "../src/financas/ia.js";
+import { dataDaNota, extrairJson, validarLancamento, promptTexto, passouDoLimite, _zerarLimites, tratarFinancas } from "../src/financas/ia.js";
 import { REPOS_PERMITIDOS, APELIDOS, verificarOidc, EMISSOR, PUBLICO } from "../src/ci/assinatura.js";
 import { escolherVersao } from "../src/atualizacao.js";
 
@@ -76,5 +76,21 @@ test("licença: o Vyntem entra no teste grátis, no dono e no pacote completo, e
   assert.equal(appsLiberados({ trial_fim: agora + DIA, ativo_ate: 0 }, agora).vyntem, true);
   assert.equal(appsLiberados({ plano: "dono" }, agora).vyntem, true);
   assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "completo" }, agora).vyntem, true);
-  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora).vyntem, false);
+  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora).vyntem, true); // grátis para qualquer conta
+  assert.equal(appsLiberados({ trial_fim: 0, ativo_ate: 0 }, agora).vyntem, true);
+  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora).vortex, false);
+});
+
+test("data da nota: dia/mês/ano, nunca o formato americano", () => {
+  assert.equal(dataDaNota("08/11/2026"), "2026-11-08");
+  assert.equal(dataDaNota("Emissão: 8-11-26 14:32"), "2026-11-08");
+  assert.equal(dataDaNota("08.11.2026"), "2026-11-08");
+  assert.equal(dataDaNota("31/02/2026"), null);
+  assert.equal(dataDaNota("sem data"), null);
+});
+
+test("Vyntem é grátis para qualquer conta do Vetorial ID", async () => {
+  const { appLiberadoParaConta } = await import("../src/id/acesso.js");
+  assert.equal(await appLiberadoParaConta({ DB: {} }, { id: "u1" }, "vyntem"), true);
+  assert.equal(await appLiberadoParaConta({ DB: {} }, null, "vyntem"), false);
 });

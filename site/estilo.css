@@ -170,3 +170,5 @@ footer a{color:var(--suave)}
   .abas-m a{flex:none;padding:8px 14px;border-radius:99px;font-size:14px;font-weight:600;text-decoration:none;color:#fff;border:1px solid var(--borda);background:#ffffff0d}
   .abas-m a[aria-current]{background:linear-gradient(135deg,#ec6fd633,#7aa2ff33);border-color:#ec6fd6}
 }
+
+.ic .icone-img{width:54px;height:54px;border-radius:14px;display:block}.selo-app .icone-app{width:min(220px,60vw);height:auto;border-radius:28%;filter:drop-shadow(0 0 40px rgba(34,227,196,.35))}

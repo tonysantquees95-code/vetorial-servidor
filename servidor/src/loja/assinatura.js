@@ -46,13 +46,13 @@ export async function precoDoPacote(env, loja, pacote, agora = Date.now()) {
 export const pacoteDe = (chave) => (Object.prototype.hasOwnProperty.call(PACOTES, chave) ? chave : "venus");
 const tituloDo = (pacote) => (pacote === "venus" ? titulo : `${PACOTES[pacote].nome} — Plano mensal`);
 
-/** Quais apps estão liberados agora: no teste grátis, todos; pago, os do pacote; o dono, todos. */
+/** Quais apps estão liberados agora: no teste grátis, todos; pago, os do pacote; o dono, todos. O Vyntem é gratuito para qualquer conta do Vetorial ID. */
 export function appsLiberados(loja, agora = Date.now()) {
   if (loja.plano === "dono") return { vindex: true, vortex: true, vyntem: true };
   const pago = agora < (loja.ativo_ate || 0);
-  if (pago) return { ...PACOTES[pacoteDe(loja.pacote)].apps };
+  if (pago) return { ...PACOTES[pacoteDe(loja.pacote)].apps, vyntem: true };
   const teste = agora < (loja.trial_fim || 0);
-  return { vindex: teste, vortex: teste, vyntem: teste };
+  return { vindex: teste, vortex: teste, vyntem: true };
 }
 
 async function http(url, op) {
