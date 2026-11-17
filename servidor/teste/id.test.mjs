@@ -376,3 +376,62 @@ test("sync aceita as chaves do Velox com hífen (tema e senhas)", async () => {
   assert.ok(CHAVES_SYNC.has("velox-tema") && CHAVES_SYNC.has("velox-senhas"));
   assert.match("/id/sync/velox-senhas", /^\/id\/sync\/([a-z-]{3,20})$/);
 });
+
+// ---------------------------------------------------------------- recuperação por senha de 6 números e pergunta secreta
+const REC = { pin: "482915", pinConfirma: "482915", pergunta: "Qual era o nome do meu primeiro cachorro?", resposta: "Rex Júnior", respostaConfirma: "rex junior" };
+const post = async (env, caminho, corpo, ip = "1.1.1.1") => {
+  const q = new Request("https://v.test" + caminho, { method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": ip }, body: JSON.stringify(corpo) });
+  const r = await tratarId(q, env, new URL(q.url), new URL(q.url).pathname);
+  return { status: r.status, ...(await r.json()) };
+};
+
+test("cadastro pelas rotas: sem a recuperação (apps novos) é recusado; com ela, cria a conta", async () => {
+  const env = ENV();
+  const base = { email: "novo@exemplo.com", senha: "senha-forte-1", nome: "Novo", dispositivo: disp(1), app: "vyntem" };
+  assert.equal((await post(env, "/id/cadastrar", base)).codigo, "recuperacao_obrigatoria");
+  assert.equal((await post(env, "/id/cadastrar", { ...base, recuperacao: { ...REC, pinConfirma: "111111" } })).codigo, "pin_diferente");
+  assert.equal((await post(env, "/id/cadastrar", { ...base, recuperacao: { ...REC, pin: "123456", pinConfirma: "123456" } })).codigo, "pin_fraco");
+  assert.equal((await post(env, "/id/cadastrar", { ...base, recuperacao: { ...REC, pin: "12345", pinConfirma: "12345" } })).codigo, "pin_invalido");
+  assert.equal((await post(env, "/id/cadastrar", { ...base, recuperacao: { ...REC, respostaConfirma: "outra" } })).codigo, "resposta_diferente");
+  assert.equal((await post(env, "/id/cadastrar", { ...base, recuperacao: { ...REC, pergunta: "curta" } })).codigo, "pergunta_invalida");
+  assert.equal((await env.DB.prepare("SELECT COUNT(*) AS n FROM usuarios").first()).n, 0); // nada foi criado nas recusas
+  assert.equal((await post(env, "/id/cadastrar", { ...base, recuperacao: REC })).status, 201);
+  const u = await env.DB.prepare("SELECT rec_pin_hash, rec_resp_hash, rec_pergunta FROM usuarios").first();
+  assert.ok(u.rec_pin_hash && u.rec_resp_hash && !u.rec_pin_hash.includes("482915")); // só hashes
+  assert.equal(u.rec_pergunta, REC.pergunta);
+});
+
+test("recuperar a senha pela senha de 6 números ou pela resposta secreta", async () => {
+  const env = ENV();
+  const base = { email: "rec@exemplo.com", senha: "senha-antiga-1", nome: "Rec", dispositivo: disp(1), app: "vyntem" };
+  assert.equal((await post(env, "/id/cadastrar", { ...base, recuperacao: REC })).status, 201);
+  const p = await post(env, "/id/recuperar/pergunta", { email: "rec@exemplo.com" });
+  assert.deepEqual([p.existe, p.configurada, p.pergunta], [true, true, REC.pergunta]);
+  assert.equal((await post(env, "/id/recuperar/pergunta", { email: "ninguem@exemplo.com" })).existe, false);
+  // errado: recusa
+  assert.equal((await post(env, "/id/recuperar/segredo", { email: "rec@exemplo.com", metodo: "pin", valor: "000111", novaSenha: "senha-nova-123" })).codigo, "segredo_errado");
+  // certo: pela pergunta (sem acento e maiúscula tanto faz) e a senha nova entra
+  assert.equal((await post(env, "/id/recuperar/segredo", { email: "rec@exemplo.com", metodo: "pergunta", valor: "REX JUNIOR!", novaSenha: "senha-nova-123" })).ok, true);
+  assert.equal((await post(env, "/id/entrar", { email: "rec@exemplo.com", senha: "senha-nova-123", dispositivo: disp(2), app: "vyntem" })).status, 200);
+  assert.equal((await post(env, "/id/entrar", { email: "rec@exemplo.com", senha: "senha-antiga-1", dispositivo: disp(2), app: "vyntem" })).status, 401);
+  // e pela senha de 6 números
+  assert.equal((await post(env, "/id/recuperar/segredo", { email: "rec@exemplo.com", metodo: "pin", valor: "482915", novaSenha: "outra-senha-456" })).ok, true);
+});
+
+test("recuperação por segredo: poucas tentativas por e-mail (não dá para adivinhar os 6 números)", async () => {
+  const env = ENV();
+  await post(env, "/id/cadastrar", { email: "forca@exemplo.com", senha: "senha-forte-1", nome: "F", dispositivo: disp(1), app: "vyntem", recuperacao: REC });
+  for (let i = 0; i < 5; i++) assert.equal((await post(env, "/id/recuperar/segredo", { email: "forca@exemplo.com", metodo: "pin", valor: `00000${i}`, novaSenha: "senha-nova-123" }, `9.9.9.${i}`)).codigo, "segredo_errado");
+  // na 6ª, mesmo acertando, está bloqueado por um tempo
+  assert.equal((await post(env, "/id/recuperar/segredo", { email: "forca@exemplo.com", metodo: "pin", valor: "482915", novaSenha: "senha-nova-123" }, "9.9.9.9")).codigo, "muitas_tentativas");
+});
+
+test("conta antiga define a recuperação logada (pede a senha atual)", async () => {
+  const env = ENV();
+  const r = await conta(env); // cadastrada sem recuperação (conta antiga)
+  const q = (corpo, metodo = "PUT") => tratarId(new Request("https://v.test/id/recuperacao", { method: metodo, headers: { authorization: `Bearer ${r.token}`, "content-type": "application/json" }, body: metodo === "GET" ? undefined : JSON.stringify(corpo) }), env, new URL("https://v.test/id/recuperacao"), "/id/recuperacao").then(async (x) => ({ status: x.status, ...(await x.json()) }));
+  assert.equal((await q(null, "GET")).configurada, false);
+  assert.equal((await q({ ...REC, senhaAtual: "errada-123456" })).codigo, "credenciais");
+  assert.equal((await q({ ...REC, senhaAtual: "senha-forte-1" })).ok, true);
+  assert.equal((await q(null, "GET")).configurada, true);
+});

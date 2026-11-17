@@ -52,26 +52,41 @@ input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #ffffff2a
 <div id="cNome" hidden><label for="nome">Nome da loja ou seu nome</label><input id="nome" autocomplete="organization"></div>
 <label for="email">E-mail</label><input id="email" type="email" required autocomplete="username">
 <label for="senha">Senha</label><input id="senha" type="password" required minlength="8" autocomplete="current-password">
+<div id="cRec" hidden><h2 class="rt">Recuperação da conta</h2><p class="s">Sem e-mail por enquanto, a recuperação é por aqui: guarde estas duas coisas, elas servem para trocar a senha se você esquecer.</p>
+<label for="pin">Senha de recuperação (6 números)</label><input id="pin" inputmode="numeric" maxlength="6" autocomplete="off" type="password">
+<label for="pin2">Repita a senha de recuperação</label><input id="pin2" inputmode="numeric" maxlength="6" autocomplete="off" type="password">
+<label for="perg">Pergunta secreta (escreva a sua)</label><input id="perg" maxlength="120" autocomplete="off" placeholder="Ex.: Qual era o nome do meu primeiro cachorro?">
+<label for="resp">Resposta da pergunta</label><input id="resp" maxlength="80" autocomplete="off">
+<label for="resp2">Repita a resposta</label><input id="resp2" maxlength="80" autocomplete="off"></div>
 <button class="go" id="ok" type="submit">Entrar</button></form>
 <div id="msg" role="status" aria-live="polite"></div><div id="extra"></div>
 <p class="s" id="pEsq" style="text-align:center"><a href="#" id="esqueci">Esqueci minha senha</a></p>
 <section id="rec" hidden>
-<div id="r1"><h2 class="rt">Recuperar a senha</h2><p class="s">Digite o e-mail da sua conta. Vamos enviar um código de 6 dígitos.</p>
+<div id="r1"><h2 class="rt">Recuperar a senha</h2><p class="s">Digite o e-mail da sua conta e escolha como provar que é você.</p>
 <label for="remail">E-mail</label><input id="remail" type="email" autocomplete="username" inputmode="email">
-<button class="go" id="rpedir" type="button" disabled>Enviar código</button>
+<div id="rmetodos" hidden>
+<button class="go" id="rpin" type="button">Usar a senha de recuperação (6 números)</button>
+<button class="go" id="rperg" type="button">Responder a pergunta secreta</button>
+<button class="go" id="rpedir" type="button" hidden>Receber um código por e-mail</button></div>
 <p class="s" style="text-align:center"><a href="#" class="rvolta">Voltar ao login</a></p></div>
 <form id="r2" hidden><h2 class="rt">Digite o código</h2><p class="s" id="rinfo"></p>
 <label for="rc">Código de 6 dígitos</label><input id="rc" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
 <label for="rn">Nova senha</label><input id="rn" type="password" minlength="8" autocomplete="new-password">
 <button class="go" id="rok" type="submit">Trocar a senha</button>
-<p class="s" style="text-align:center"><a href="#" id="routro">Usar outro e-mail</a> · <a href="#" class="rvolta">Voltar ao login</a></p></form></section>
+<p class="s" style="text-align:center"><a href="#" id="routro">Usar outro e-mail</a> · <a href="#" class="rvolta">Voltar ao login</a></p></form>
+<form id="r3" hidden><h2 class="rt" id="r3t"></h2><p class="s" id="r3info"></p>
+<label for="r3v" id="r3l"></label><input id="r3v" autocomplete="off">
+<label for="rn3">Nova senha (mínimo 8 caracteres)</label><input id="rn3" type="password" minlength="8" autocomplete="new-password">
+<label for="rn4">Repita a nova senha</label><input id="rn4" type="password" minlength="8" autocomplete="new-password">
+<button class="go" type="submit">Trocar a senha</button>
+<p class="s" style="text-align:center"><a href="#" id="r3volta">Escolher outro jeito</a> · <a href="#" class="rvolta">Voltar ao login</a></p></form></section>
 <div class="rod">Até 3 aparelhos vinculados, 2 usando ao mesmo tempo.</div></main>
 <script>
 const CFG=${cfg};
 const $=(i)=>document.getElementById(i);
 const q=new URLSearchParams(location.search);
 let criar=false,pendente=null;
-function aba(c){criar=c;$("tEntrar").setAttribute("aria-selected",!c);$("tCriar").setAttribute("aria-selected",c);$("cNome").hidden=!c;$("ok").textContent=c?"Criar conta":"Entrar";$("senha").autocomplete=c?"new-password":"current-password";}
+function aba(c){criar=c;$("tEntrar").setAttribute("aria-selected",!c);$("tCriar").setAttribute("aria-selected",c);$("cNome").hidden=!c;$("cRec").hidden=!c;$("ok").textContent=c?"Criar conta":"Entrar";$("senha").autocomplete=c?"new-password":"current-password";}
 $("tEntrar").onclick=()=>aba(false);$("tCriar").onclick=()=>aba(true);
 function aparelho(){let id="";try{id=localStorage.getItem("vid_aparelho")||"";if(!id){id=crypto.randomUUID();localStorage.setItem("vid_aparelho",id);}}catch(e){id=crypto.randomUUID();}
 const ua=navigator.userAgent;const ios=/iPhone|iPad/.test(ua);const win=/Windows/.test(ua);const mac=/Macintosh/.test(ua)&&!ios;const and=/Android/.test(ua);
@@ -91,6 +106,7 @@ for(const it of itens){const li=document.createElement("li");const s=document.cr
 d.appendChild(ul);const c=document.createElement("button");c.className="cancel";c.textContent="Cancelar login neste aparelho";c.onclick=()=>{e.textContent="";msg("Login cancelado.");};d.appendChild(c);e.appendChild(d);}
 async function enviar(extra){msg("");$("ok").disabled=true;
 try{const corpo={email:$("email").value,senha:$("senha").value,nome:$("nome").value,dispositivo:aparelho(),...extra};
+if(criar&&!extra.encerrar&&!extra.remover)corpo.recuperacao={pin:$("pin").value,pinConfirma:$("pin2").value,pergunta:$("perg").value,resposta:$("resp").value,respostaConfirma:$("resp2").value};
 const r=await fetch(criar&&!extra.encerrar&&!extra.remover?"/id/cadastrar":"/id/entrar",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(corpo)});
 const d=await r.json();
 if(r.ok){$("extra").textContent="";pronto(d);}
@@ -101,14 +117,28 @@ else msg(d.error||"Não deu certo. Tente de novo.");
 $("ok").disabled=false;}
 $("f").onsubmit=(e)=>{e.preventDefault();enviar({});};
 const EML=/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/;
-function tela(t){const l=t==="login";$("f").hidden=!l;$("abas").hidden=!l;$("pEsq").hidden=!l;$("extra").hidden=!l;$("rec").hidden=l;$("r1").hidden=t!=="r1";$("r2").hidden=t!=="r2";msg("");}
+function tela(t){const l=t==="login";$("f").hidden=!l;$("abas").hidden=!l;$("pEsq").hidden=!l;$("extra").hidden=!l;$("rec").hidden=l;$("r1").hidden=t!=="r1";$("r2").hidden=t!=="r2";$("r3").hidden=t!=="r3";msg("");}
 async function rec(caminho,corpo){const r=await fetch(caminho,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(corpo)});return{ok:r.ok,d:await r.json()};}
 $("esqueci").onclick=(e)=>{e.preventDefault();$("remail").value=$("email").value;tela("r1");$("remail").oninput();$("remail").focus();};
 for(const a of document.querySelectorAll(".rvolta"))a.onclick=(e)=>{e.preventDefault();tela("login");};
 $("routro").onclick=(e)=>{e.preventDefault();tela("r1");$("remail").focus();};
-let esperaR=0,contaR=0;
-$("remail").oninput=()=>{const v=$("remail").value.trim(),n=++contaR;$("rpedir").disabled=true;clearTimeout(esperaR);msg("");if(!EML.test(v))return;
-esperaR=setTimeout(async()=>{try{const x=await rec("/id/recuperar/existe",{email:v});if(n!==contaR)return;if(x.ok&&x.d.existe)$("rpedir").disabled=false;else if(x.ok)msg("Não encontramos uma conta com esse e-mail.");else msg(x.d.error||"Não consegui conferir o e-mail.");}catch(e){if(n===contaR)msg("Sem conexão. Tente de novo.");}},700);};
+let esperaR=0,contaR=0,canaisRec={email:false},infoRec=null,metodoRec="pin";
+fetch("/id/recuperar/canais").then(r=>r.json()).then(d=>{canaisRec=d.canais||{email:false};}).catch(()=>{});
+$("remail").oninput=()=>{const v=$("remail").value.trim(),n=++contaR;$("rmetodos").hidden=true;clearTimeout(esperaR);msg("");if(!EML.test(v))return;
+esperaR=setTimeout(async()=>{try{const x=await rec("/id/recuperar/pergunta",{email:v});if(n!==contaR)return;
+if(!x.ok){msg(x.d.error||"Não consegui conferir o e-mail.");return;}
+if(!x.d.existe){msg("Não encontramos uma conta com esse e-mail.");return;}
+infoRec=x.d;$("rmetodos").hidden=false;$("rpin").hidden=!x.d.configurada;$("rperg").hidden=!x.d.configurada;$("rpedir").hidden=!canaisRec.email;
+if(!x.d.configurada&&!canaisRec.email)msg("Essa conta foi criada antes da recuperação por senha de 6 números. Entre com a senha e cadastre a recuperação em Minha conta.");}catch(e){if(n===contaR)msg("Sem conexão. Tente de novo.");}},700);};
+function abrirR3(m){metodoRec=m;const pin=m==="pin";$("r3t").textContent=pin?"Senha de recuperação":"Pergunta secreta";
+$("r3info").textContent=pin?"Digite a senha de 6 números que você criou no cadastro.":infoRec.pergunta;
+$("r3l").textContent=pin?"Senha de recuperação (6 números)":"Sua resposta";$("r3v").value="";$("rn3").value="";$("rn4").value="";
+$("r3v").type=pin?"password":"text";$("r3v").inputMode=pin?"numeric":"text";$("r3v").maxLength=pin?6:80;tela("r3");$("r3v").focus();}
+$("rpin").onclick=()=>abrirR3("pin");$("rperg").onclick=()=>abrirR3("pergunta");
+$("r3volta").onclick=(e)=>{e.preventDefault();tela("r1");};
+$("r3").onsubmit=async(e)=>{e.preventDefault();msg("");if($("rn3").value!==$("rn4").value){msg("As duas senhas novas não são iguais.");return;}
+try{const x=await rec("/id/recuperar/segredo",{email:$("remail").value.trim(),metodo:metodoRec,valor:$("r3v").value,novaSenha:$("rn3").value});
+if(x.ok){$("email").value=$("remail").value.trim();$("senha").value="";tela("login");msg("Senha trocada. Entre com a nova senha.",true);}else msg(x.d.error||"Não deu certo.");}catch(e){msg("Sem conexão. Tente de novo.");}};
 $("rpedir").onclick=async()=>{msg("");$("rpedir").disabled=true;const v=$("remail").value.trim();try{const x=await rec("/id/recuperar/pedir",{email:v,canal:"email"});
 if(x.ok&&x.d.enviado!==false){$("rinfo").textContent="Enviamos um código para "+v+". Ele vale por 10 minutos.";$("rc").value="";$("rn").value="";tela("r2");$("rc").focus();}
 else{msg(x.ok?"Não consegui enviar o e-mail agora. Tente de novo em instantes.":(x.d.error||"Não consegui enviar."));$("rpedir").disabled=false;}}catch(e){msg("Sem conexão. Tente de novo.");$("rpedir").disabled=false;}};

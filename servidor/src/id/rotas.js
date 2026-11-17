@@ -4,7 +4,7 @@ import { ErroLoja, comPrivilegios } from "../loja/lojas.js";
 import { contaComAcesso, MSG_SEM_ACESSO } from "./acesso.js";
 import { emitirSelo, chavePublicaDoSelo } from "./selo.js";
 import { canaisDisponiveis } from "./envio.js";
-import { ErroId, cadastrar, confirmarRecuperacao, existeConta, pedirRecuperacao, salvarTelefone, perfilPublico, salvarPerfil, tokenDeApp, encerrarSessao, entrar, gravarSync, lerSync, listarDispositivos, reativar, removerDispositivo, renovarToken, tokenDoPedido, validarSessao } from "./conta.js";
+import { ErroId, conferirRecuperacao, definirRecuperacao, estadoDaRecuperacao, perguntaSecreta, recuperarPorSegredo, cadastrar, confirmarRecuperacao, existeConta, pedirRecuperacao, salvarTelefone, perfilPublico, salvarPerfil, tokenDeApp, encerrarSessao, entrar, gravarSync, lerSync, listarDispositivos, reativar, removerDispositivo, renovarToken, tokenDoPedido, validarSessao } from "./conta.js";
 import { paginaDeLogin, paginaSso } from "./pagina.js";
 import { ehAdmin } from "../dev/admin.js";
 
@@ -63,12 +63,17 @@ export async function tratarId(req, env, url, caminho) {
         const { lojaDoPedido } = await import("../loja/lojas.js");
         lojaExistente = await lojaDoPedido(env, req); // quem já usa a Vênus liga a loja atual à conta
       }
-      return json(await comLicenca(env, await cadastrar(env, { ...d, lojaExistente, exigirTelefone: false, ip: req.headers.get("cf-connecting-ip") || "" }), origem), 201);
+      // Senha de 6 números + pergunta secreta são obrigatórias no cadastro (recuperar a senha sem e-mail).
+      if (d.recuperacao) conferirRecuperacao(d.recuperacao);
+      else if (String(d.app || "venus") !== "venus") throw new ErroId(400, "recuperacao_obrigatoria", "Crie a senha de recuperação (6 números) e a pergunta secreta para terminar o cadastro.");
+      return json(await comLicenca(env, await cadastrar(env, { ...d, lojaExistente, exigirTelefone: false, ip: req.headers.get("cf-connecting-ip") || "", recuperacao: d.recuperacao || null }), origem), 201);
     }
     if (caminho === "/id/entrar" && req.method === "POST") return json(await comLicenca(env, await entrar(env, await corpo(req)), origem));
     if (caminho === "/id/chave-publica" && req.method === "GET") return json({ alg: "Ed25519", x: await chavePublicaDoSelo(env) });
     if (caminho === "/id/recuperar/canais" && req.method === "GET") return json({ canais: canaisDisponiveis(env) });
     if (caminho === "/id/recuperar/existe" && req.method === "POST") return json(await existeConta(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
+    if (caminho === "/id/recuperar/pergunta" && req.method === "POST") return json(await perguntaSecreta(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
+    if (caminho === "/id/recuperar/segredo" && req.method === "POST") return json(await recuperarPorSegredo(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
     if (caminho === "/id/recuperar/pedir" && req.method === "POST") return json(await pedirRecuperacao(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
     if (caminho === "/id/recuperar/confirmar" && req.method === "POST") return json(await confirmarRecuperacao(env, await corpo(req)));
     if (caminho === "/id/reativar" && req.method === "POST") return json(await reativar(env, tokenDoPedido(req), (await corpo(req)).encerrar));
@@ -83,8 +88,10 @@ export async function tratarId(req, env, url, caminho) {
     }
     if (caminho === "/id/conta" && req.method === "GET") { // tudo para o avatar: perfil, licença e este aparelho
       const lic = await licenca(env, ctx.usuario, origem, false);
-      return json({ usuario: perfilPublico(ctx.usuario), licenca: lic, sessao: ctx.sessao, dispositivo: ctx.dispositivo, admin: ehAdmin(env, ctx.usuario.email) });
+      return json({ usuario: perfilPublico(ctx.usuario), licenca: lic, sessao: ctx.sessao, dispositivo: ctx.dispositivo, admin: ehAdmin(env, ctx.usuario.email), recuperacao: (await estadoDaRecuperacao(env, ctx.usuario.id)).configurada });
     }
+    if (caminho === "/id/recuperacao" && req.method === "GET") return json(await estadoDaRecuperacao(env, ctx.usuario.id));
+    if (caminho === "/id/recuperacao" && req.method === "PUT") return json(await definirRecuperacao(env, ctx, await corpo(req)));
     if (caminho === "/id/telefone" && req.method === "PUT") return json(await salvarTelefone(env, ctx, (await corpo(req)).telefone));
     if (caminho === "/id/perfil" && req.method === "PUT") return json({ usuario: await salvarPerfil(env, ctx, await corpo(req)) });
     if (caminho === "/id/app-token" && req.method === "POST") return json(await tokenDeApp(env, ctx, String((await corpo(req)).app || "")));

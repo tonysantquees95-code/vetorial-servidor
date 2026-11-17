@@ -52,7 +52,7 @@ async function limitarTentativas(env, chave, agora, max = 8) {
   if (n.n >= max) throw new ErroId(429, "muitas_tentativas", "Muitas tentativas. Espere alguns minutos e tente de novo.");
 }
 
-export async function cadastrar(env, { email, senha, nome, dispositivo, app, lojaExistente, telefone, exigirTelefone = false, ip = "" }, agora = Date.now()) {
+export async function cadastrar(env, { email, senha, nome, dispositivo, app, lojaExistente, telefone, exigirTelefone = false, ip = "", recuperacao = null }, agora = Date.now()) {
   email = emailLimpo(email);
   const fone = telefoneLimpo(telefone);
   if (exigirTelefone && !fone && !semLimites(env, email)) throw new ErroId(400, "telefone_invalido", "Informe um celular com DDD (ex.: 51 99999-9999). Ele serve para recuperar a senha.");
@@ -78,6 +78,7 @@ export async function cadastrar(env, { email, senha, nome, dispositivo, app, loj
   }
   await env.DB.prepare("INSERT INTO usuarios (id, email, nome, senha_hash, salt, loja, criado, telefone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
     .bind(id, email, String(nome || "").trim().slice(0, 80), await hashSenha(senha, salt), salt, lojaId, agora, fone).run();
+  if (recuperacao) await gravarRecuperacao(env, id, recuperacao);
   return entrar(env, { email, senha, dispositivo, app }, agora);
 }
 
@@ -315,6 +316,83 @@ export async function confirmarRecuperacao(env, { email, codigo, novaSenha }, ag
   const salt = aleatorio(16);
   await env.DB.prepare("UPDATE usuarios SET senha_hash = ?, salt = ? WHERE id = ?").bind(await hashSenha(novaSenha, salt), salt, u.id).run();
   await env.DB.prepare("DELETE FROM id_recuperacao WHERE usuario = ?").bind(u.id).run();
+  await env.DB.prepare("UPDATE sessoes SET encerrada = 1, motivo = 'senha_trocada' WHERE usuario = ? AND encerrada = 0").bind(u.id).run();
+  return { ok: true };
+}
+
+// ------------------------------------------------------------------ recuperação por senha de 6 números e pergunta secreta
+const PINS_FRACOS = new Set(["123456", "654321", "012345", "123123", "121212", "112233", "696969"]);
+/** Resposta secreta sem acento, em minúsculas e sem pontuação: "São Paulo!" e "sao paulo" valem igual. */
+export const respostaNormalizada = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/** Confere o que a pessoa digitou no cadastro (cada coisa duas vezes) e devolve já limpo. */
+export function conferirRecuperacao(r) {
+  r = r && typeof r === "object" ? r : {};
+  const pin = String(r.pin ?? "");
+  if (!/^\d{6}$/.test(pin)) throw new ErroId(400, "pin_invalido", "A senha de recuperação precisa ter exatamente 6 números.");
+  if (pin !== String(r.pinConfirma ?? "")) throw new ErroId(400, "pin_diferente", "As duas senhas de recuperação não são iguais.");
+  if (/^(\d)\1{5}$/.test(pin) || PINS_FRACOS.has(pin)) throw new ErroId(400, "pin_fraco", "Escolha uma senha de recuperação menos óbvia (não use 123456 nem números repetidos).");
+  const pergunta = String(r.pergunta ?? "").replace(/\s+/g, " ").trim();
+  if (pergunta.length < 8 || pergunta.length > 120) throw new ErroId(400, "pergunta_invalida", "Escreva a pergunta secreta (de 8 a 120 letras).");
+  const resposta = respostaNormalizada(r.resposta);
+  if (resposta.length < 3 || resposta.length > 80) throw new ErroId(400, "resposta_invalida", "A resposta secreta precisa ter pelo menos 3 letras.");
+  if (resposta !== respostaNormalizada(r.respostaConfirma)) throw new ErroId(400, "resposta_diferente", "As duas respostas da pergunta secreta não são iguais.");
+  return { pin, pergunta, resposta };
+}
+
+async function gravarRecuperacao(env, usuarioId, bruto) {
+  const { pin, pergunta, resposta } = conferirRecuperacao(bruto);
+  const sp = aleatorio(16), sr = aleatorio(16);
+  await env.DB.prepare("UPDATE usuarios SET rec_pin_hash = ?, rec_pin_salt = ?, rec_pergunta = ?, rec_resp_hash = ?, rec_resp_salt = ? WHERE id = ?")
+    .bind(await hashSenha(`pin:${pin}`, sp), sp, pergunta, await hashSenha(`resp:${resposta}`, sr), sr, usuarioId).run();
+}
+
+/** Quem já tem conta (e quem quer trocar) define a recuperação logado; pede a senha atual para um token roubado não valer. */
+export async function definirRecuperacao(env, ctx, { senhaAtual, ...resto }, agora = Date.now()) {
+  await limitarTentativas(env, `recdef:${ctx.usuario.id}`, agora, 6);
+  const u = await env.DB.prepare("SELECT * FROM usuarios WHERE id = ?").bind(ctx.usuario.id).first();
+  if (!u || !iguais(await hashSenha(String(senhaAtual || ""), u.salt), u.senha_hash)) {
+    await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recdef:${ctx.usuario.id}`, agora).run();
+    throw new ErroId(401, "credenciais", "A senha atual está errada.");
+  }
+  await gravarRecuperacao(env, u.id, resto);
+  return { ok: true };
+}
+
+export async function estadoDaRecuperacao(env, usuarioId) {
+  const u = await env.DB.prepare("SELECT rec_pin_hash, rec_pergunta FROM usuarios WHERE id = ?").bind(usuarioId).first();
+  return { configurada: !!(u && u.rec_pin_hash), pergunta: u ? u.rec_pergunta : "" };
+}
+
+/** Passo 1 da recuperação: mostra a pergunta secreta (se a conta tem). Limite por IP para não servir de lista de e-mails. */
+export async function perguntaSecreta(env, { email }, ip = "", agora = Date.now()) {
+  email = emailLimpo(email);
+  await limitarTentativas(env, `recp:${ip || "?"}`, agora, 30);
+  await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recp:${ip || "?"}`, agora).run();
+  const u = EMAIL.test(email) ? await env.DB.prepare("SELECT rec_pin_hash, rec_pergunta FROM usuarios WHERE email = ?").bind(email).first() : null;
+  return { ok: true, existe: !!u, configurada: !!(u && u.rec_pin_hash), pergunta: u ? u.rec_pergunta : "" };
+}
+
+/** Passo 2: a senha de 6 números OU a resposta da pergunta secreta abrem a troca da senha. Poucas tentativas, para não dar para adivinhar. */
+export async function recuperarPorSegredo(env, { email, metodo, valor, novaSenha }, ip = "", agora = Date.now()) {
+  email = emailLimpo(email);
+  if (String(novaSenha || "").length < 8) throw new ErroId(400, "senha_curta", "A senha precisa ter pelo menos 8 caracteres.");
+  await limitarTentativas(env, `recs:${email}`, agora, 5);
+  await limitarTentativas(env, `recsip:${ip || "?"}`, agora, 20);
+  const u = await env.DB.prepare("SELECT * FROM usuarios WHERE email = ?").bind(email).first();
+  const porPin = metodo !== "pergunta";
+  const sal = u ? (porPin ? u.rec_pin_salt : u.rec_resp_salt) : "";
+  const alvo = u ? (porPin ? u.rec_pin_hash : u.rec_resp_hash) : "";
+  const dado = porPin ? `pin:${String(valor || "").replace(/\D/g, "")}` : `resp:${respostaNormalizada(valor)}`;
+  const hash = await hashSenha(dado, sal || "00".repeat(16)); // tempo parecido com ou sem conta
+  if (!u || !alvo || !iguais(hash, alvo)) {
+    await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recs:${email}`, agora).run();
+    await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recsip:${ip || "?"}`, agora).run();
+    throw new ErroId(400, "segredo_errado", u && !alvo ? "Essa conta ainda não tem recuperação por senha de 6 números ou pergunta secreta." : porPin ? "Senha de recuperação errada." : "Resposta errada.");
+  }
+  const salt = aleatorio(16);
+  await env.DB.prepare("UPDATE usuarios SET senha_hash = ?, salt = ? WHERE id = ?").bind(await hashSenha(novaSenha, salt), salt, u.id).run();
+  await env.DB.prepare("DELETE FROM id_tentativas WHERE chave = ?").bind(`recs:${email}`).run();
   await env.DB.prepare("UPDATE sessoes SET encerrada = 1, motivo = 'senha_trocada' WHERE usuario = ? AND encerrada = 0").bind(u.id).run();
   return { ok: true };
 }
