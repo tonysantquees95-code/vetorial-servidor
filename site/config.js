@@ -9,3 +9,6 @@ window.VENUS.baixarAndroid = `${window.VENUS.api}/atualizacao?app=venus&baixar=1
 window.VENUS.baixarWindows = `${window.VENUS.api}/atualizacao?app=windows&baixar=1`;
 window.VENUS.baixarMac = `${window.VENUS.api}/atualizacao?app=mac&baixar=1`;
 window.VENUS.web = `${window.VENUS.api}/app/`;
+
+// Redes da Vetorial Tech. Preencha o endereço quando o Instagram existir: o link aparece sozinho em todas as páginas.
+window.VENUS.instagram = "";

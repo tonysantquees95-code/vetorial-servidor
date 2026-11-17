@@ -15,7 +15,7 @@
 <body>
 <header class="topo"><div class="wrap">
   <a class="marca" href="./"><img src="logo-vetorial.png" alt="">VETORIAL TECH</a>
-  <nav><a class="ocultar" href="./">Vênus</a><a class="ocultar" href="vindex.html">Vindex</a><a class="ocultar" href="vortex.html">Vortex</a><a class="ocultar" href="velox.html">Velox · grátis</a><a class="ocultar" href="#preco">Preço</a><a class="btn p" id="entrar-topo" href="conta.html">Entrar</a></nav>
+  <nav><a class="ocultar" href="./">Vênus</a><a class="ocultar" href="vindex.html">Vindex</a><a class="ocultar" href="vortex.html">Vortex</a><a class="ocultar" href="velox.html">Velox · grátis</a><a class="ocultar" href="#preco">Preço</a><a class="ocultar" href="voxix.html">Voxix</a><a class="btn p" id="entrar-topo" href="conta.html">Entrar</a></nav>
 </div></header>
 <main>
 <section class="hero"><div class="wrap">
@@ -31,6 +31,12 @@
   </div>
   <div class="selo-app"><img src="/icone/velox.png" alt="Ícone do Velox" width="260" height="260"></div>
 </div></section>
+
+<section class="demo" data-demo="velox" hidden><div class="wrap">
+  <div class="titulo menor rev"><h2>Veja o <em>Velox</em> em ação</h2></div>
+  <div class="tela-video rev"><video controls playsinline muted loop preload="metadata" aria-label="Vídeo mostrando o Velox funcionando"></video></div>
+</div></section>
+
 
 <section id="funcoes"><div class="wrap">
   <div class="titulo rev"><h2>Tudo o que o <em>Velox</em> faz</h2></div>
@@ -65,9 +71,10 @@
 </div></section>
 </main>
 
-<footer><div class="wrap"><b>VETORIAL TECH</b><br><a href="./">Vênus</a> · <a href="vindex.html">Vindex</a> · <a href="vortex.html">Vortex</a> · <a href="velox.html">Velox</a><br><small>© <span id="ano"></span> Vetorial Tech</small></div></footer>
+<footer><div class="wrap"><b>VETORIAL TECH</b><br><a href="./">Vênus</a> · <a href="vindex.html">Vindex</a> · <a href="vortex.html">Vortex</a> · <a href="velox.html">Velox</a> · <a href="voxix.html">Voxix</a> · <a data-instagram hidden href="#" rel="noopener" target="_blank">Instagram</a><br><small>© <span id="ano"></span> Vetorial Tech</small></div></footer>
 
 <script src="config.js"></script>
+<script src="vitrine.js" defer></script>
 <script>
   document.getElementById("ano").textContent = new Date().getFullYear();
   [["vx-android","velox-android"],["vx-android2","velox-android"],["vx-windows","velox-windows"],["vx-windows2","velox-windows"]].forEach(([i, a]) => { document.getElementById(i).href = VENUS.api + "/atualizacao?app=" + a + "&baixar=1"; });
