@@ -11,4 +11,4 @@ window.VENUS.baixarMac = `${window.VENUS.api}/atualizacao?app=mac&baixar=1`;
 window.VENUS.web = `${window.VENUS.api}/app/`;
 
 // Redes da Vetorial Tech. Preencha o endereço quando o Instagram existir: o link aparece sozinho em todas as páginas.
-window.VENUS.instagram = "";
+window.VENUS.instagram = "https://www.instagram.com/vetorial_tech/";
