@@ -10,6 +10,7 @@
 //   GET/POST/DELETE /voxix/bloqueios      → bloquear e desbloquear
 //   POST /voxix/denuncias {apelido, motivo, trecho?} → fila de revisão
 //   /voxix/comunidades…, /voxix/convites/…, /voxix/salas/…/ws → comunidades, salas e convites (ver comunidades.js)
+//   POST /voxix/pontuar                   → ditado (põe vírgulas, pontos e maiúsculas no texto falado)
 //   POST /voxix/transcrever               → ditado (áudio curto vira texto; o áudio não é guardado)
 import { ErroLoja } from "../loja/lojas.js";
 import { aleatorio } from "../loja/cripto.js";
@@ -19,7 +20,7 @@ import { tratarComunidades } from "./comunidades.js";
 export const ehRotaVoxix = (c) => c.startsWith("/voxix/");
 export const MAX_TEXTO = 2000;
 export const MAX_AUDIO = 1_000_000; // ~1 MB: ditado curto
-export const LIMITE_DIARIO = { denuncia: 20, transcricao: 60, mensagem: 3000, comunidade: 10 };
+export const LIMITE_DIARIO = { denuncia: 20, transcricao: 60, mensagem: 3000, comunidade: 10, pontuacao: 400 };
 const RESERVADOS = new Set(["admin", "administrador", "voxix", "vetorial", "suporte", "moderador", "sistema", "root", "ajuda", "oficial"]);
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS" };
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS } });
@@ -189,6 +190,27 @@ export async function transcrever(env, usuario, bytes, tipo, agora = Date.now())
   return { texto: String(r?.text ?? "").trim().slice(0, MAX_TEXTO), tipo: String(tipo || "").slice(0, 40) };
 }
 
+const PALAVRAS = (t) => String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+
+/** Ditado: devolve o mesmo texto com vírgulas, pontos, interrogação e maiúsculas. Se a IA mexer nas palavras, devolve o texto original. */
+export async function pontuar(env, usuario, texto, agora = Date.now()) {
+  const original = String(texto ?? "").replace(/\u0000/g, "").trim();
+  if (!original) throw new ErroLoja(400, "texto_vazio", "Não chegou texto.");
+  if (original.length > MAX_TEXTO) throw new ErroLoja(413, "texto_grande", "Texto longo demais.");
+  if (!env.AI) throw new ErroLoja(503, "pontuacao_indisponivel", "A pontuação automática ainda não está ligada no servidor.");
+  await gastar(env, usuario, "pontuacao", agora);
+  const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
+    messages: [
+      { role: "system", content: "Você revisa textos ditados em português do Brasil. Devolva exatamente o mesmo texto com a pontuação e as letras maiúsculas corretas: vírgulas, pontos finais, pontos de interrogação e de exclamação, dois-pontos e travessão quando fizer sentido, e uma letra maiúscula no começo de cada frase e em nomes próprios. NÃO troque, NÃO tire e NÃO acrescente nenhuma palavra. Responda só com o texto revisado, sem aspas e sem explicações." },
+      { role: "user", content: original },
+    ],
+    max_tokens: 900, temperature: 0,
+  });
+  const saida = String(r?.response ?? "").trim().replace(/^["“]|["”]$/g, "").trim();
+  const igual = saida && PALAVRAS(saida).join(" ") === PALAVRAS(original).join(" ");
+  return { texto: igual ? saida.slice(0, MAX_TEXTO) : original, ajustado: !!igual };
+}
+
 export async function tratarVoxix(req, env, url, caminho) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   try {
@@ -217,6 +239,7 @@ export async function tratarVoxix(req, env, url, caminho) {
     const m = /^\/voxix\/bloqueios\/([A-Za-z0-9_]{3,20})$/.exec(caminho);
     if (m && req.method === "DELETE") return json(await desbloquear(env, u, m[1]));
     if (caminho === "/voxix/denuncias" && req.method === "POST") return json(await denunciar(env, u, await corpo(req)), 201);
+    if (caminho === "/voxix/pontuar" && req.method === "POST") return json(await pontuar(env, u, (await corpo(req)).texto));
     if (caminho === "/voxix/transcrever" && req.method === "POST") {
       const buf = await req.arrayBuffer();
       return json(await transcrever(env, u, buf, req.headers.get("content-type")));

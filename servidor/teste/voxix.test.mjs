@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { bancoDeTeste } from "./d1.mjs";
 import { cadastrar } from "../src/id/conta.js";
-import { apelidoValido, criarPerfil, enviar, bloquear, desbloquear, listarBloqueios, denunciar, transcrever, gastar, tratarVoxix, LIMITE_DIARIO, MAX_TEXTO } from "../src/voxix/rotas.js";
+import { apelidoValido, criarPerfil, enviar, bloquear, desbloquear, listarBloqueios, denunciar, transcrever, pontuar, gastar, tratarVoxix, LIMITE_DIARIO, MAX_TEXTO } from "../src/voxix/rotas.js";
 import { CaixaVoxix, MAX_FILA, VALIDADE_MS } from "../src/voxix/caixa.js";
 
 process.removeAllListeners("warning");
@@ -134,6 +134,18 @@ test("ditado: precisa do serviço ligado, áudio vazio ou longo demais é recusa
   assert.equal((await erro(transcrever(env, a.id, new ArrayBuffer(0), "audio/webm", T0))).codigo, "audio_vazio");
   assert.equal((await erro(transcrever(env, a.id, new ArrayBuffer(1_000_001), "audio/webm", T0))).codigo, "audio_grande");
   assert.equal((await transcrever(env, a.id, new Uint8Array([1, 2, 3]).buffer, "audio/webm", T0)).texto, "oi pessoal");
+});
+
+test("ditado: pontuação só vale se as palavras continuam as mesmas", async () => {
+  const env = ENV();
+  const a = await pessoa(env, "a@exemplo.com", "ana");
+  assert.equal((await erro(pontuar(env, a.id, "oi tudo bem", T0))).codigo, "pontuacao_indisponivel");
+  env.AI = { run: async (modelo, e) => { assert.match(modelo, /llama/); return { response: "Oi, tudo bem?" }; } };
+  assert.deepEqual(await pontuar(env, a.id, "oi tudo bem", T0), { texto: "Oi, tudo bem?", ajustado: true });
+  env.AI = { run: async () => ({ response: "Olá, como vai você?" }) };
+  assert.deepEqual(await pontuar(env, a.id, "oi tudo bem", T0), { texto: "oi tudo bem", ajustado: false });
+  assert.equal((await erro(pontuar(env, a.id, "   ", T0))).codigo, "texto_vazio");
+  assert.equal((await erro(pontuar(env, a.id, "x".repeat(MAX_TEXTO + 1), T0))).codigo, "texto_grande");
 });
 
 test("rotas: exigem login, e o perfil/busca/mensagem funcionam pela API", async () => {
