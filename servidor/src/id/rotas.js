@@ -4,7 +4,7 @@ import { ErroLoja, comPrivilegios } from "../loja/lojas.js";
 import { contaComAcesso, MSG_SEM_ACESSO } from "./acesso.js";
 import { emitirSelo, chavePublicaDoSelo } from "./selo.js";
 import { canaisDisponiveis } from "./envio.js";
-import { ErroId, cadastrar, confirmarRecuperacao, pedirRecuperacao, salvarTelefone, perfilPublico, salvarPerfil, tokenDeApp, encerrarSessao, entrar, gravarSync, lerSync, listarDispositivos, reativar, removerDispositivo, renovarToken, tokenDoPedido, validarSessao } from "./conta.js";
+import { ErroId, cadastrar, confirmarRecuperacao, existeConta, pedirRecuperacao, salvarTelefone, perfilPublico, salvarPerfil, tokenDeApp, encerrarSessao, entrar, gravarSync, lerSync, listarDispositivos, reativar, removerDispositivo, renovarToken, tokenDoPedido, validarSessao } from "./conta.js";
 import { paginaDeLogin, paginaSso } from "./pagina.js";
 import { ehAdmin } from "../dev/admin.js";
 
@@ -66,6 +66,7 @@ export async function tratarId(req, env, url, caminho) {
     if (caminho === "/id/entrar" && req.method === "POST") return json(await comLicenca(env, await entrar(env, await corpo(req)), origem));
     if (caminho === "/id/chave-publica" && req.method === "GET") return json({ alg: "Ed25519", x: await chavePublicaDoSelo(env) });
     if (caminho === "/id/recuperar/canais" && req.method === "GET") return json({ canais: canaisDisponiveis(env) });
+    if (caminho === "/id/recuperar/existe" && req.method === "POST") return json(await existeConta(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
     if (caminho === "/id/recuperar/pedir" && req.method === "POST") return json(await pedirRecuperacao(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
     if (caminho === "/id/recuperar/confirmar" && req.method === "POST") return json(await confirmarRecuperacao(env, await corpo(req)));
     if (caminho === "/id/reativar" && req.method === "POST") return json(await reativar(env, tokenDoPedido(req), (await corpo(req)).encerrar));

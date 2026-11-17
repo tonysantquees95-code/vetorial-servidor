@@ -46,10 +46,10 @@ function lerDispositivo(d) {
   return { bruto: id, nome: String(d.nome || plataforma).trim().slice(0, 60) || plataforma, plataforma };
 }
 
-async function limitarTentativas(env, chave, agora) {
+async function limitarTentativas(env, chave, agora, max = 8) {
   await env.DB.prepare("DELETE FROM id_tentativas WHERE quando < ?").bind(agora - 15 * 60_000).run();
   const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM id_tentativas WHERE chave = ? AND quando > ?").bind(chave, agora - 15 * 60_000).first();
-  if (n.n >= 8) throw new ErroId(429, "muitas_tentativas", "Muitas tentativas. Espere alguns minutos e tente de novo.");
+  if (n.n >= max) throw new ErroId(429, "muitas_tentativas", "Muitas tentativas. Espere alguns minutos e tente de novo.");
 }
 
 export async function cadastrar(env, { email, senha, nome, dispositivo, app, lojaExistente, telefone, exigirTelefone = false, ip = "" }, agora = Date.now()) {
@@ -279,13 +279,24 @@ export async function pedirRecuperacao(env, { email, canal }, ip = "", agora = D
   await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recip:${ip || "?"}`, agora).run();
   const u = await env.DB.prepare("SELECT * FROM usuarios WHERE email = ?").bind(email).first();
   const destino = u ? (canal === "sms" ? u.telefone : u.email) : "";
+  let enviado = true; // só vira false quando a conta existe e o provedor recusou o envio
   if (u && destino) {
     const codigo = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
     await env.DB.prepare("INSERT OR REPLACE INTO id_recuperacao (usuario, codigo_hash, canal, expira, tentativas, criado) VALUES (?, ?, ?, ?, 0, ?)")
       .bind(u.id, await sha256Hex(`rec:${u.id}:${codigo}`), canal, agora + CODIGO_MS, agora).run();
-    try { await enviarCodigo(env, canal, destino, codigo); } catch { /* o app só diz "se existir, enviamos" */ }
+    try { enviado = (await enviarCodigo(env, canal, destino, codigo)) !== false; } catch { enviado = false; }
   }
-  return { ok: true, mensagem: "Se existir uma conta com esse e-mail, enviamos um código.", minutos: 10 };
+  return { ok: true, enviado, mensagem: "Se existir uma conta com esse e-mail, enviamos um código.", minutos: 10 };
+}
+
+/** A tela de "esqueci a senha" só libera o envio se o e-mail tem conta. Limite por IP para não servir de lista de e-mails. */
+export async function existeConta(env, { email }, ip = "", agora = Date.now()) {
+  email = emailLimpo(email);
+  await limitarTentativas(env, `recv:${ip || "?"}`, agora, 30);
+  await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recv:${ip || "?"}`, agora).run();
+  if (!EMAIL.test(email)) return { ok: true, existe: false };
+  const u = await env.DB.prepare("SELECT 1 AS x FROM usuarios WHERE email = ?").bind(email).first();
+  return { ok: true, existe: !!u };
 }
 
 export async function confirmarRecuperacao(env, { email, codigo, novaSenha }, agora = Date.now()) {

@@ -22,6 +22,7 @@ input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #ffffff2a
 .aviso li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #ffffff14}
 .aviso button{border:1px solid #ffffff33;background:#ffffff14;color:#fff;border-radius:10px;padding:7px 10px}
 .aviso .cancel{width:100%;margin-top:6px}
+.rt{margin:0 0 6px;font-size:22px}
 .rod{margin-top:16px;text-align:center;font-size:12px;color:#8d8da8}
 
 .marca{display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 20px;text-align:center}
@@ -46,7 +47,7 @@ input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #ffffff2a
 <div class="carro" aria-label="Aplicativos da Vetorial Tech"><div class="trilho"><div class="cartao"><i class="ic ic-venus" aria-hidden="true"></i><div><strong>Vênus</strong><small>Assistente pessoal e comercial</small></div></div><div class="cartao"><i class="ic ic-vindex" aria-hidden="true"></i><div><strong>Vindex</strong><small>App da suíte Vetorial</small></div></div><div class="cartao"><i class="ic ic-vortex" aria-hidden="true"></i><div><strong>Vortex</strong><small>Seus jogos e emuladores</small></div></div><div class="cartao"><i class="ic ic-velox" aria-hidden="true"></i><div><strong>Velox Search</strong><small>Busca e navegador gamer</small></div></div><div class="cartao dup" aria-hidden="true"><i class="ic ic-venus" aria-hidden="true"></i><div><strong>Vênus</strong><small>Assistente pessoal e comercial</small></div></div><div class="cartao dup" aria-hidden="true"><i class="ic ic-vindex" aria-hidden="true"></i><div><strong>Vindex</strong><small>App da suíte Vetorial</small></div></div><div class="cartao dup" aria-hidden="true"><i class="ic ic-vortex" aria-hidden="true"></i><div><strong>Vortex</strong><small>Seus jogos e emuladores</small></div></div><div class="cartao dup" aria-hidden="true"><i class="ic ic-velox" aria-hidden="true"></i><div><strong>Velox Search</strong><small>Busca e navegador gamer</small></div></div></div></div>
 <main>
 <h1>Entrar no Vetorial ID</h1><p class="s">Entre ou crie a sua conta para usar em todos os apps.</p>
-<div class="abas" role="tablist"><button id="tEntrar" role="tab" aria-selected="true">Entrar</button><button id="tCriar" role="tab" aria-selected="false">Criar conta</button></div>
+<div class="abas" id="abas" role="tablist"><button id="tEntrar" role="tab" aria-selected="true">Entrar</button><button id="tCriar" role="tab" aria-selected="false">Criar conta</button></div>
 <form id="f" autocomplete="on">
 <div id="cNome" hidden><label for="nome">Nome da loja ou seu nome</label><input id="nome" autocomplete="organization"></div>
 <div id="cFone" hidden><label for="fone">Celular com DDD (para recuperar a senha)</label><input id="fone" type="tel" autocomplete="tel" placeholder="51 99999-9999"></div>
@@ -54,17 +55,24 @@ input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #ffffff2a
 <label for="senha">Senha</label><input id="senha" type="password" required minlength="8" autocomplete="current-password">
 <button class="go" id="ok" type="submit">Entrar</button></form>
 <div id="msg" role="status" aria-live="polite"></div><div id="extra"></div>
-<p class="s" style="text-align:center"><a href="#" id="esqueci">Esqueci minha senha</a></p>
-<form id="rec" hidden><label for="rcanal">Receber o código por</label><select id="rcanal"><option value="email">E-mail</option><option value="sms">SMS</option></select>
-<button class="go" id="rpedir" type="button">Enviar código</button>
-<div id="rcod" hidden><label for="rc">Código de 6 dígitos</label><input id="rc" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><label for="rn">Nova senha</label><input id="rn" type="password" minlength="8" autocomplete="new-password"><button class="go" id="rok" type="submit">Trocar a senha</button></div></form>
+<p class="s" id="pEsq" style="text-align:center"><a href="#" id="esqueci">Esqueci minha senha</a></p>
+<section id="rec" hidden>
+<div id="r1"><h2 class="rt">Recuperar a senha</h2><p class="s">Digite o e-mail da sua conta. Vamos enviar um código de 6 dígitos.</p>
+<label for="remail">E-mail</label><input id="remail" type="email" autocomplete="username" inputmode="email">
+<button class="go" id="rpedir" type="button" disabled>Enviar código</button>
+<p class="s" style="text-align:center"><a href="#" class="rvolta">Voltar ao login</a></p></div>
+<form id="r2" hidden><h2 class="rt">Digite o código</h2><p class="s" id="rinfo"></p>
+<label for="rc">Código de 6 dígitos</label><input id="rc" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+<label for="rn">Nova senha</label><input id="rn" type="password" minlength="8" autocomplete="new-password">
+<button class="go" id="rok" type="submit">Trocar a senha</button>
+<p class="s" style="text-align:center"><a href="#" id="routro">Usar outro e-mail</a> · <a href="#" class="rvolta">Voltar ao login</a></p></form></section>
 <div class="rod">Até 3 aparelhos vinculados, 2 usando ao mesmo tempo.</div></main>
 <script>
 const CFG=${cfg};
 const $=(i)=>document.getElementById(i);
 const q=new URLSearchParams(location.search);
 let criar=false,pendente=null;
-function aba(c){criar=c;$("tEntrar").setAttribute("aria-selected",!c);$("tCriar").setAttribute("aria-selected",c);$("cNome").hidden=!c;$("cFone").hidden=!c;$("fone").required=c;$("rec").hidden=true;$("ok").textContent=c?"Criar conta":"Entrar";$("senha").autocomplete=c?"new-password":"current-password";}
+function aba(c){criar=c;$("tEntrar").setAttribute("aria-selected",!c);$("tCriar").setAttribute("aria-selected",c);$("cNome").hidden=!c;$("cFone").hidden=!c;$("fone").required=c;$("ok").textContent=c?"Criar conta":"Entrar";$("senha").autocomplete=c?"new-password":"current-password";}
 $("tEntrar").onclick=()=>aba(false);$("tCriar").onclick=()=>aba(true);
 function aparelho(){let id="";try{id=localStorage.getItem("vid_aparelho")||"";if(!id){id=crypto.randomUUID();localStorage.setItem("vid_aparelho",id);}}catch(e){id=crypto.randomUUID();}
 const ua=navigator.userAgent;const ios=/iPhone|iPad/.test(ua);const win=/Windows/.test(ua);const mac=/Macintosh/.test(ua)&&!ios;const and=/Android/.test(ua);
@@ -93,10 +101,20 @@ else msg(d.error||"Não deu certo. Tente de novo.");
 }catch(e){msg("Sem conexão. Tente de novo.");}
 $("ok").disabled=false;}
 $("f").onsubmit=(e)=>{e.preventDefault();enviar({});};
-$("esqueci").onclick=(e)=>{e.preventDefault();$("rec").hidden=!$("rec").hidden;};
+const EML=/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/;
+function tela(t){const l=t==="login";$("f").hidden=!l;$("abas").hidden=!l;$("pEsq").hidden=!l;$("extra").hidden=!l;$("rec").hidden=l;$("r1").hidden=t!=="r1";$("r2").hidden=t!=="r2";msg("");}
 async function rec(caminho,corpo){const r=await fetch(caminho,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(corpo)});return{ok:r.ok,d:await r.json()};}
-$("rpedir").onclick=async()=>{msg("");try{const x=await rec("/id/recuperar/pedir",{email:$("email").value,canal:$("rcanal").value});if(x.ok){$("rcod").hidden=false;msg(x.d.mensagem);}else msg(x.d.error||"Não consegui enviar.");}catch(e){msg("Sem conexão. Tente de novo.");}};
-$("rec").onsubmit=async(e)=>{e.preventDefault();msg("");try{const x=await rec("/id/recuperar/confirmar",{email:$("email").value,codigo:$("rc").value,novaSenha:$("rn").value});if(x.ok){$("rec").hidden=true;msg("Senha trocada. Entre com a nova senha.");}else msg(x.d.error||"Não deu certo.");}catch(e){msg("Sem conexão. Tente de novo.");}};
+$("esqueci").onclick=(e)=>{e.preventDefault();$("remail").value=$("email").value;tela("r1");$("remail").oninput();$("remail").focus();};
+for(const a of document.querySelectorAll(".rvolta"))a.onclick=(e)=>{e.preventDefault();tela("login");};
+$("routro").onclick=(e)=>{e.preventDefault();tela("r1");$("remail").focus();};
+let esperaR=0,contaR=0;
+$("remail").oninput=()=>{const v=$("remail").value.trim(),n=++contaR;$("rpedir").disabled=true;clearTimeout(esperaR);msg("");if(!EML.test(v))return;
+esperaR=setTimeout(async()=>{try{const x=await rec("/id/recuperar/existe",{email:v});if(n!==contaR)return;if(x.ok&&x.d.existe)$("rpedir").disabled=false;else if(x.ok)msg("Não encontramos uma conta com esse e-mail.");else msg(x.d.error||"Não consegui conferir o e-mail.");}catch(e){if(n===contaR)msg("Sem conexão. Tente de novo.");}},700);};
+$("rpedir").onclick=async()=>{msg("");$("rpedir").disabled=true;const v=$("remail").value.trim();try{const x=await rec("/id/recuperar/pedir",{email:v,canal:"email"});
+if(x.ok&&x.d.enviado!==false){$("rinfo").textContent="Enviamos um código para "+v+". Ele vale por 10 minutos.";$("rc").value="";$("rn").value="";tela("r2");$("rc").focus();}
+else{msg(x.ok?"Não consegui enviar o e-mail agora. Tente de novo em instantes.":(x.d.error||"Não consegui enviar."));$("rpedir").disabled=false;}}catch(e){msg("Sem conexão. Tente de novo.");$("rpedir").disabled=false;}};
+$("r2").onsubmit=async(e)=>{e.preventDefault();msg("");try{const x=await rec("/id/recuperar/confirmar",{email:$("remail").value.trim(),codigo:$("rc").value,novaSenha:$("rn").value});
+if(x.ok){$("email").value=$("remail").value.trim();$("senha").value="";tela("login");msg("Senha trocada. Entre com a nova senha.",true);}else msg(x.d.error||"Não deu certo.");}catch(e){msg("Sem conexão. Tente de novo.");}};
 </script></body></html>`;
 }
 

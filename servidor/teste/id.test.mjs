@@ -282,6 +282,13 @@ test("recuperação: código por e-mail/SMS, 5 tentativas, troca a senha e derru
   // conta que não existe recebe a mesma resposta e nada é enviado
   assert.equal((await chamarId(env, "POST", "/id/recuperar/pedir", { email: "naoexiste@b.com", canal: "email" })).ok, true);
   assert.equal(enviados.length, 0);
+  // a tela só libera o envio se o e-mail tem conta; e avisa quando o provedor recusa
+  assert.equal((await chamarId(env, "POST", "/id/recuperar/existe", { email: "naoexiste@b.com" })).existe, false);
+  assert.equal((await chamarId(env, "POST", "/id/recuperar/existe", { email: "R@b.com" })).existe, true);
+  const antes = env.fetchEnvio;
+  env.fetchEnvio = async () => new Response("{}", { status: 403 });
+  assert.equal((await chamarId(env, "POST", "/id/recuperar/pedir", { email: "r@b.com", canal: "email" })).enviado, false);
+  env.fetchEnvio = antes;
   assert.equal((await chamarId(env, "POST", "/id/recuperar/pedir", { email: "r@b.com", canal: "sms" })).ok, true);
   assert.match(enviados[0].u, /twilio/);
   assert.match(decodeURIComponent(enviados[0].corpo), /To=\+5551966665555/);
