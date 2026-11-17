@@ -231,7 +231,7 @@ export async function listarDispositivos(env, ctx, agora = Date.now()) {
 
 // ------------------------------------------------------------------ sincronização (última escrita vence, com versão)
 export const chaveDeSync = (c) => CHAVES_SYNC.has(c) || /^empresa-[a-f0-9]{6,16}$/.test(String(c)); // "empresa-<loja>": o cadastro de cada loja extra
-export const CHAVES_SYNC = new Set(["tema", "preferencias", "modo", "sessoes", "catalogo", "marketing", "empresa", "ideiaspost", "postagens", "stories", "instagram", "velox", "velox-tema", "velox-senhas"]);
+export const CHAVES_SYNC = new Set(["tema", "preferencias", "modo", "sessoes", "catalogo", "marketing", "empresa", "ideiaspost", "postagens", "stories", "instagram", "velox", "velox-tema", "velox-senhas", "voz", "conexoes"]);
 const MAX_DOC = 64_000;
 
 export async function lerSync(env, ctx, desde = 0) {
