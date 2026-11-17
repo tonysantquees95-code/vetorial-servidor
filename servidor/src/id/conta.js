@@ -123,6 +123,7 @@ export async function entrar(env, { email, senha, dispositivo, encerrar, remover
     await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`login:${email}`, agora).run();
     throw new ErroId(401, "credenciais", "E-mail ou senha incorretos.");
   }
+  if (u.bloqueado) throw new ErroId(403, "conta_bloqueada", "Esta conta foi bloqueada pela administração da Vetorial Tech.");
   // no Vênus o identificador continua o mesmo de antes (contas antigas); nos outros apps ele leva o nome do app
   const devId = await sha256Hex(app === "venus" ? `vid:${u.id}:${d.bruto}` : `vid:${u.id}:${app}:${d.bruto}`);
   const jaTem = await env.DB.prepare("SELECT 1 AS x FROM dispositivos WHERE id = ? AND usuario = ?").bind(devId, u.id).first();
@@ -192,6 +193,7 @@ export async function validarSessao(env, req, { agora = Date.now(), ping = true 
   if (s.encerrada) throw new ErroId(401, "sessao_encerrada", "Esta sessão foi encerrada. Entre de novo.", { motivo: s.motivo });
   const u = await env.DB.prepare("SELECT * FROM usuarios WHERE id = ?").bind(dados.sub).first();
   if (!u) throw new ErroId(401, "sessao_inexistente", "Conta não encontrada.");
+  if (u.bloqueado) throw new ErroId(403, "conta_bloqueada", "Esta conta foi bloqueada pela administração da Vetorial Tech.");
   if (agora - s.ultimo_ping > TTL_ATIVA_MS) {
     const ativas = (await sessoesAtivas(env, u.id, agora, s.app)).filter((x) => x.sessao !== s.id);
     if (ativas.length >= MAX_ATIVAS && comLimite(env, u.email, s.app)) throw new ErroId(409, "limite_simultaneo", AVISO_LIMITE, { ativas, opcoes: ["encerrar_sessao", "cancelar"], maxAtivas: MAX_ATIVAS, sessaoAtual: s.id });

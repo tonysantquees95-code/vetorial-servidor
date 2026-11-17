@@ -3,7 +3,7 @@ import { ErroId, encerrarSessao, tokenDoPedido, validarSessao, MAX_ATIVAS, MAX_D
 import { verificar } from "../id/jwt.js";
 import { ErroLoja } from "../loja/lojas.js";
 import { TABELA } from "../ia/roteador.js";
-import { criarAdmin, emailAdmin, entrarAdmin, exigirAdmin } from "./admin.js";
+import { ehAdmin, criarAdmin, emailAdmin, entrarAdmin, exigirAdmin } from "./admin.js";
 import { PROJETOS, REPO_VALIDO, apksDoProjeto, buildsDoRepo, falhaDosBuilds, falhaDasVersoes, estadoGeral, linkDoApk, progressoDoBuild, listaDeVersoes, metricasDoRepo } from "./github.js";
 import { bi, esquecerProvedores, listarTrafego } from "./uso.js";
 import * as cofre from "./cofre.js";
@@ -175,30 +175,41 @@ async function dispositivos(env, agora = Date.now()) {
   };
 }
 
+/** Apaga o perfil e o que é só dele (aparelhos, sessões, sincronia, arquivos do Drive, Voxix...). A loja fica: pode ter pedidos e pagamentos. */
+export async function excluirUsuario(env, id) {
+  const run = (sql, ...a) => env.DB.prepare(sql).bind(...a).run();
+  await run("DELETE FROM drive_pedacos WHERE envio IN (SELECT envio FROM drive_envios WHERE usuario = ?)", id);
+  for (const tabela of ["drive_envios", "drive_arquivos", "dispositivos", "sessoes", "sync_docs", "id_recuperacao", "vindex_comandos", "vindex_presenca", "vortex_comandos", "vortex_presenca", "vortex_steam", "vortex_steam_login", "cofre_pessoal", "voxix_perfis", "voxix_bloqueios", "voxix_uso", "voxix_membros", "voxix_expulsos", "voxix_limpezas"]) await run(`DELETE FROM ${tabela} WHERE usuario = ?`, id);
+  await run("DELETE FROM voxix_mensagens WHERE de = ? OR para = ?", id, id);
+  await run("DELETE FROM voxix_denuncias WHERE de = ?", id);
+  await run("DELETE FROM usuarios WHERE id = ?", id);
+}
+
 // ------------------------------------------------------------------ usuários (quem usa os produtos, por aplicativo)
 const APPS_DO_PAINEL = ["venus", "vindex", "vortex", "vyntem", "velox", "drive", "voxix"];
 async function usuarios(env, agora = Date.now()) {
   const q = async (sql, ...a) => (await env.DB.prepare(sql).bind(...a).all()).results;
   const [contas, devs, sess] = await Promise.all([
-    q("SELECT u.id, u.email, u.nome, u.telefone, u.criado, u.rec_pin_hash AS rec, l.plano, l.pacote, l.ativo_ate AS ativoAte, l.trial_fim AS trialFim FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja ORDER BY u.criado DESC LIMIT 500"),
+    q("SELECT u.id, u.email, u.nome, u.telefone, u.criado, u.rec_pin_hash AS rec, l.plano, l.pacote, l.ativo_ate AS ativoAte, l.trial_fim AS trialFim, u.bloqueado FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja ORDER BY u.criado DESC LIMIT 500"),
     q("SELECT usuario, app, COUNT(*) AS n, MAX(ultimo) AS ultimo FROM dispositivos GROUP BY usuario, app"),
     q("SELECT s.id AS sessao, s.usuario, s.app, d.nome, d.plataforma, s.ultimo_ping AS ultimoPing FROM sessoes s JOIN dispositivos d ON d.id = s.dispositivo WHERE s.encerrada = 0 AND s.ultimo_ping > ? ORDER BY s.ultimo_ping DESC LIMIT 1000", agora - TTL_ATIVA_MS),
   ]);
   const lista = contas.map((c) => {
-    const situacao = c.plano === "dono" ? "dono" : agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
+    const admin = ehAdmin(env, c.email) || c.plano === "dono";
+    const situacao = admin ? "admin" : agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
     const apps = {};
     for (const d of devs.filter((x) => x.usuario === c.id)) apps[d.app] = { dispositivos: d.n, ativas: 0, ultimo: d.ultimo };
     for (const s of sess.filter((x) => x.usuario === c.id)) (apps[s.app] ||= { dispositivos: 0, ativas: 0, ultimo: 0 }).ativas++;
     return {
       id: c.id, email: c.email, nome: c.nome, telefone: c.telefone, criado: c.criado, recuperacao: !!c.rec,
-      situacao, pagante: situacao === "pagante" || situacao === "dono", pacote: situacao === "pagante" ? c.pacote : "", ativoAte: c.ativoAte || 0,
+      situacao, admin, bloqueado: !!c.bloqueado, pagante: situacao === "pagante", pacote: situacao === "pagante" ? c.pacote : "", ativoAte: c.ativoAte || 0,
       apps, sessoes: sess.filter((x) => x.usuario === c.id).map(({ usuario, ...resto }) => resto),
     };
   });
   const por = (f) => lista.filter(f).length;
   return {
     agora, apps: APPS_DO_PAINEL, maxDispositivos: MAX_DISPOSITIVOS, maxAtivas: MAX_ATIVAS,
-    total: lista.length, pagantes: por((u) => u.pagante), emTeste: por((u) => u.situacao === "teste"), soGratis: por((u) => u.situacao === "gratis"),
+    total: lista.length, pagantes: por((u) => u.pagante), bloqueados: por((u) => u.bloqueado), emTeste: por((u) => u.situacao === "teste"), soGratis: por((u) => u.situacao === "gratis"),
     usandoAgora: por((u) => u.sessoes.length > 0), semRecuperacao: por((u) => !u.recuperacao),
     usuarios: lista,
   };
@@ -274,6 +285,23 @@ export async function tratarDev(req, env, url, caminho) {
       if (!s) throw new ErroLoja(404, "sessao_inexistente", "Sessão não encontrada.");
       if (m[1] === ctx.sessao) throw new ErroLoja(400, "sessao_atual", "Para sair deste aparelho use Sair.");
       return json({ ok: await encerrarSessao(env, s.usuario, m[1], "encerrada_pelo_admin") });
+    }
+    m = /^\/dev\/usuarios\/([a-f0-9]{16,64})(?:\/(bloquear|desbloquear))?$/.exec(caminho);
+    if (m) {
+      const alvo = await env.DB.prepare("SELECT u.id, u.email, u.loja, l.plano, l.ativo_ate AS ativoAte FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja WHERE u.id = ?").bind(m[1]).first();
+      if (!alvo) throw new ErroLoja(404, "usuario_inexistente", "Usuário não encontrado.");
+      if (ehAdmin(env, alvo.email) || alvo.plano === "dono" || alvo.id === ctx.usuario.id) throw new ErroLoja(400, "usuario_protegido", "O administrador não pode ser bloqueado nem excluído.");
+      if (m[2] && req.method === "POST") {
+        const bloquear = m[2] === "bloquear";
+        await env.DB.prepare("UPDATE usuarios SET bloqueado = ? WHERE id = ?").bind(bloquear ? 1 : 0, alvo.id).run();
+        if (bloquear) await env.DB.prepare("UPDATE sessoes SET encerrada = 1, motivo = 'bloqueada_pelo_admin' WHERE usuario = ? AND encerrada = 0").bind(alvo.id).run();
+        return json({ ok: true, bloqueado: bloquear });
+      }
+      if (!m[2] && req.method === "DELETE") {
+        if (agora < (alvo.ativoAte || 0)) throw new ErroLoja(400, "usuario_pagante", "Esse perfil é pagante. Bloqueie em vez de excluir.");
+        await excluirUsuario(env, alvo.id);
+        return json({ ok: true });
+      }
     }
     if (caminho === "/dev/config" && req.method === "GET") {
       const cfg = await configuracoes(env);

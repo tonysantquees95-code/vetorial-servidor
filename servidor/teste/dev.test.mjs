@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { bancoDeTeste } from "./d1.mjs";
-import { cadastrar } from "../src/id/conta.js";
+import { cadastrar, entrar } from "../src/id/conta.js";
 import { entrarAdmin, criarAdmin, exigirAdmin, ehAdmin } from "../src/dev/admin.js";
 import { tratarDev, progressoDasFases } from "../src/dev/rotas.js";
 import { tratarId } from "../src/id/rotas.js";
@@ -453,4 +453,33 @@ test("usuários: por aplicativo, dispositivos e uso agora, e pagante ou só grá
   // só o dono do painel vê
   const l = await cadastrar(env, { email: "z@x.com", senha: "senha-forte-1", dispositivo: disp(7) });
   assert.notEqual((await chamar(env, l.token, "/dev/usuarios")).status, 200);
+});
+
+test("usuários: administrador aparece como admin; bloquear, desbloquear e excluir perfil", async () => {
+  const env = ENV();
+  const a = await admin(env);
+  const l = await cadastrar(env, { email: "teste@x.com", senha: "senha-forte-1", nome: "Tony teste", dispositivo: disp(8), app: "vyntem" });
+  let r = await chamar(env, a.token, "/dev/usuarios");
+  const eu = r.d.usuarios.find((u) => u.admin);
+  assert.ok(eu && eu.situacao === "admin" && eu.pagante === false);
+  const t = r.d.usuarios.find((u) => u.email === "teste@x.com");
+  // admin não se bloqueia nem se exclui
+  assert.equal((await chamar(env, a.token, `/dev/usuarios/${eu.id}/bloquear`, "POST")).status, 400);
+  assert.equal((await chamar(env, a.token, `/dev/usuarios/${eu.id}`, "DELETE")).status, 400);
+  // bloquear: derruba a sessão e impede de entrar
+  assert.equal((await chamar(env, a.token, `/dev/usuarios/${t.id}/bloquear`, "POST")).d.bloqueado, true);
+  await assert.rejects(entrar(env, { email: "teste@x.com", senha: "senha-forte-1", dispositivo: disp(8), app: "vyntem" }), (e) => e.codigo === "conta_bloqueada");
+  assert.equal((await chamar(env, a.token, `/dev/usuarios/${t.id}/desbloquear`, "POST")).d.bloqueado, false);
+  await entrar(env, { email: "teste@x.com", senha: "senha-forte-1", dispositivo: disp(8), app: "vyntem" });
+  // excluir: some tudo e o e-mail fica livre
+  assert.equal((await chamar(env, a.token, `/dev/usuarios/${t.id}`, "DELETE")).d.ok, true);
+  r = await chamar(env, a.token, "/dev/usuarios");
+  assert.equal(r.d.usuarios.some((u) => u.email === "teste@x.com"), false);
+  assert.equal((await env.DB.prepare("SELECT COUNT(*) AS n FROM dispositivos WHERE usuario = ?").bind(t.id).first()).n, 0);
+  // pagante não se exclui
+  const p = await cadastrar(env, { email: "paga@x.com", senha: "senha-forte-1", dispositivo: disp(9) });
+  await env.DB.prepare("UPDATE lojas SET ativo_ate = ? WHERE id = (SELECT loja FROM usuarios WHERE email = 'paga@x.com')").bind(Date.now() + 86_400_000).run();
+  const pid = (await chamar(env, a.token, "/dev/usuarios")).d.usuarios.find((u) => u.email === "paga@x.com");
+  assert.equal(pid.situacao, "pagante");
+  assert.equal((await chamar(env, a.token, `/dev/usuarios/${pid.id}`, "DELETE")).d.codigo, "usuario_pagante");
 });
