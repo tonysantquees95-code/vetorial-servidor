@@ -10,6 +10,8 @@ import { ehAdmin } from "../dev/admin.js";
 
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS" };
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS } });
+/** O que a conta sem plano pode sincronizar: os apps gratuitos. */
+const SYNC_GRATIS = new Set(["velox", "velox-tema", "velox-senhas"]);
 export const ehRotaDoId = (c) => c === "/id" || c.startsWith("/id/");
 
 async function corpo(req) {
@@ -101,9 +103,14 @@ export async function tratarId(req, env, url, caminho) {
       const g = url.searchParams.get("gerar") === "1";
       return json(await licenca(env, ctx.usuario, origem, g, url.searchParams.get("gateway"), url.searchParams.get("pacote") || "venus", "", url.searchParams.get("forma") || "recorrente"));
     }
-    if (caminho.startsWith("/id/sync") && !(await contaComAcesso(env, ctx.usuario))) throw new ErroId(402, "teste_acabou", MSG_SEM_ACESSO);
-    if (caminho === "/id/sync" && req.method === "GET") return json(await lerSync(env, ctx, Number(url.searchParams.get("desde")) || 0));
+    // Quem não tem plano (conta só dos apps grátis, Velox e Vyntem) sincroniza apenas os dados desses apps.
+    const semPlano = caminho.startsWith("/id/sync") && !(await contaComAcesso(env, ctx.usuario));
+    if (caminho === "/id/sync" && req.method === "GET") {
+      const r = await lerSync(env, ctx, Number(url.searchParams.get("desde")) || 0);
+      return json(semPlano ? { ...r, docs: r.docs.filter((d) => SYNC_GRATIS.has(d.chave)) } : r);
+    }
     m = /^\/id\/sync\/([a-z-]{3,20})$/.exec(caminho);
+    if (m && semPlano && !SYNC_GRATIS.has(m[1])) throw new ErroId(402, "teste_acabou", MSG_SEM_ACESSO);
     if (m && req.method === "PUT") {
       const d = await corpo(req);
       return json(await gravarSync(env, ctx, m[1], d.valor, d.versao ?? 0));
