@@ -161,3 +161,12 @@ footer a{color:var(--suave)}
 .anim-voxix .corre.c0{stroke:#ff2a2a}.anim-voxix .corre.c1{stroke:#2aff5a}.anim-voxix .corre.c2{stroke:#2a6bff}
 .anim img{background:none!important;box-shadow:none!important;border-radius:0!important;filter:none}
 .anim-vortex{--t:340px}.ic .anim-vortex{--t:56px}
+
+/* abas dos produtos no celular (o menu do topo some em telas pequenas) */
+.abas-m{display:none}
+@media(max-width:700px){
+  .abas-m{display:flex;gap:8px;overflow-x:auto;padding:8px 12px;border-top:1px solid var(--borda);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .abas-m::-webkit-scrollbar{display:none}
+  .abas-m a{flex:none;padding:8px 14px;border-radius:99px;font-size:14px;font-weight:600;text-decoration:none;color:#fff;border:1px solid var(--borda);background:#ffffff0d}
+  .abas-m a[aria-current]{background:linear-gradient(135deg,#ec6fd633,#7aa2ff33);border-color:#ec6fd6}
+}
