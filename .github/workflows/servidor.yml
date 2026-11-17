@@ -77,6 +77,24 @@ jobs:
           find "$GITHUB_WORKSPACE/site/app" -name '*.map' -delete
           test -f "$GITHUB_WORKSPACE/site/app/index.html"
 
+      # O Voxix web (o que o iPhone e o navegador usam, instalável pela tela de início) vai junto, em /voxix-app/.
+      # O repositório do Voxix é público, então não precisa de token. Mexeu no Voxix web? Rode esta publicação de novo.
+      - name: Buscar o código do Voxix (público)
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/voxix
+          path: voxix
+          sparse-checkout: app
+      - name: Montar o Voxix web em site/voxix-app
+        working-directory: voxix/app
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          rm -rf "$GITHUB_WORKSPACE/site/voxix-app"
+          cp -r dist "$GITHUB_WORKSPACE/site/voxix-app"
+          find "$GITHUB_WORKSPACE/site/voxix-app" -name '*.map' -delete
+          test -f "$GITHUB_WORKSPACE/site/voxix-app/index.html"
+
       - name: Banco D1 (cria na primeira vez)
         run: |
           id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="venus") | .uuid' | head -1)
