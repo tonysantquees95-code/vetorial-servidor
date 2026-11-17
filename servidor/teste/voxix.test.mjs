@@ -189,3 +189,19 @@ test("histórico em lotes", async () => {
   const l2 = await historico(env, a.id, { desde: l1.mensagens.at(-1).criado, limite: 3 });
   assert.deepEqual(l2.mensagens.map((m) => m.corpo), ["m3", "m4"]); assert.equal(l2.mais, false);
 });
+
+test("avatar: pronto ou foto pequena, só quem é dono muda, consulta em lote", async () => {
+  const { definirAvatar, avatares, avatarValido } = await import("../src/voxix/rotas.js");
+  const env = ENV();
+  const a = await pessoa(env, "a@av.com", "alfa");
+  const b = await pessoa(env, "b@av.com", "bravo");
+  assert.equal((await definirAvatar(env, a.id, "p:robo")).avatar, "p:robo");
+  const foto = "f:data:image/jpeg;base64," + "A".repeat(500);
+  await definirAvatar(env, b.id, foto);
+  const r = await avatares(env, "alfa,BRAVO,ninguem,x");
+  assert.equal(r.alfa, "p:robo"); assert.equal(r.bravo, foto); assert.ok(!("ninguem" in r) && !("x" in r));
+  assert.equal(avatarValido(""), null);
+  for (const ruim of ["p:Robo!", "http://x.com/a.png", "f:data:text/html;base64,AAAA", "f:data:image/jpeg;base64," + "A".repeat(70_000)]) assert.equal((await erro(Promise.resolve().then(() => avatarValido(ruim)))).status, 400);
+  await definirAvatar(env, a.id, null);
+  assert.equal((await avatares(env, "alfa")).alfa, null);
+});

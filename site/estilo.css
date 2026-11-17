@@ -6,7 +6,7 @@ a{color:inherit}img{max-width:100%}
 .topo{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);background:#070914b8;border-bottom:1px solid var(--borda)}
 .topo .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
 .marca{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.14em;text-decoration:none;font-size:15px}
-.marca img{width:30px;height:30px;border-radius:50%}
+.marca img{width:auto;height:72px;border-radius:0;display:block}
 .topo nav{display:flex;gap:18px;align-items:center;font-size:14px;color:var(--suave)}
 .topo nav a{text-decoration:none}.topo nav a:hover{color:#fff}
 @media(max-width:700px){.topo nav .ocultar{display:none}}
@@ -99,7 +99,7 @@ footer a{color:var(--suave)}
 .vitrine .it .nome{display:block;color:var(--texto);font-size:12px;line-height:1.25;min-height:30px}
 .vitrine .exemplo{font-size:11px;color:var(--suave);margin-left:auto;font-weight:500;border:1px solid var(--borda);border-radius:99px;padding:2px 10px}
 .grat-mini{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:99px;background:#8ff0b41f;border:1px solid #8ff0b466;color:var(--verde);font-size:12px;font-weight:700;vertical-align:middle}
-.marca img{border-radius:8px}
+
 .aviso ol{margin:10px 0 0;padding-left:22px}.aviso li{margin:4px 0}.aviso.protect{text-align:left;max-width:760px;margin:22px auto 0}
 
 /* vídeo de demonstração (aparece só quando o arquivo existe) */
@@ -107,3 +107,22 @@ footer a{color:var(--suave)}
 .tela-video{display:grid;place-items:center}
 .tela-video video{width:min(300px,78vw);max-height:620px;border-radius:30px;border:1px solid var(--borda);background:#000;box-shadow:0 30px 90px #7aa2ff33}
 .titulo.menor{margin-bottom:24px}
+
+/* cabeçalho com o logo oficial (V grande) e o Instagram bem à vista */
+.topo .wrap{height:88px}
+.topo .wrap .marca{flex:none}
+.ig{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:99px;font-weight:700;font-size:15px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#EC6FD6,#7aa2ff);box-shadow:0 6px 22px #ec6fd644;margin-right:auto;transition:transform .2s,box-shadow .2s}
+.ig:hover{transform:translateY(-2px);box-shadow:0 10px 30px #ec6fd666}
+.ig svg{flex:none}
+.faixa-ig{display:none;align-items:center;justify-content:center;gap:8px;padding:8px 12px;font-size:14px;text-decoration:none;color:#fff;background:linear-gradient(90deg,#ec6fd62e,#7aa2ff2e);border-top:1px solid var(--borda)}
+.faixa-ig b{color:#fff}
+@media(max-width:700px){
+  .topo .wrap{height:68px}
+  .marca img{height:54px}
+  .topo .ig{display:none}
+  .faixa-ig{display:flex}
+}
+.topo nav{gap:14px;white-space:nowrap}
+.topo nav a{font-size:13.5px}
+.topo nav .btn.p{font-size:14px}
+@media(max-width:1000px){.topo nav .ocultar{display:none}}

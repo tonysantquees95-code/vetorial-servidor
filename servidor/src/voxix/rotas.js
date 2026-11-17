@@ -39,10 +39,36 @@ export function apelidoValido(a) {
 const nomeLimpo = (n, padrao) => String(n || padrao || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 40) || padrao;
 const hoje = (agora) => new Date(agora).toISOString().slice(0, 10);
 
-async function corpo(req, max = 20_000) {
+async function corpo(req, max = 90_000) {
   const t = await req.text();
   if (t.length > max) throw new ErroLoja(413, "corpo_grande", "Pedido grande demais.");
   try { const d = JSON.parse(t || "{}"); return d && typeof d === "object" && !Array.isArray(d) ? d : {}; } catch { throw new ErroLoja(400, "json_invalido", "O corpo precisa ser um JSON válido."); }
+}
+
+export const MAX_AVATAR = 60_000;
+/** Aceita só um avatar pronto ("p:robo") ou uma foto pequena em data URL; vazio remove. */
+export function avatarValido(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const t = String(v);
+  if (/^p:[a-z0-9_]{1,24}$/.test(t)) return t;
+  if (t.length <= MAX_AVATAR && /^f:data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(t)) return t;
+  throw new ErroLoja(400, "avatar_invalido", "Essa foto não serve. Escolha um avatar ou uma imagem pequena (JPG, PNG ou WebP).");
+}
+export async function definirAvatar(env, usuario, avatar) {
+  const p = await perfilDe(env, usuario);
+  if (!p) throw new ErroLoja(409, "sem_perfil", "Crie o seu perfil do Voxix antes.");
+  const a = avatarValido(avatar);
+  await env.DB.prepare("UPDATE voxix_perfis SET avatar = ? WHERE usuario = ?").bind(a, usuario).run();
+  return { avatar: a };
+}
+/** Avatares de várias pessoas de uma vez (para as conversas e a lista). */
+export async function avatares(env, apelidos) {
+  const lista = [...new Set(String(apelidos || "").split(",").map((x) => x.trim()).filter((x) => /^[A-Za-z0-9_]{3,20}$/.test(x)))].slice(0, 60);
+  const r = {};
+  if (!lista.length) return r;
+  const { results } = await env.DB.prepare(`SELECT apelido, avatar FROM voxix_perfis WHERE apelido IN (${lista.map(() => "?").join(",")})`).bind(...lista).all();
+  for (const x of results || []) r[x.apelido.toLowerCase()] = x.avatar || null;
+  return r;
 }
 
 async function perfilDe(env, usuario) {
@@ -173,12 +199,14 @@ export async function tratarVoxix(req, env, url, caminho) {
     if ((caminho === "/voxix/ws" || /^\/voxix\/salas\/[A-Za-z0-9]+\/ws$/.test(caminho)) && url.searchParams.get("token")) pedido = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get("token")}` } });
     const ctx = await validarSessao(env, pedido, {});
     const u = ctx.usuario.id;
-    if (caminho === "/voxix/perfil" && req.method === "GET") { const p = await perfilDe(env, u); return json(p ? { apelido: p.apelido, nome: p.nome } : { apelido: null, nomeSugerido: ctx.usuario.nome || "" }); }
+    if (caminho === "/voxix/perfil" && req.method === "GET") { const p = await perfilDe(env, u); return json(p ? { apelido: p.apelido, nome: p.nome, avatar: p.avatar || null } : { apelido: null, nomeSugerido: ctx.usuario.nome || "" }); }
+    if (caminho === "/voxix/perfil/avatar" && req.method === "PUT") return json(await definirAvatar(env, u, (await corpo(req)).avatar));
+    if (caminho === "/voxix/avatares" && req.method === "GET") return json({ avatares: await avatares(env, url.searchParams.get("apelidos")) });
     if (caminho === "/voxix/perfil" && req.method === "PUT") return json(await criarPerfil(env, u, await corpo(req), ctx.usuario.nome), 201);
     if (caminho === "/voxix/buscar" && req.method === "GET") {
       const a = await perfilPorApelido(env, apelidoValido(url.searchParams.get("apelido")));
       if (!a) throw new ErroLoja(404, "pessoa_inexistente", "Não achei ninguém com esse apelido.");
-      return json({ apelido: a.apelido, nome: a.nome });
+      return json({ apelido: a.apelido, nome: a.nome, avatar: a.avatar || null });
     }
     if (caminho === "/voxix/mensagens" && req.method === "POST") return json(await enviar(env, u, await corpo(req)), 201);
     if (caminho === "/voxix/historico" && req.method === "GET") return json(await historico(env, u, { desde: url.searchParams.get("desde"), limite: url.searchParams.get("limite") }));
