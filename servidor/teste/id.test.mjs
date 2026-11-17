@@ -239,10 +239,9 @@ test("telefone: aceita formatos comuns de celular BR e recusa o resto", () => {
   assert.equal(telefoneLimpo("5133334444"), ""); // fixo
 });
 
-test("cadastro exige celular e devolve selo assinado que só vale com a chave certa", async () => {
+test("cadastro não exige celular (a recuperação é só por e-mail) e devolve selo assinado que só vale com a chave certa", async () => {
   const env = mundo2();
-  assert.equal((await chamarId(env, "POST", "/id/cadastrar", { email: "a@b.com", senha: "senha-forte-1", dispositivo: D(1) })).codigo, "telefone_invalido");
-  const r = await chamarId(env, "POST", "/id/cadastrar", { email: "a@b.com", senha: "senha-forte-1", telefone: "51999999999", dispositivo: D(1) });
+  const r = await chamarId(env, "POST", "/id/cadastrar", { email: "a@b.com", senha: "senha-forte-1", dispositivo: D(1) });
   assert.equal(r.status, 201);
   const c = await conferirSelo(env, r.selo);
   assert.equal(c.ac, true);

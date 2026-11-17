@@ -61,7 +61,7 @@ export async function tratarId(req, env, url, caminho) {
         const { lojaDoPedido } = await import("../loja/lojas.js");
         lojaExistente = await lojaDoPedido(env, req); // quem já usa a Vênus liga a loja atual à conta
       }
-      return json(await comLicenca(env, await cadastrar(env, { ...d, lojaExistente, exigirTelefone: true, ip: req.headers.get("cf-connecting-ip") || "" }), origem), 201);
+      return json(await comLicenca(env, await cadastrar(env, { ...d, lojaExistente, exigirTelefone: false, ip: req.headers.get("cf-connecting-ip") || "" }), origem), 201);
     }
     if (caminho === "/id/entrar" && req.method === "POST") return json(await comLicenca(env, await entrar(env, await corpo(req)), origem));
     if (caminho === "/id/chave-publica" && req.method === "GET") return json({ alg: "Ed25519", x: await chavePublicaDoSelo(env) });

@@ -50,7 +50,6 @@ input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #ffffff2a
 <div class="abas" id="abas" role="tablist"><button id="tEntrar" role="tab" aria-selected="true">Entrar</button><button id="tCriar" role="tab" aria-selected="false">Criar conta</button></div>
 <form id="f" autocomplete="on">
 <div id="cNome" hidden><label for="nome">Nome da loja ou seu nome</label><input id="nome" autocomplete="organization"></div>
-<div id="cFone" hidden><label for="fone">Celular com DDD (para recuperar a senha)</label><input id="fone" type="tel" autocomplete="tel" placeholder="51 99999-9999"></div>
 <label for="email">E-mail</label><input id="email" type="email" required autocomplete="username">
 <label for="senha">Senha</label><input id="senha" type="password" required minlength="8" autocomplete="current-password">
 <button class="go" id="ok" type="submit">Entrar</button></form>
@@ -72,7 +71,7 @@ const CFG=${cfg};
 const $=(i)=>document.getElementById(i);
 const q=new URLSearchParams(location.search);
 let criar=false,pendente=null;
-function aba(c){criar=c;$("tEntrar").setAttribute("aria-selected",!c);$("tCriar").setAttribute("aria-selected",c);$("cNome").hidden=!c;$("cFone").hidden=!c;$("fone").required=c;$("ok").textContent=c?"Criar conta":"Entrar";$("senha").autocomplete=c?"new-password":"current-password";}
+function aba(c){criar=c;$("tEntrar").setAttribute("aria-selected",!c);$("tCriar").setAttribute("aria-selected",c);$("cNome").hidden=!c;$("ok").textContent=c?"Criar conta":"Entrar";$("senha").autocomplete=c?"new-password":"current-password";}
 $("tEntrar").onclick=()=>aba(false);$("tCriar").onclick=()=>aba(true);
 function aparelho(){let id="";try{id=localStorage.getItem("vid_aparelho")||"";if(!id){id=crypto.randomUUID();localStorage.setItem("vid_aparelho",id);}}catch(e){id=crypto.randomUUID();}
 const ua=navigator.userAgent;const ios=/iPhone|iPad/.test(ua);const win=/Windows/.test(ua);const mac=/Macintosh/.test(ua)&&!ios;const and=/Android/.test(ua);
@@ -91,7 +90,7 @@ const h=document.createElement("h2");h.textContent=titulo;d.appendChild(h);const
 for(const it of itens){const li=document.createElement("li");const s=document.createElement("span");s.textContent=it.nome+" ("+it.plataforma+")";const b=document.createElement("button");b.textContent=rotulo;b.onclick=()=>acao(it);li.append(s,b);ul.appendChild(li);}
 d.appendChild(ul);const c=document.createElement("button");c.className="cancel";c.textContent="Cancelar login neste aparelho";c.onclick=()=>{e.textContent="";msg("Login cancelado.");};d.appendChild(c);e.appendChild(d);}
 async function enviar(extra){msg("");$("ok").disabled=true;
-try{const corpo={email:$("email").value,senha:$("senha").value,nome:$("nome").value,telefone:$("fone").value,dispositivo:aparelho(),...extra};
+try{const corpo={email:$("email").value,senha:$("senha").value,nome:$("nome").value,dispositivo:aparelho(),...extra};
 const r=await fetch(criar&&!extra.encerrar&&!extra.remover?"/id/cadastrar":"/id/entrar",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(corpo)});
 const d=await r.json();
 if(r.ok){$("extra").textContent="";pronto(d);}
