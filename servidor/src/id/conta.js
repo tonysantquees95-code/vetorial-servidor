@@ -8,7 +8,7 @@ export const MAX_DISPOSITIVOS = 3;
 export const MAX_ATIVAS = 2;
 export const TTL_ATIVA_MS = 5 * 60_000; // sem ping por 5 minutos = sessão inativa
 /** Cada aplicativo tem os seus próprios limites. O Velox é gratuito e público: não entra na conta de limites. */
-export const APPS_COM_LIMITE = new Set(["venus", "vindex", "vortex"]);
+export const APPS_COM_LIMITE = new Set(["venus", "vindex", "vortex", "vyntem"]);
 const APPS_DE_LOGIN = new Set([...APPS_COM_LIMITE, "velox", "drive", "voxix"]);
 export function appDeLogin(app) {
   const a = String(app || "venus").trim().toLowerCase();
@@ -152,7 +152,7 @@ export async function removerDispositivo(env, usuario, dispositivo) {
 }
 
 // ------------------------------------------------------------------ perfil e tokens por aplicativo
-export const APPS_DA_SUITE = new Set(["venus", "venus-windows", "venus-ios", "vindex", "vortex", "voxix", "portal"]);
+export const APPS_DA_SUITE = new Set(["venus", "venus-windows", "venus-ios", "vindex", "vortex", "vyntem", "voxix", "portal"]);
 const FOTO_MAX = 70_000;
 export const fotoValida = (f) =>
   f === "" || (typeof f === "string" && f.length <= FOTO_MAX && (/^https:\/\/[^\s"'<>]{4,400}$/.test(f) || /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(f)));

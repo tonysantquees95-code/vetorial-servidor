@@ -1,9 +1,11 @@
 // IA do Vyntem (controle de gastos): DeepSeek entende texto e responde perguntas; Grok (xAI) lê a foto de uma nota.
 //   POST /financas/ia  { tarefa: "texto" | "foto" | "pergunta", ... }  → JSON (contrato completo no repositório do Vyntem, docs/IA.md)
 // As chaves (DEEPSEEK_API_KEY, XAI_API_KEY) vêm do cofre/segredos e nunca saem daqui. Valores em CENTAVOS; datas AAAA-MM-DD.
-// O app não tem login, então a rota é limitada por tamanho e por quantidade de pedidos por endereço.
+// Só responde para quem entrou com o Vetorial ID, com plano ativo que inclua o Vyntem; ainda assim é limitada por tamanho e por quantidade de pedidos por conta.
 import { deepseek } from "../ia/provedores.js";
 import { lerSegredo } from "../dev/cofre.js";
+import { validarSessao } from "../id/conta.js";
+import { appLiberadoParaConta, MSG_SEM_ACESSO } from "../id/acesso.js";
 
 export const ehRotaFinancas = (c) => c === "/financas/ia";
 
@@ -92,16 +94,18 @@ async function grokLerNota(env, imagemB64, hoje, cats) {
 }
 
 export async function tratarFinancas(req, env, ctx, opcoes = {}) {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...CABECALHOS, "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "86400" } });
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...CABECALHOS, "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type, authorization", "access-control-max-age": "86400" } });
   if (req.method !== "POST") return json({ error: "método não permitido" }, 405);
+  let quem;
+  try { quem = await (opcoes.validar ?? validarSessao)(env, req); } catch (e) { return json({ error: e?.message || "Entre de novo com o seu Vetorial ID." }, e?.status === 409 ? 409 : 401); }
+  if (!(await (opcoes.liberado ?? appLiberadoParaConta)(env, quem.usuario, "vyntem"))) return json({ error: MSG_SEM_ACESSO }, 402);
   const tam = Number(req.headers.get("content-length") ?? 0);
   if (tam > MAX_CORPO) return json({ error: "pedido grande demais" }, 413);
   let p;
   try { const bruto = await req.text(); if (bruto.length > MAX_CORPO) return json({ error: "pedido grande demais" }, 413); p = JSON.parse(bruto); } catch { return json({ error: "pedido inválido" }, 400); }
   const tarefa = p?.tarefa;
   if (!["texto", "foto", "pergunta"].includes(tarefa)) return json({ error: "tarefa desconhecida" }, 400);
-  const quem = req.headers.get("cf-connecting-ip") || "local";
-  if (passouDoLimite(quem, tarefa, opcoes.agora)) return json({ error: "muitos pedidos; tente de novo em alguns minutos" }, 429);
+  if (passouDoLimite(String(quem.usuario?.id ?? "?"), tarefa, opcoes.agora)) return json({ error: "muitos pedidos; tente de novo em alguns minutos" }, 429);
   const hoje = dataValida(p.hoje) ? p.hoje : new Date().toISOString().slice(0, 10);
   const cats = listaDe(p.categorias);
   const contas = listaDe(p.contas, 30);

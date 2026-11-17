@@ -19,12 +19,12 @@ test("preços dos pacotes e pacote desconhecido vira Vênus", () => {
 
 test("teste grátis libera Vindex e Vortex; depois vale só o pacote pago", () => {
   const agora = 1_800_000_000_000;
-  assert.deepEqual(appsLiberados({ trial_fim: agora + DIA, ativo_ate: 0 }, agora), { vindex: true, vortex: true });
-  assert.deepEqual(appsLiberados({ trial_fim: agora - DIA, ativo_ate: 0 }, agora), { vindex: false, vortex: false });
-  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "venus" }, agora), { vindex: false, vortex: false });
-  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora), { vindex: true, vortex: false });
-  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "completo" }, agora), { vindex: true, vortex: true });
-  assert.deepEqual(appsLiberados({ plano: "dono", trial_fim: 0, ativo_ate: 0 }, agora), { vindex: true, vortex: true });
+  assert.deepEqual(appsLiberados({ trial_fim: agora + DIA, ativo_ate: 0 }, agora), { vindex: true, vortex: true, vyntem: true });
+  assert.deepEqual(appsLiberados({ trial_fim: agora - DIA, ativo_ate: 0 }, agora), { vindex: false, vortex: false, vyntem: false });
+  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "venus" }, agora), { vindex: false, vortex: false, vyntem: false });
+  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora), { vindex: true, vortex: false, vyntem: false });
+  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "completo" }, agora), { vindex: true, vortex: true, vyntem: true });
+  assert.deepEqual(appsLiberados({ plano: "dono", trial_fim: 0, ativo_ate: 0 }, agora), { vindex: true, vortex: true, vyntem: true });
 });
 
 test("cobrança recorrente usa o valor do pacote e guarda o pacote no pagamento", async () => {
@@ -50,7 +50,7 @@ test("cobrança recorrente usa o valor do pacote e guarda o pacote no pagamento"
   } finally { globalThis.fetch = antes; }
   const e = await estadoDaAssinatura(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first());
   assert.equal(e.pacotes.length, 7);
-  assert.deepEqual(e.apps, { vindex: true, vortex: true });
+  assert.deepEqual(e.apps, { vindex: true, vortex: true, vyntem: true });
 });
 
 import { escolherVersao } from "../src/atualizacao.js";
@@ -77,8 +77,8 @@ test("Vortex e Vindex vendidos sozinhos: liberam só o app, não a Vênus", () =
   const agora = 1_800_000_000_000;
   assert.equal(PACOTES.vortex.centavos, 2490);
   assert.equal(PACOTES.vindex_vortex.centavos, 5000);
-  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "vortex" }, agora), { vindex: false, vortex: true });
-  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "vindex_vortex" }, agora), { vindex: true, vortex: true });
+  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "vortex" }, agora), { vindex: false, vortex: true, vyntem: false });
+  assert.deepEqual(appsLiberados({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "vindex_vortex" }, agora), { vindex: true, vortex: true, vyntem: false });
   assert.equal(acessoLiberado({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "vortex" }, agora), false);
   assert.equal(acessoLiberado({ trial_fim: 0, ativo_ate: agora + DIA, pacote: "venus_vortex" }, agora), true);
   assert.equal(acessoLiberado({ trial_fim: agora + DIA, ativo_ate: 0, pacote: "vortex" }, agora), true);

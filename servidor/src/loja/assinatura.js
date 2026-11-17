@@ -12,14 +12,14 @@ const titulo = "Vênus — Plano Fundadores (mensal)";
 
 /** Pacotes mensais. O teste grátis de 7 dias libera Vênus, Vindex e Vortex; depois, vale o pacote assinado. */
 export const PACOTES = {
-  venus: { nome: "Vênus", centavos: 4990, apps: { vindex: false, vortex: false } },
-  venus_vindex: { nome: "Vênus + Vindex", centavos: 7000, apps: { vindex: true, vortex: false } },
-  venus_vortex: { nome: "Vênus + Vortex", centavos: 7000, apps: { vindex: false, vortex: true } },
-  completo: { nome: "Vênus + Vindex + Vortex", centavos: 10000, apps: { vindex: true, vortex: true } },
+  venus: { nome: "Vênus", centavos: 4990, apps: { vindex: false, vortex: false, vyntem: false } },
+  venus_vindex: { nome: "Vênus + Vindex", centavos: 7000, apps: { vindex: true, vortex: false, vyntem: false } },
+  venus_vortex: { nome: "Vênus + Vortex", centavos: 7000, apps: { vindex: false, vortex: true, vyntem: false } },
+  completo: { nome: "Vênus + Vindex + Vortex", centavos: 10000, apps: { vindex: true, vortex: true, vyntem: true } },
   // vendidos sozinhos, sem a Vênus
-  vortex: { nome: "Vortex", centavos: 2490, apps: { vindex: false, vortex: true } },
-  vindex: { nome: "Vindex", centavos: 3490, apps: { vindex: true, vortex: false } },
-  vindex_vortex: { nome: "Vindex + Vortex", centavos: 5000, apps: { vindex: true, vortex: true } },
+  vortex: { nome: "Vortex", centavos: 2490, apps: { vindex: false, vortex: true, vyntem: false } },
+  vindex: { nome: "Vindex", centavos: 3490, apps: { vindex: true, vortex: false, vyntem: false } },
+  vindex_vortex: { nome: "Vindex + Vortex", centavos: 5000, apps: { vindex: true, vortex: true, vyntem: false } },
 };
 /**
  * Promoção de lançamento: a suíte completa (Vênus + Vindex + Vortex) a R$ 49,90 por mês para quem assinar até o fim da promoção;
@@ -48,11 +48,11 @@ const tituloDo = (pacote) => (pacote === "venus" ? titulo : `${PACOTES[pacote].n
 
 /** Quais apps estão liberados agora: no teste grátis, todos; pago, os do pacote; o dono, todos. */
 export function appsLiberados(loja, agora = Date.now()) {
-  if (loja.plano === "dono") return { vindex: true, vortex: true };
+  if (loja.plano === "dono") return { vindex: true, vortex: true, vyntem: true };
   const pago = agora < (loja.ativo_ate || 0);
   if (pago) return { ...PACOTES[pacoteDe(loja.pacote)].apps };
   const teste = agora < (loja.trial_fim || 0);
-  return { vindex: teste, vortex: teste };
+  return { vindex: teste, vortex: teste, vyntem: teste };
 }
 
 async function http(url, op) {

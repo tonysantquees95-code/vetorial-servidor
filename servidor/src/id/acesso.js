@@ -9,4 +9,12 @@ export async function contaComAcesso(env, usuario, agora = Date.now()) {
   if (!loja) return false;
   return (await estadoDaAssinatura(env, loja, agora)).acesso;
 }
+/** O app está liberado para esta conta? (acesso ativo E o app incluído no plano: no teste grátis todos, depois só os do pacote.) */
+export async function appLiberadoParaConta(env, usuario, app, agora = Date.now()) {
+  if (!env.DB || !usuario || !usuario.loja) return !env.DB;
+  const loja = await comPrivilegios(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(usuario.loja).first());
+  if (!loja) return false;
+  const e = await estadoDaAssinatura(env, loja, agora);
+  return !!e.acesso && e.apps?.[app] !== false;
+}
 export const MSG_SEM_ACESSO = "O seu teste acabou. Escolha um plano para continuar.";

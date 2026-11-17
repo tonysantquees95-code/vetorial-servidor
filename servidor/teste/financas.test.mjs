@@ -33,16 +33,17 @@ test("limite por endereço: a foto trava antes do texto e a janela expira", () =
   assert.equal(passouDoLimite("1.1.1.1", "texto", 1000), false, "tarefas contam separado");
   assert.equal(passouDoLimite("1.1.1.1", "foto", 1000 + 11 * 60_000), false, "passada a janela, libera");
 });
-const pedido = (corpo, extra = {}) => tratarFinancas(new Request("https://x/financas/ia", { method: "POST", body: typeof corpo === "string" ? corpo : JSON.stringify(corpo), ...extra }), {}, {});
+const logado = { validar: async () => ({ usuario: { id: "u1", loja: "l1" } }), liberado: async () => true };
+const pedido = (corpo, extra = {}) => tratarFinancas(new Request("https://x/financas/ia", { method: "POST", body: typeof corpo === "string" ? corpo : JSON.stringify(corpo), ...extra }), {}, {}, logado);
 test("rota: recusa pedido inválido, tarefa desconhecida, imagem estranha e responde preflight", async () => {
   _zerarLimites();
   assert.equal((await pedido("não é json")).status, 400);
   assert.equal((await pedido({ tarefa: "x" })).status, 400);
   assert.equal((await pedido({ tarefa: "texto", texto: "  " })).status, 400);
   assert.equal((await pedido({ tarefa: "foto", imagem: "<script>" })).status, 400);
-  assert.equal((await tratarFinancas(new Request("https://x/financas/ia", { method: "GET" }), {}, {})).status, 405);
+  assert.equal((await tratarFinancas(new Request("https://x/financas/ia", { method: "GET" }), {}, {}, logado)).status, 405);
   assert.equal((await tratarFinancas(new Request("https://x/financas/ia", { method: "OPTIONS" }), {}, {})).status, 204);
-  const grande = await tratarFinancas(new Request("https://x/financas/ia", { method: "POST", headers: { "content-length": "9999999" }, body: "{}" }), {}, {});
+  const grande = await tratarFinancas(new Request("https://x/financas/ia", { method: "POST", headers: { "content-length": "9999999" }, body: "{}" }), {}, {}, logado);
   assert.equal(grande.status, 413);
 });
 test("sem a chave do Grok no servidor, a foto responde 503 claro (e não vaza nada)", async () => {
@@ -59,4 +60,21 @@ test("atualização: o servidor conhece o Vyntem", () => {
   const lista = [{ tag_name: "1.7", assets: [{ name: "Vyntem.apk" }, { name: "VyntemSetup.exe" }] }, { tag_name: "1.9", assets: [{ name: "Vyntem.apk" }, { name: "VyntemSetup.exe" }] }];
   assert.equal(escolherVersao(lista, "vyntem-android").numero, 9);
   assert.equal(escolherVersao(lista, "vyntem-windows").apk.name, "VyntemSetup.exe");
+});
+
+test("sem login a rota responde 401; sem o Vyntem no plano, 402", async () => {
+  _zerarLimites();
+  const req = () => new Request("https://x/financas/ia", { method: "POST", body: JSON.stringify({ tarefa: "texto", texto: "oi" }) });
+  const semLogin = await tratarFinancas(req(), {}, {}, { validar: async () => { const e = new Error("Entre de novo."); e.status = 401; throw e; } });
+  assert.equal(semLogin.status, 401);
+  const semPlano = await tratarFinancas(req(), {}, {}, { validar: logado.validar, liberado: async () => false });
+  assert.equal(semPlano.status, 402);
+});
+test("licença: o Vyntem entra no teste grátis, no dono e no pacote completo, e em mais nenhum", async () => {
+  const { appsLiberados } = await import("../src/loja/assinatura.js");
+  const agora = 1_800_000_000_000, DIA = 86_400_000;
+  assert.equal(appsLiberados({ trial_fim: agora + DIA, ativo_ate: 0 }, agora).vyntem, true);
+  assert.equal(appsLiberados({ plano: "dono" }, agora).vyntem, true);
+  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "completo" }, agora).vyntem, true);
+  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora).vyntem, false);
 });
