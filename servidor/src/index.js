@@ -26,6 +26,7 @@ import { ehRotaIcone, tratarIcone } from "./icone.js";
 import { ehRotaVortex, tratarVortex } from "./vortex/saves.js";
 import { ehRotaDrive, tratarDrive, limparDrive } from "./drive/drive.js";
 import { ehRotaCi, tratarCi } from "./ci/assinatura.js";
+import { ehRotaFinancas, tratarFinancas } from "./financas/ia.js";
 import { chat, chatPreflight } from "./chat.js";
 import { comChavesDoCofre } from "./dev/cofre.js";
 import { tratarIA } from "./ia/rotas.js";
@@ -69,7 +70,7 @@ export default {
       if (caminho === "/cobranca/status" && req.method === "GET") return await cobrancaStatus(url, env);
       const ehChat = caminho === "/chat" && (req.method === "POST" || req.method === "OPTIONS");
       // as chaves de IA vêm do cofre do Vindex (guardadas 5 min); sem cofre, valem as variáveis do Worker
-      const envIA = ehRotaDaIA(caminho) || caminho.startsWith("/v1/") || ehChat ? await comChavesDoCofre(env) : env;
+      const envIA = ehRotaDaIA(caminho) || caminho.startsWith("/v1/") || ehChat || ehRotaFinancas(caminho) ? await comChavesDoCofre(env) : env;
       if (ehRotaDaIA(caminho)) {
         // o app do Windows/navegador também usa a IA da conta: precisa do CORS (o celular fala direto e não precisa)
         const origem = req.headers.get("origin");
@@ -77,6 +78,7 @@ export default {
         return comCors(await tratarProxyIA(req, envIA, ctx, caminho), origem, env);
       }
       if (caminho.startsWith("/v1/")) return await tratarIA(req, envIA, ctx);
+      if (ehRotaFinancas(caminho)) return await tratarFinancas(req, envIA, ctx);
       if (ehRotaDoId(caminho)) return await tratarId(req, env, url, caminho);
       if (ehRotaCi(caminho)) return await tratarCi(req, env, url, caminho);
       if (ehRotaVortex(caminho)) return await tratarVortex(req, env, url, caminho);

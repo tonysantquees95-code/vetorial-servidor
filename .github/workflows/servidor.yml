@@ -205,12 +205,13 @@ jobs:
             fi
           done
 
-      - name: Chaves extras do roteador de IA (DeepSeek e token do app)
+      - name: Chaves extras do roteador de IA (DeepSeek, Grok e token do app)
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           APP_TOKEN: ${{ secrets.APP_TOKEN }}
         run: |
-          for nome in DEEPSEEK_API_KEY APP_TOKEN; do
+          for nome in DEEPSEEK_API_KEY XAI_API_KEY APP_TOKEN; do
             valor="${!nome}"
             if [ -n "$valor" ]; then
               printf '%s' "$valor" | $WRANGLER secret put "$nome"

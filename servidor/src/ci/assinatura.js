@@ -5,7 +5,9 @@
 import { cifrar, decifrar } from "../loja/cripto.js";
 
 export const ehRotaCi = (c) => c === "/ci/assinatura";
-export const REPOS_PERMITIDOS = ["tonysantquees95-code/vetorial-dev-center", "tonysantquees95-code/Vindex-", "tonysantquees95-code/Vortex", "tonysantquees95-code/velox-gaming-search", "tonysantquees95-code/Vetorial-Drive", "tonysantquees95-code/voxix"];
+export const REPOS_PERMITIDOS = ["tonysantquees95-code/vetorial-dev-center", "tonysantquees95-code/Vindex-", "tonysantquees95-code/Vortex", "tonysantquees95-code/velox-gaming-search", "tonysantquees95-code/Vetorial-Drive", "tonysantquees95-code/voxix", "tonysantquees95-code/Vyntem"];
+// O repositório do Vindex hoje se chama "Vindex", mas a chave de assinatura já guardada está sob "Vindex-": o apelido leva a ela (outra chave impediria atualizar por cima do app instalado).
+export const APELIDOS = { "tonysantquees95-code/vindex": "tonysantquees95-code/Vindex-" };
 export const EMISSOR = "https://token.actions.githubusercontent.com";
 export const PUBLICO = "venus-assinatura";
 const EVENTOS = ["push", "workflow_dispatch", "schedule"];
@@ -29,7 +31,8 @@ export async function verificarOidc(token, chaves, agora = Date.now() / 1000) {
     const c = JSON.parse(texto(p));
     if (c.iss !== EMISSOR || c.aud !== PUBLICO || !(c.exp > agora) || (c.nbf && c.nbf > agora + 60)) return null;
     // o GitHub não diferencia maiúsculas nos nomes de repositório (o nome pode vir como "Velox-..." ou "velox-..."): vale o nome da lista
-    const permitido = REPOS_PERMITIDOS.find((r) => r.toLowerCase() === String(c.repository || "").toLowerCase());
+    const nomeLower = String(c.repository || "").toLowerCase();
+    const permitido = REPOS_PERMITIDOS.find((r) => r.toLowerCase() === nomeLower) ?? APELIDOS[nomeLower];
     if (!permitido || c.ref !== "refs/heads/main" || !EVENTOS.includes(c.event_name)) return null;
     return { repo: permitido, ref: c.ref, evento: c.event_name };
   } catch {

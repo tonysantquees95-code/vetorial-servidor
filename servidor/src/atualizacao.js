@@ -7,6 +7,7 @@ export const REPO_DO_VINDEX = "tonysantquees95-code/Vindex-";
 export const REPO_DO_VORTEX = "tonysantquees95-code/Vortex";
 export const REPO_DO_DRIVE = "tonysantquees95-code/vetorial-drive";
 export const REPO_DO_VELOX = "tonysantquees95-code/velox-gaming-search";
+export const REPO_DO_VYNTEM = "tonysantquees95-code/Vyntem";
 export const REPO_DO_VOXIX = "tonysantquees95-code/voxix";
 export const REPO_DO_PAINEL = "tonysantquees95-code/vetorial-dev-center";
 
@@ -20,6 +21,8 @@ const APPS = {
   "vortex-android": { repo: REPO_DO_VORTEX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /\.apk$/i.test(n), publico: true },
   "vortex-windows": { repo: REPO_DO_VORTEX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /\.exe$/i.test(n), publico: true },
   "drive-android": { repo: REPO_DO_DRIVE, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VetorialDrive\.apk$/i.test(n) },
+  "vyntem-android": { repo: REPO_DO_VYNTEM, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Vyntem\.apk$/i.test(n), publico: true },
+  "vyntem-windows": { repo: REPO_DO_VYNTEM, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VyntemSetup\.exe$/i.test(n), publico: true },
   "voxix-android": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Voxix\.apk$/i.test(n), publico: true },
   "voxix-windows": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VoxixSetup\.exe$/i.test(n), publico: true },
   "paineldev-android": { repo: REPO_DO_PAINEL, tag: /^dev-1\.(\d+)$/, arquivo: (n) => /^VenusDev\.apk$/i.test(n), publico: true },
