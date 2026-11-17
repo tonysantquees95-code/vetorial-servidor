@@ -130,7 +130,6 @@ footer a{color:var(--suave)}
 .logo3d{display:grid;place-items:center;perspective:900px}
 .logo3d img{width:min(320px,70vw);height:auto;animation:gira3d 9s ease-in-out infinite;filter:drop-shadow(0 18px 40px #ec6fd655);transform-style:preserve-3d}
 @keyframes gira3d{0%,100%{transform:rotateY(-28deg) rotateX(6deg) translateY(0)}50%{transform:rotateY(28deg) rotateX(-4deg) translateY(-10px)}}
-.marca img{animation:balanca3d 7s ease-in-out infinite;transform-origin:left center}
 @keyframes balanca3d{0%,100%{transform:perspective(500px) rotateY(-9deg)}50%{transform:perspective(500px) rotateY(9deg)}}
 @keyframes flutua3d{0%,100%{transform:perspective(400px) rotateY(-14deg) translateY(0)}50%{transform:perspective(400px) rotateY(14deg) translateY(-4px)}}
 .historia{display:grid;gap:14px;max-width:760px;margin:0 auto}
