@@ -46,7 +46,7 @@ test("rota: recusa pedido inválido, tarefa desconhecida, imagem estranha e resp
   const grande = await tratarFinancas(new Request("https://x/financas/ia", { method: "POST", headers: { "content-length": "9999999" }, body: "{}" }), {}, {}, logado);
   assert.equal(grande.status, 413);
 });
-test("sem a chave do Grok no servidor, a foto responde 503 claro (e não vaza nada)", async () => {
+test("sem a chave da Groq no servidor, a foto responde 503 claro (e não vaza nada)", async () => {
   _zerarLimites();
   const r = await pedido({ tarefa: "foto", imagem: "AAAA", categorias: cats });
   assert.equal(r.status, 503);

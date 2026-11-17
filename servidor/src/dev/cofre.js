@@ -18,7 +18,6 @@ export const CHAVES_SUGERIDAS = [
   { nome: "GEMINI_API_KEY", rotulo: "Gemini (PDF, áudio, fotos e memória)" },
   { nome: "GEMINI_API_KEY_2", rotulo: "Gemini reserva (usada se a principal falhar)" },
   { nome: "DEEPSEEK_API_KEY", rotulo: "DeepSeek (raciocínio)" },
-  { nome: "XAI_API_KEY", rotulo: "Grok / xAI (Vyntem: ler foto de nota)" },
   { nome: "TAVILY_API_KEY", rotulo: "Tavily (busca na web)" },
   { nome: "CLOUDFLARE_API_TOKEN", rotulo: "Cloudflare (Workers AI)" },
   { nome: "MERCADOPAGO_ACCESS_TOKEN", rotulo: "Mercado Pago" },
@@ -133,7 +132,7 @@ export async function lerSegredo(env, nome) {
   return env[nome] || "";
 }
 
-const CHAVES_DE_IA = ["GROQ_API_KEY", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "DEEPSEEK_API_KEY", "XAI_API_KEY", "TAVILY_API_KEY"];
+const CHAVES_DE_IA = ["GROQ_API_KEY", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "DEEPSEEK_API_KEY", "TAVILY_API_KEY"];
 const VALIDADE_CHAVES_MS = 5 * 60_000;
 let cacheChaves = { ate: 0, valores: null };
 
