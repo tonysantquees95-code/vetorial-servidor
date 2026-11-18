@@ -2,7 +2,7 @@
 // se todo botão dá para alcançar, se não há erro no console e se as partes interativas (simulador dos apps,
 // janelinha do Android, escolha de preço) funcionam. Fotos em teste-visual/fotos/ (a publicação guarda como artefato).
 // Rodar (na raiz do repositório): npm i --no-save playwright-core && node teste-visual/telas.mjs
-// Variáveis: CHROME=/caminho/do/chrome, TAMANHO=celular, TELA=home
+// Variáveis: CHROME=/caminho/do/chrome, TAMANHO=celular, TELA=home, FONTE_LARGA=1 (simula fonte mais larga)
 import { createServer } from "node:http";
 import { readFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -77,6 +77,7 @@ try {
       let problemas = [], avisos = [];
       try {
         await p.goto(`http://localhost:${config.porta}/${caminho}`);
+        if (process.env.FONTE_LARGA) await p.addStyleTag({ content: "*{font-family:'DejaVu Sans',Verdana,sans-serif !important}" }); // simula aparelhos com fonte mais larga
         await p.waitForTimeout(500);
         await passos(p);
         await p.waitForTimeout(200);
