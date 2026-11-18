@@ -19,6 +19,12 @@ export default {
       for (const b of await p.locator("#tela button:visible").all()) { await b.click({ timeout: 2000 }).catch(() => {}); await p.waitForTimeout(120); }
       await p.locator("#simulador").scrollIntoViewIfNeeded();
     }]),
+    ["home-video-venus", "", async (p) => {
+      await p.locator("#video-venus").scrollIntoViewIfNeeded(); await p.waitForTimeout(800);
+      const ok = await p.evaluate(() => { const v = document.getElementById("video-venus-el"); return v && v.readyState >= 1 && v.videoWidth > 0; });
+      if (!ok) throw new Error("o vídeo da Vênus não carregou");
+      await p.locator("#video-venus-bt").click();
+    }],
     ["home-guia-android", "", async (p) => {
       await p.locator("#dl-android").scrollIntoViewIfNeeded(); await p.locator("#dl-android").click(); await ESPERA(p);
       if (!(await p.locator("#guia").isVisible())) throw new Error("a janelinha do Android não abriu");
