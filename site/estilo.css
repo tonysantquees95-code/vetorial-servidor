@@ -185,3 +185,8 @@ footer a{color:var(--suave)}
 @media(max-width:520px){.compat .cab{display:none}.compat [role=row]{grid-template-columns:5.5em 1fr;gap:4px 12px}.compat [role=row]:not(.cab) span:nth-child(3){grid-column:2;color:var(--suave);font-size:13px}.compat [role=row]:not(.cab) span:nth-child(3)::before{content:"Vindex e Vortex: "}}
 
 details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:none}details.combos[open] summary{margin-bottom:6px}
+
+/* topo: em janelas médias o Instagram vira só o ícone e o menu aperta, para nunca estourar para o lado (a fonte de cada aparelho muda a largura) */
+@media(max-width:1380px){.topo .ig span{display:none}.topo .ig{padding:9px 11px}.topo nav{gap:11px}.topo nav a{font-size:13px}}
+.topo .wrap>*{min-width:0}
+@media(max-width:480px){.btn{white-space:normal;text-align:center;max-width:100%}}
