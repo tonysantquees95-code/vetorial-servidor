@@ -172,3 +172,15 @@ footer a{color:var(--suave)}
 }
 
 .ic .icone-img{width:54px;height:54px;border-radius:14px;display:block}.selo-app .icone-app{width:min(220px,60vw);height:auto;border-radius:28%;filter:drop-shadow(0 0 40px rgba(34,227,196,.35))}
+/* vitrine de preços em 3 cartões e tabela de compatibilidade */
+.planos.tres{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));max-width:1000px;margin:0 auto}
+.combos{margin-top:auto;text-align:left}.combos summary{list-style:none;text-align:center;cursor:pointer;display:block}.combos summary::-webkit-details-marker{display:none}
+.combo{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--borda);font-size:14px}
+.combo span:nth-child(2){color:var(--suave);white-space:nowrap}.combo a.ir-conta{color:var(--azul);font-weight:700;text-decoration:none;padding:8px 6px}
+.combo a:not(.ir-conta){color:var(--azul);font-size:12px}
+.compat{max-width:760px;margin:20px auto 0;border:1px solid var(--borda);border-radius:16px;overflow:hidden;font-size:14px}
+.compat [role=row]{display:grid;grid-template-columns:.8fr 2.2fr 1fr;gap:12px;padding:12px 16px;border-top:1px solid var(--borda);align-items:center}
+.compat .cab{background:#ffffff0d;border-top:0;color:var(--suave);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+@media(max-width:520px){.compat .cab{display:none}.compat [role=row]{grid-template-columns:5.5em 1fr;gap:4px 12px}.compat [role=row]:not(.cab) span:nth-child(3){grid-column:2;color:var(--suave);font-size:13px}.compat [role=row]:not(.cab) span:nth-child(3)::before{content:"Vindex e Vortex: "}}
+
+details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:none}details.combos[open] summary{margin-bottom:6px}
