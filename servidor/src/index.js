@@ -173,7 +173,7 @@ async function atualizacao(url, env, ctx) {
     return json({ numero: melhor.numero, tag: melhor.r.tag_name, notas: notas(melhor.r.body), tamanho: melhor.apk.size || 0, sha256: dig.toLowerCase().startsWith("sha256:") ? dig.slice(7).toLowerCase() : "", url: link });
   }
   // link assinado do GitHub (vale poucos minutos): o app pede de novo antes de baixar
-  const d = await gh(env, `/repos/${REPO}/releases/assets/${melhor.apk.id}`, {
+  const d = await gh(env, `/repos/${cfg.repo}/releases/assets/${melhor.apk.id}`, {
     headers: { Accept: "application/octet-stream" },
     redirect: "manual",
   });
