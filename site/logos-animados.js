@@ -32,6 +32,11 @@
     return '<svg viewBox="-16 -14 148 154" role="img" aria-label="Voxix"><defs><filter id="' + id + 'b" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="0" stdDeviation="2.6" flood-color="#ff2a48" flood-opacity=".85"/></filter></defs>' +
       fill(VL, "#2a0710") + fill(x, "#150409") + luzes + "</svg>";
   }
-  document.querySelectorAll(".anim-velox").forEach(function (e) { e.innerHTML = velox(); });
-  document.querySelectorAll(".anim-voxix").forEach(function (e) { e.innerHTML = voxix(); });
+  function pintar(raiz) {
+    var r = raiz || document;
+    r.querySelectorAll(".anim-velox:empty").forEach(function (e) { e.innerHTML = velox(); });
+    r.querySelectorAll(".anim-voxix:empty").forEach(function (e) { e.innerHTML = voxix(); });
+  }
+  window.pintarLogos = pintar;
+  pintar(document);
 })();

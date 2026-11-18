@@ -10,7 +10,8 @@
 <meta property="og:description" content="Atendimento no WhatsApp, loja própria, estoque e marketing em um só lugar. 7 dias grátis.">
 <meta property="og:image" content="logo-vetorial.png">
 <link rel="icon" href="favicon.png">
-<link rel="stylesheet" href="estilo.css?v=3">
+<link rel="stylesheet" href="estilo.css?v=4">
+<link rel="stylesheet" href="simulador.css?v=1">
 </head>
 <body>
 <header class="topo"><div class="wrap">
@@ -29,7 +30,7 @@
     <p class="sub">A Vênus atende seus clientes no WhatsApp, controla o estoque, cria sua loja e seus posts, e ainda obedece à sua voz no celular e no computador. Do primeiro cliente ao negócio consolidado.</p>
     <div class="cta">
       <a class="btn" id="cta-gratis" href="conta.html">Começar meus 7 dias grátis</a>
-      <a class="btn sec" href="#funcoes">Ver o que ela faz</a>
+      <a class="btn sec" href="#simulador" onclick="return window.irParaApp ? window.irParaApp('venus') : true">Ver a Vênus funcionando</a>
     </div>
     <p class="nota">7 dias grátis com <b>Vênus, Vindex e Vortex</b>. Entre com o seu <b>Vetorial ID</b>: uma conta só para o celular, o computador e outros aparelhos.</p>
   </div>
@@ -91,6 +92,17 @@
   </div>
 </div></section>
 
+<section id="simulador" class="sim-secao"><div class="wrap tw">
+  <div class="titulo menor rev"><h2>Veja a <em>Suíte Vetorial</em> em ação</h2><p>Toque nas abas e use cada app de verdade, aqui mesmo. Tudo com dados de exemplo, nada é enviado.</p></div>
+  <div id="abas" role="tablist" aria-label="Apps da suíte" class="sim-abas-apps -mx-5 mb-8 flex gap-2 overflow-x-auto px-5 md:mx-0 md:flex-wrap md:justify-center md:overflow-visible md:px-0"></div>
+  <div class="grid items-center gap-8 md:grid-cols-[minmax(0,1fr)_340px] lg:gap-14">
+    <div class="order-2 min-w-0 md:order-1" id="descricao" aria-live="polite"></div>
+    <div class="order-1 md:order-2 min-w-0">
+      <div class="sim-aparelho"><div class="sim-tela"><span class="sim-entalhe"></span><div class="sim-conteudo" id="tela" role="tabpanel"></div></div></div>
+      <p class="mt-3 text-center text-xs text-suave">Demonstração com dados de exemplo</p>
+    </div>
+  </div>
+</div></section>
 <section id="suite"><div class="wrap">
   <div class="titulo rev"><h2>A suíte <em>Vetorial Tech</em></h2><p>Um Vetorial ID para tudo. Cada app funciona sozinho ou junto com os outros. Vênus, Vindex e Vortex têm 7 dias grátis; o Velox e o Vyntem são gratuitos para sempre.</p></div>
   <div class="grade">
@@ -136,7 +148,7 @@
     <div role="row"><span role="cell"><b>Mac</b></span><span role="cell">Completa, sem o assistente pessoal</span><span role="cell">—</span></div>
     <div role="row"><span role="cell"><b>iPhone</b></span><span role="cell">Assistente comercial, pelo Safari: Compartilhar › Adicionar à Tela de Início</span><span role="cell">—</span></div>
   </div>
-  <p class="nota" style="text-align:center;max-width:680px;margin:18px auto 0">🔒 <b>Instalação no Android:</b> os nossos apps são distribuídos direto por aqui, e não pela Play Store, e assim o preço fica baixo. Por isso o Android pode pedir uma confirmação extra na primeira instalação. Leva um minuto: <a href="#play-protect" data-abrir="play-protect">veja o passo a passo</a>.</p>
+  <p class="nota" style="text-align:center;max-width:680px;margin:18px auto 0">🔒 <b>Instalação no Android:</b> os nossos apps são distribuídos direto por aqui, e não pela Play Store, e assim o preço fica baixo. Por isso o Android pode pedir uma confirmação extra na primeira instalação. Leva um minuto: <a href="#play-protect" data-guia>veja o passo a passo</a>.</p>
   <p class="nota" style="text-align:center">No <b>Windows</b>, se o aviso do SmartScreen aparecer, toque em “Mais informações” e depois em “Executar assim mesmo”. No <b>Mac</b>, o app ainda não tem a assinatura da Apple: na primeira vez, abra <b>Ajustes do Sistema › Privacidade e Segurança</b> e toque em “Abrir mesmo assim”.</p>
 </div></section>
 
@@ -146,7 +158,7 @@
   <details class="rev"><summary>O que acontece com o Vindex e o Vortex depois do teste?</summary><p>Para continuar, escolha um plano que os inclua: Vindex (R$ 34,90), Vortex (R$ 24,90), Vindex + Vortex (R$ 50), Vênus + Vindex (R$ 70), Vênus + Vortex (R$ 70) ou o Completo (R$ 100). Na assinatura só da Vênus (R$ 49,90) eles ficam bloqueados.</p></details>
   <details class="rev"><summary>Posso contratar o Vortex ou o Vindex sem a Vênus?</summary><p>Pode. Eles funcionam separados: Vortex por R$ 24,90, Vindex por R$ 34,90 ou os dois juntos por R$ 50 por mês, todos com 7 dias grátis. A Vênus (assistente, loja e WhatsApp) fica de fora desses planos.</p></details>
   <details class="rev"><summary>A Vênus atende no Instagram e no Messenger?</summary><p>O atendimento automático que prometemos hoje é o do <b>WhatsApp</b>. A Meta unificou as APIs e ainda não prometemos resposta automática no Instagram e no Messenger. Publicar e agendar posts e stories no Instagram continua funcionando.</p></details>
-  <details class="rev" id="play-protect"><summary>O Android pediu confirmação ou bloqueou a instalação. E agora?</summary><p>Tudo certo, é normal: o Google Play Protect confere os apps que não vêm da Play Store, e os nossos são distribuídos direto, por isso o aviso. Para instalar: Play Store › sua foto › Play Protect › engrenagem ⚙ › desligue “Verificar apps com o Play Protect”. Instale o app e <b>ligue de novo</b> depois. Se o Android pedir, permita “Instalar apps desconhecidos” para o navegador que baixou o arquivo.</p></details>
+  <details class="rev" id="play-protect"><summary>O Android pediu confirmação ou bloqueou a instalação. E agora?</summary><p>Tudo certo, é normal: o Android confere os apps que não vêm da Play Store, e os nossos são distribuídos direto, por isso o aviso. O passo a passo leva um minuto. <a href="#play-protect" data-guia>Abrir o passo a passo</a>.</p></details>
   <details class="rev" id="banco"><summary>O app do meu banco não abre depois de instalar. E agora?</summary><p>Alguns bancos e apps do governo travam quando acham o celular pouco seguro, por exemplo com o Play Protect desligado. Ligue o Play Protect de novo e veja os outros passos em <a href="seguranca.html">O app do banco não abre?</a>.</p></details>
   <details class="rev"><summary>Tem Vênus para Mac e para iPhone?</summary><p>Tem. No Mac, baixe o app (arquivo .dmg) na parte de baixar. No iPhone, ela abre pelo Safari. Veja o que cada aparelho faz na tabela de compatibilidade, na parte de baixar. O Vindex e o Vortex são para Android e Windows.</p></details>
   <details class="rev"><summary>Posso usar em mais de um aparelho?</summary><p>Sim. O Vetorial ID vale no celular, no computador e em outros aparelhos, com o mesmo cadastro da empresa.</p></details>
@@ -158,6 +170,20 @@
 
 <footer><div class="wrap"><b>VETORIAL TECH</b><br><a href="./">Vênus</a> · <a href="vindex.html">Vindex</a> · <a href="vortex.html">Vortex</a> · <a href="velox.html">Velox</a><a href="vyntem.html">Vyntem</a> · <a href="voxix.html">Voxix</a> · <a data-instagram hidden href="#" rel="noopener" target="_blank">Instagram</a> · <a href="seguranca.html">Banco não abre?</a><br><small>© <span id="ano"></span> Vetorial Tech</small></div></footer>
 
+<div class="tw"><div id="guia" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/75 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="guia-t">
+  <div class="absolute inset-0" id="guia-fundo"></div>
+  <div class="relative flex max-h-[calc(100dvh-1rem)] w-full max-w-lg flex-col rounded-t-3xl border border-borda bg-painel sm:rounded-3xl">
+    <div class="flex items-start justify-between gap-3 px-5 pb-2 pt-5"><div><h2 id="guia-t" class="text-xl font-black">Instalar no Android</h2><p class="mt-1 text-sm text-suave">Leva um minuto. Nossos apps vêm direto daqui, e não da Play Store, por isso o Android pode pedir uma confirmação extra.</p></div>
+      <button type="button" class="grid size-11 flex-none place-items-center rounded-xl text-suave hover:text-white" aria-label="Fechar" id="guia-x">✕</button></div>
+    <ol class="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-3 text-sm text-suave">
+      <li class="flex gap-3"><b class="grid size-7 flex-none place-items-center rounded-full bg-rosa/20 text-rosa">1</b><span>Toque em <b class="text-white">Baixar e instalar</b> abaixo e abra o arquivo quando terminar.</span></li>
+      <li class="flex gap-3"><b class="grid size-7 flex-none place-items-center rounded-full bg-rosa/20 text-rosa">2</b><span>Se o Android pedir, permita <b class="text-white">“Instalar apps desconhecidos”</b> para o navegador que baixou o arquivo.</span></li>
+      <li class="flex gap-3"><b class="grid size-7 flex-none place-items-center rounded-full bg-rosa/20 text-rosa">3</b><span>Se o <b class="text-white">Google Play Protect</b> avisar, escolha <b class="text-white">“Mais detalhes › Instalar mesmo assim”</b>. Se ele bloquear de vez: Play Store › sua foto › Play Protect › engrenagem ⚙ › desligue “Verificar apps” só durante a instalação.</span></li>
+      <li class="flex gap-3"><b class="grid size-7 flex-none place-items-center rounded-full bg-rosa/20 text-rosa">4</b><span>Depois de instalar, <b class="text-white">ligue o Play Protect de novo</b>. Ele protege o seu celular, e alguns apps de banco só funcionam com ele ligado.</span></li>
+    </ol>
+    <div class="flex flex-col gap-2 border-t border-borda p-5 sm:flex-row"><a id="guia-baixar" class="sim-btn flex-1" href="#">Baixar e instalar</a><button type="button" class="sim-btn-sec" id="guia-agora">Agora não</button></div>
+  </div>
+</div></div>
 <script src="config.js"></script>
 <script src="vitrine.js" defer></script>
 <script>
@@ -170,12 +196,23 @@
     var fim = new Date(2026, 11, 16, 23, 59, 59), dias = Math.ceil((fim - new Date()) / 86400000), el = document.getElementById("faltam");
     if (el && dias > 0) el.textContent = "(faltam " + dias + (dias === 1 ? " dia" : " dias") + ") ";
   })();
-  document.querySelectorAll("[data-abrir]").forEach(function (a) { a.addEventListener("click", function () { var d = document.getElementById(a.dataset.abrir); if (d) d.open = true; }); });
+  (function () { // guia de instalação no Android: janelinha que só abre quando a pessoa pede
+    var g = document.getElementById("guia"), volta = null;
+    function abrir(e, de) { if (e) e.preventDefault(); volta = de || null; g.classList.remove("hidden"); g.classList.add("flex"); document.body.style.overflow = "hidden"; document.getElementById("guia-x").focus(); }
+    function fechar() { g.classList.add("hidden"); g.classList.remove("flex"); document.body.style.overflow = ""; if (volta && volta.focus) volta.focus(); }
+    document.getElementById("guia-baixar").href = VENUS.baixarAndroid;
+    document.getElementById("dl-android").addEventListener("click", function (e) { abrir(e, this); });
+    document.querySelectorAll("[data-guia]").forEach(function (a) { a.addEventListener("click", function (e) { abrir(e, a); }); });
+    ["guia-fundo", "guia-x", "guia-agora"].forEach(function (id) { document.getElementById(id).addEventListener("click", fechar); });
+    document.getElementById("guia-baixar").addEventListener("click", function () { setTimeout(fechar, 300); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !g.classList.contains("hidden")) fechar(); });
+  })();
   document.getElementById("entrar-topo").href = VENUS.entrar("conta.html");
   document.getElementById("cta-gratis").href = VENUS.entrar("conta.html");
   document.querySelectorAll(".ir-conta").forEach((a) => { a.href = VENUS.entrar("conta.html?pacote=" + a.dataset.pacote); });
 </script>
 <script src="orbe.js"></script>
 <script src="logos-animados.js" defer></script>
+<script src="simulador.js"></script>
 </body>
 </html>

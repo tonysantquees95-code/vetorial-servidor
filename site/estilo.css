@@ -37,7 +37,8 @@ h2{font-size:clamp(26px,4vw,38px);line-height:1.15;margin:0 0 10px;letter-spacin
 .cartao .ic img{width:48px;height:48px;border-radius:12px;display:block}
 .cartao h3{margin:0 0 6px;font-size:18px}.cartao p{margin:0;color:var(--suave);font-size:15px}
 .dois{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
-@media(max-width:820px){.dois{grid-template-columns:1fr}}
+@media(max-width:820px){.dois{grid-template-columns:minmax(0,1fr)}}
+.dois>*{min-width:0}
 .destaque{background:linear-gradient(135deg,#ec6fd61f,#7aa2ff1f);border:1px solid var(--borda);border-radius:28px;padding:34px}
 ul.ok{list-style:none;padding:0;margin:14px 0 0}ul.ok li{padding:7px 0 7px 30px;position:relative;color:var(--suave)}
 ul.ok li::before{content:"✓";position:absolute;left:0;color:var(--verde);font-weight:700}

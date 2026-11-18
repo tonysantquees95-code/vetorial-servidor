@@ -2,3 +2,5 @@ node_modules/
 .wrangler/
 deploy.txt
 site/app/
+teste-visual/fotos/
+node_modules

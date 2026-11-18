@@ -43,6 +43,19 @@ jobs:
             exit 1
           fi
 
+      - name: Teste visual do site (7 tamanhos de tela)
+        working-directory: .
+        run: |
+          npm i --no-save --no-audit --no-fund playwright-core
+          CHROME=$(which google-chrome) node teste-visual/telas.mjs
+      - name: Guardar as fotos das telas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fotos-do-site
+          path: teste-visual/fotos
+          if-no-files-found: ignore
+
       # A Vênus web (/app) é montada a partir do código do Venus-core (privado), só em leitura. Mexeu na Vênus web? Rode esta publicação de novo (Actions › Run workflow).
       - name: Buscar o código da Vênus web (leitura)
         uses: actions/checkout@v4
