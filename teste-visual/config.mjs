@@ -36,6 +36,6 @@ export default {
     }],
     ["home-precos", "", async (p) => { await p.locator("#preco").scrollIntoViewIfNeeded(); }],
     ["home-baixar", "", async (p) => { await p.locator("#baixar").scrollIntoViewIfNeeded(); }],
-    ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta"].map((n) => pagina(n, `${n}.html`)),
+    ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
   ],
 };
