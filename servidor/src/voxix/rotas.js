@@ -6,7 +6,8 @@
 //   POST /voxix/mensagens {para, corpo, idLocal} → entrega na caixa de quem recebe
 //   GET  /voxix/historico?desde=&limite=  → mensagens da conta (enviadas e recebidas) depois de "desde"
 //   DELETE /voxix/conversas/<apelido>     → apaga a conversa só para quem pediu
-//   GET  /voxix/ws?token=                 → WebSocket: fila de mensagens e entrega ao vivo
+//   POST /voxix/ticket                    → { ticket }: código de uso único (60 s) para abrir o WebSocket
+//   GET  /voxix/ws?ticket=                → WebSocket: fila de mensagens e entrega ao vivo (?token= só nas versões antigas)
 //   GET/POST/DELETE /voxix/bloqueios      → bloquear e desbloquear
 //   POST /voxix/denuncias {apelido, motivo, trecho?} → fila de revisão
 //   /voxix/comunidades…, /voxix/convites/…, /voxix/salas/…/ws → comunidades, salas e convites (ver comunidades.js)
@@ -211,6 +212,20 @@ export async function pontuar(env, usuario, texto, agora = Date.now()) {
   return { texto: igual ? saida.slice(0, MAX_TEXTO) : original, ajustado: !!igual };
 }
 
+// O WebSocket do navegador não manda cabeçalhos. Em vez de pôr o token de login na URL (que aparece em registros),
+// o app pede um código de uso único (vale 60 s) e abre o WebSocket com ele.
+export const TICKET_MS = 60_000;
+export async function criarTicket(env, token, agora = Date.now()) {
+  await env.DB.prepare("DELETE FROM voxix_ticket WHERE expira < ?").bind(agora).run();
+  const ticket = aleatorio(24);
+  await env.DB.prepare("INSERT INTO voxix_ticket (ticket, token, expira) VALUES (?, ?, ?)").bind(ticket, token, agora + TICKET_MS).run();
+  return { ticket, expira: agora + TICKET_MS };
+}
+export async function gastarTicket(env, ticket, agora = Date.now()) {
+  const l = await env.DB.prepare("DELETE FROM voxix_ticket WHERE ticket = ? AND expira > ? RETURNING token").bind(String(ticket || ""), agora).first();
+  return l ? l.token : null;
+}
+
 export async function tratarVoxix(req, env, url, caminho) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
   try {
@@ -218,7 +233,16 @@ export async function tratarVoxix(req, env, url, caminho) {
     if (conv && req.method === "GET") return paginaDoConvite(conv[1].toUpperCase());
     // o WebSocket do navegador não manda cabeçalhos: o token vai na URL
     let pedido = req;
-    if ((caminho === "/voxix/ws" || /^\/voxix\/salas\/[A-Za-z0-9]+\/ws$/.test(caminho)) && url.searchParams.get("token")) pedido = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get("token")}` } });
+    if (caminho === "/voxix/ticket" && req.method === "POST") {
+      await validarSessao(env, req, {});
+      const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+      return json(await criarTicket(env, token));
+    }
+    if (caminho === "/voxix/ws" || /^\/voxix\/salas\/[A-Za-z0-9]+\/ws$/.test(caminho)) {
+      // novo: ?ticket= (uso único). Antigo, só para versões do app que ainda não usam código: ?token=
+      const t = url.searchParams.get("ticket") ? await gastarTicket(env, url.searchParams.get("ticket")) : url.searchParams.get("token");
+      if (t) pedido = new Request(req.url, { headers: { authorization: `Bearer ${t}` } });
+    }
     const ctx = await validarSessao(env, pedido, {});
     const u = ctx.usuario.id;
     if (caminho === "/voxix/perfil" && req.method === "GET") { const p = await perfilDe(env, u); return json(p ? { apelido: p.apelido, nome: p.nome, avatar: p.avatar || null } : { apelido: null, nomeSugerido: ctx.usuario.nome || "" }); }

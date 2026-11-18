@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { bancoDeTeste } from "./d1.mjs";
 import { cadastrar } from "../src/id/conta.js";
-import { apelidoValido, criarPerfil, enviar, bloquear, desbloquear, listarBloqueios, denunciar, transcrever, pontuar, gastar, tratarVoxix, LIMITE_DIARIO, MAX_TEXTO } from "../src/voxix/rotas.js";
+import { apelidoValido, criarPerfil, enviar, bloquear, desbloquear, listarBloqueios, denunciar, transcrever, pontuar, gastar, tratarVoxix, criarTicket, gastarTicket, LIMITE_DIARIO, MAX_TEXTO } from "../src/voxix/rotas.js";
 import { CaixaVoxix, MAX_FILA, VALIDADE_MS } from "../src/voxix/caixa.js";
 
 process.removeAllListeners("warning");
@@ -216,4 +216,21 @@ test("avatar: pronto ou foto pequena, só quem é dono muda, consulta em lote", 
   for (const ruim of ["p:Robo!", "http://x.com/a.png", "f:data:text/html;base64,AAAA", "f:data:image/jpeg;base64," + "A".repeat(70_000)]) assert.equal((await erro(Promise.resolve().then(() => avatarValido(ruim)))).status, 400);
   await definirAvatar(env, a.id, null);
   assert.equal((await avatares(env, "alfa")).alfa, null);
+});
+
+test("ticket: código de uso único para o chat ao vivo (não precisa pôr o token na URL)", async () => {
+  const env = ENV();
+  const a = await pessoa(env, "a@exemplo.com", "ana");
+  const chamar = (token, metodo, caminho) => tratarVoxix(new Request(`https://v.test${caminho}`, { method: metodo, headers: token ? { authorization: `Bearer ${token}` } : {} }), env, new URL(`https://v.test${caminho}`), caminho.split("?")[0]);
+  assert.equal((await chamar(null, "POST", "/voxix/ticket")).status, 401); // sem login não ganha código
+  const r = await chamar(a.token, "POST", "/voxix/ticket");
+  assert.equal(r.status, 200);
+  const { ticket, expira } = await r.json();
+  assert.ok(ticket.length >= 24 && expira > Date.now());
+  assert.equal(await gastarTicket(env, ticket), a.token); // devolve o login de quem pediu
+  assert.equal(await gastarTicket(env, ticket), null); // só vale uma vez
+  const t2 = (await criarTicket(env, a.token, T0)).ticket;
+  assert.equal(await gastarTicket(env, t2, T0 + 61_000), null); // vencido depois de 60 s
+  assert.equal(await gastarTicket(env, "inventado"), null);
+  assert.equal(await gastarTicket(env, ""), null);
 });

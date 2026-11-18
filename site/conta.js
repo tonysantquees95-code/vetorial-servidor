@@ -58,6 +58,13 @@
     e.className = "aviso al"; e.textContent = "O seu período grátis acabou. Escolha um pacote para continuar.";
   }
 
+  function recuperacaoEstado(r) {
+    const e = $("rec-estado"), ok = !!(r && r.configurada);
+    e.className = ok ? "aviso ok" : "aviso al";
+    e.textContent = ok ? "Recuperação configurada. Para trocar o PIN ou a pergunta, preencha de novo abaixo." : "Você ainda não configurou a recuperação de senha. Faça agora, leva um minuto.";
+    $("rec-botao").textContent = ok ? "Trocar recuperação" : "Salvar recuperação";
+  }
+
   async function iniciar() {
     const t = ler();
     if (!t) return mostrar("d");
@@ -69,6 +76,7 @@
       $("inicial").textContent = String(u.nome || u.email || "V").trim().charAt(0).toUpperCase();
       $("novo-nome").value = u.nome || "";
       estado(c.licenca);
+      recuperacaoEstado(c.recuperacao);
       precos(c.licenca);
       document.querySelectorAll("#pacotes .plano").forEach((p) => p.classList.toggle("sel", p.dataset.pacote === escolhido));
       mostrar("l");
@@ -103,6 +111,21 @@
       $("nome").textContent = j.usuario.nome || $("email").textContent;
       msg.textContent = "Nome atualizado.";
     } catch (e) { msg.textContent = e.message; }
+  });
+  $("rec").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const msg = $("msg-rec"), botao = $("rec-botao");
+    const pin = $("rec-pin").value.replace(/\D/g, ""), pin2 = $("rec-pin2").value.replace(/\D/g, "");
+    if (pin.length !== 6) { msg.textContent = "O PIN tem 6 números."; return; }
+    if (pin !== pin2) { msg.textContent = "Os dois PINs não são iguais."; return; }
+    if ($("rec-resp").value.trim().toLowerCase() !== $("rec-resp2").value.trim().toLowerCase()) { msg.textContent = "As duas respostas não são iguais."; return; }
+    botao.disabled = true; msg.textContent = "Salvando…";
+    try {
+      const r = await fetch(A.api + "/id/recuperacao", { method: "PUT", headers: { "content-type": "application/json", authorization: "Bearer " + ler() }, body: JSON.stringify({ senhaAtual: $("rec-senha").value, pin, pinConfirma: pin2, pergunta: $("rec-pergunta").value, resposta: $("rec-resp").value, respostaConfirma: $("rec-resp2").value }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Não consegui salvar.");
+      $("rec").reset(); recuperacaoEstado({ configurada: true }); msg.textContent = "Pronto! A recuperação de senha foi salva.";
+    } catch (e) { msg.textContent = e.message; } finally { botao.disabled = false; }
   });
   $("sair").addEventListener("click", (ev) => { ev.preventDefault(); apagar(); mostrar("d"); });
   iniciar();

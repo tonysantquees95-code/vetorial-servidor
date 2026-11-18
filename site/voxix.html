@@ -23,15 +23,13 @@
 <main>
 <section class="hero"><div class="wrap">
   <div>
-    <span class="etiqueta">Versão de testes · na suíte Vetorial Tech</span>
+    <span class="etiqueta">Em breve · na suíte Vetorial Tech</span>
     <h1>O <em>chat dos gamers</em>, feito para quem joga.</h1>
     <p class="sub">O Voxix junta conversas e grupos num app só, com visual que você muda do seu jeito: cor, luzes que correm em volta, papel de parede e um teclado próprio. Você entra com o mesmo Vetorial ID dos outros apps da suíte, escolhe o seu apelido e já está no meio da turma.</p>
     <div class="cta">
-      <a class="btn" id="vx-android" href="#">⬇ Baixar para Android</a>
-      <a class="btn sec" id="vx-windows" href="#">⬇ Baixar para Windows</a>
-      <a class="btn sec" href="#funcoes">Ver o que ele faz</a>
+      <a class="btn" href="#funcoes">Ver o que ele vai ter</a>
     </div>
-    <p class="nota"><b>Versão de testes.</b> O Voxix ainda está em ajustes: pode ter erros e muda com frequência. Ele avisa quando há versão nova e se atualiza por dentro do app. Entre com o seu Vetorial ID.</p>
+    <p class="nota"><b>Em breve.</b> O Voxix ainda está em fase de testes e ainda não tem data de lançamento. Quando abrir para todo mundo, o download aparece aqui e você entra com o seu Vetorial ID.</p>
   </div>
   <div class="selo-app"><span class="anim anim-voxix" role="img" aria-label="Voxix"></span></div>
 </div></section>
@@ -60,7 +58,7 @@
 
 <section><div class="wrap" style="max-width:760px">
   <div class="titulo rev"><h2>Perguntas <em>frequentes</em></h2></div>
-  <details class="rev"><summary>Já posso usar o Voxix?</summary><p>Já dá para baixar e testar. É uma versão de testes: ainda não há data para o lançamento final e pode ter erros. Quando houver versão nova, o app avisa e você instala por cima, sem perder a conta.</p></details>
+  <details class="rev"><summary>Já posso usar o Voxix?</summary><p>Ainda não: o Voxix está em fase de testes e ainda não tem data de lançamento. Quando abrir para todo mundo, o download aparece nesta página.</p></details>
   <details class="rev"><summary>Vai ser pago?</summary><p>Ainda vamos anunciar. Quando o Voxix sair, os valores e as condições aparecem nesta página.</p></details>
   <details class="rev"><summary>Em quais aparelhos?</summary><p>Android, Windows, navegador e iPhone, com o mesmo Vetorial ID.</p></details>
   <details class="rev"><summary>Como fico sabendo?</summary><p>Fique de olho nesta página, na <a href="./">página da suíte</a> e no nosso Instagram: o Voxix entra por lá.</p></details>
@@ -73,7 +71,6 @@
 <script src="vitrine.js" defer></script>
 <script>
   document.getElementById("ano").textContent = new Date().getFullYear();
-  [["vx-android","voxix-android"],["vx-windows","voxix-windows"]].forEach(([i, a]) => { document.getElementById(i).href = VENUS.api + "/atualizacao?app=" + a + "&baixar=1"; });
   document.getElementById("entrar-topo").href = VENUS.entrar("conta.html");
 </script>
 <script>
