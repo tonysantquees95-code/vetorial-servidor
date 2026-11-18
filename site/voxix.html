@@ -10,7 +10,7 @@
 <meta property="og:description" content="O Voxix é o chat para gamers da Vetorial Tech: conversas, grupos, salas de texto e de voz, com o seu Vetorial ID. Em breve.">
 <meta property="og:image" content="/icone/voxix.png">
 <link rel="icon" href="favicon.png">
-<link rel="stylesheet" href="estilo.css?v=8">
+<link rel="stylesheet" href="estilo.css?v=9">
 </head>
 <body>
 <header class="topo"><div class="wrap">
@@ -27,7 +27,8 @@
     <h1>O <em>chat dos gamers</em>, feito para quem joga.</h1>
     <p class="sub">O Voxix junta conversas e grupos num app só, com visual que você muda do seu jeito: cor, luzes que correm em volta, papel de parede e um teclado próprio. Você entra com o mesmo Vetorial ID dos outros apps da suíte, escolhe o seu apelido e já está no meio da turma.</p>
     <div class="cta">
-      <a class="btn" href="#funcoes">Ver o que ele vai ter</a>
+      <a class="btn" href="#espera">Entrar na lista de espera</a>
+      <a class="btn sec" href="#funcoes">Ver o que ele vai ter</a>
     </div>
     <p class="nota"><b>Em breve.</b> O Voxix ainda está em fase de testes e ainda não tem data de lançamento. Quando abrir para todo mundo, o download aparece aqui e você entra com o seu Vetorial ID.</p>
   </div>
@@ -56,12 +57,26 @@
   <p class="nota" style="text-align:center;margin-top:22px"><b>Vem por aí:</b> salas de voz e envio de fotos e arquivos leves.</p>
 </div></section>
 
+<section id="espera"><div class="wrap" style="max-width:640px">
+  <div class="titulo rev"><h2>Quer ser avisado quando o <em>Voxix</em> abrir?</h2><p>Deixe o seu e-mail na lista de espera.</p></div>
+  <form id="form-espera" class="espera rev" novalidate>
+    <label for="espera-email">Seu e-mail</label>
+    <div class="linha">
+      <input id="espera-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="voce@email.com" required>
+      <button class="btn" type="submit">Entrar na lista</button>
+    </div>
+    <input class="isca" name="site" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p id="espera-msg" class="espera-msg" role="status" aria-live="polite"></p>
+    <p class="nota">Usamos o seu e-mail só para avisar quando o Voxix abrir. Não mandamos outras coisas e não repassamos para ninguém. Para sair da lista, é só chamar a gente no Instagram <a href="https://www.instagram.com/vetorial_tech/" target="_blank" rel="noopener">@vetorial_tech</a> e apagamos o seu e-mail.</p>
+  </form>
+</div></section>
+
 <section><div class="wrap" style="max-width:760px">
   <div class="titulo rev"><h2>Perguntas <em>frequentes</em></h2></div>
   <details class="rev"><summary>Já posso usar o Voxix?</summary><p>Ainda não: o Voxix está em fase de testes e ainda não tem data de lançamento. Quando abrir para todo mundo, o download aparece nesta página.</p></details>
   <details class="rev"><summary>Vai ser pago?</summary><p>Ainda vamos anunciar. Quando o Voxix sair, os valores e as condições aparecem nesta página.</p></details>
   <details class="rev"><summary>Em quais aparelhos?</summary><p>Android, Windows, navegador e iPhone, com o mesmo Vetorial ID.</p></details>
-  <details class="rev"><summary>Como fico sabendo?</summary><p>Fique de olho nesta página, na <a href="./">página da suíte</a> e no nosso Instagram: o Voxix entra por lá.</p></details>
+  <details class="rev"><summary>Como fico sabendo?</summary><p>Deixe o seu e-mail na <a href="#espera">lista de espera</a> desta página e a gente avisa quando o Voxix abrir. Também vamos mostrar as novidades no nosso Instagram.</p></details>
 </div></section>
 </main>
 
@@ -79,6 +94,27 @@
     if (!("IntersectionObserver" in window)) { els.forEach((e) => e.classList.add("v")); return; }
     const o = new IntersectionObserver((l) => l.forEach((x) => { if (x.isIntersecting) { x.target.classList.add("v"); o.unobserve(x.target); } }), { threshold: 0.12 });
     els.forEach((e) => o.observe(e));
+  })();
+</script>
+<script>
+  (() => {
+    const f = document.getElementById("form-espera"), msg = document.getElementById("espera-msg");
+    if (!f) return;
+    f.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const email = f.email.value.trim(), btn = f.querySelector("button");
+      msg.className = "espera-msg";
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) { msg.textContent = "Esse e-mail não parece certo. Confira e tente de novo."; msg.classList.add("erro"); f.email.focus(); return; }
+      btn.disabled = true; msg.textContent = "Enviando…";
+      try {
+        const r = await fetch(VENUS.api + "/voxix/espera", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, site: f.site.value }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.mensagem || d.erro || "Não deu certo agora. Tente de novo daqui a pouco.");
+        f.email.value = ""; msg.textContent = "Pronto! Você está na lista. Avisamos por e-mail quando o Voxix abrir."; msg.classList.add("ok");
+      } catch (e) {
+        msg.textContent = (e && e.message && !/fetch|network|load failed/i.test(e.message)) ? e.message : "Não consegui enviar agora. Confira a internet e tente de novo."; msg.classList.add("erro");
+      } finally { btn.disabled = false; }
+    });
   })();
 </script>
 <script src="logos-animados.js" defer></script>

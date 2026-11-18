@@ -190,3 +190,16 @@ details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:non
 @media(max-width:1380px){.topo .ig span{display:none}.topo .ig{padding:9px 11px}.topo nav{gap:11px}.topo nav a{font-size:13px}}
 .topo .wrap>*{min-width:0}
 @media(max-width:480px){.btn{white-space:normal;text-align:center;max-width:100%}}
+
+/* Lista de espera (voxix.html) */
+.espera{border:1px solid var(--borda);background:var(--painel);border-radius:20px;padding:22px}
+.espera label{display:block;font-weight:700;margin-bottom:8px}
+.espera .linha{display:flex;gap:10px;flex-wrap:wrap}
+.espera input[type=email]{flex:1 1 220px;min-width:0;box-sizing:border-box;font:inherit;color:var(--texto);background:#00000055;border:1px solid var(--borda);border-radius:14px;padding:13px 14px}
+.espera input[type=email]:focus{outline:2px solid var(--azul);outline-offset:1px}
+.espera .btn{flex:0 0 auto}
+.espera .btn:disabled{opacity:.6;cursor:wait}
+.espera{position:relative}.espera .isca{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.espera-msg{min-height:1.4em;margin:10px 0 0;font-size:14px;color:var(--suave)}
+.espera-msg.ok{color:var(--verde)}.espera-msg.erro{color:#ff9bb0}
+@media(max-width:480px){.espera .btn{width:100%}}

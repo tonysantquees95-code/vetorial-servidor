@@ -36,6 +36,27 @@ export default {
     }],
     ["home-precos", "", async (p) => { await p.locator("#preco").scrollIntoViewIfNeeded(); }],
     ["home-baixar", "", async (p) => { await p.locator("#baixar").scrollIntoViewIfNeeded(); }],
+    ["voxix-espera-erro", "voxix.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")));
+      await p.locator("#espera").scrollIntoViewIfNeeded();
+      await p.fill("#espera-email", "isso-nao-e-email"); await p.click("#form-espera button");
+      await ESPERA(p);
+      if (!/não parece certo/.test(await p.locator("#espera-msg").innerText())) throw new Error("e-mail errado não mostrou o aviso");
+    }],
+    ["voxix-espera-ok", "voxix.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")));
+      let enviado = null;
+      await p.route("**/voxix/espera", async (r) => {
+        if (r.request().method() === "OPTIONS") return r.fulfill({ status: 204, headers: { "access-control-allow-origin": "*", "access-control-allow-headers": "content-type" } });
+        enviado = JSON.parse(r.request().postData() || "{}");
+        return r.fulfill({ status: 201, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"ok":true}' });
+      });
+      await p.locator("#espera").scrollIntoViewIfNeeded();
+      await p.fill("#espera-email", "pessoa@exemplo.com"); await p.click("#form-espera button");
+      await ESPERA(p);
+      if (!/Pronto/.test(await p.locator("#espera-msg").innerText())) throw new Error("o aviso de sucesso não apareceu");
+      if (!enviado || enviado.email !== "pessoa@exemplo.com" || enviado.site !== "") throw new Error("o pedido saiu errado");
+    }],
     ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
   ],
 };

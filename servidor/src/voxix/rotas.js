@@ -11,12 +11,14 @@
 //   GET/POST/DELETE /voxix/bloqueios      → bloquear e desbloquear
 //   POST /voxix/denuncias {apelido, motivo, trecho?} → fila de revisão
 //   /voxix/comunidades…, /voxix/convites/…, /voxix/salas/…/ws → comunidades, salas e convites (ver comunidades.js)
+//   POST /voxix/espera {email}            → lista de espera do site (pública, sem login; ver espera.js)
 //   POST /voxix/pontuar                   → ditado (põe vírgulas, pontos e maiúsculas no texto falado)
 //   POST /voxix/transcrever               → ditado (áudio curto vira texto; o áudio não é guardado)
 import { ErroLoja } from "../loja/lojas.js";
 import { aleatorio } from "../loja/cripto.js";
 import { ErroId, validarSessao } from "../id/conta.js";
 import { tratarComunidades } from "./comunidades.js";
+import { entrarNaEspera } from "./espera.js";
 
 export const ehRotaVoxix = (c) => c.startsWith("/voxix/");
 export const MAX_TEXTO = 2000;
@@ -231,6 +233,7 @@ export async function tratarVoxix(req, env, url, caminho) {
   try {
     const conv = /^\/voxix\/entrar\/([A-HJ-NP-Z2-9]{8})$/i.exec(caminho);
     if (conv && req.method === "GET") return paginaDoConvite(conv[1].toUpperCase());
+    if (caminho === "/voxix/espera" && req.method === "POST") return json(await entrarNaEspera(env, await corpo(req, 2000)), 201);
     // o WebSocket do navegador não manda cabeçalhos: o token vai na URL
     let pedido = req;
     if (caminho === "/voxix/ticket" && req.method === "POST") {
