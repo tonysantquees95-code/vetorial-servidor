@@ -86,7 +86,7 @@ export async function deepseek(env, p) {
     "https://api.deepseek.com/chat/completions",
     { authorization: `Bearer ${chave}` },
     corpo,
-    raciocinio ? TEMPO_RACIOCINIO : TEMPO_PADRAO
+    raciocinio ? TEMPO_RACIOCINIO : (p.tempo ?? TEMPO_PADRAO)
   );
   // Só o `content` volta ao app; o encadeamento interno (reasoning_content) é descartado.
   return { ...extrairOpenAI("deepseek", dados), modelo };
