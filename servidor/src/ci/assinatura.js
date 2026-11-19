@@ -5,7 +5,7 @@
 import { cifrar, decifrar } from "../loja/cripto.js";
 
 export const ehRotaCi = (c) => c === "/ci/assinatura";
-export const REPOS_PERMITIDOS = ["tonysantquees95-code/vetorial-dev-center", "tonysantquees95-code/Vindex-", "tonysantquees95-code/Vortex", "tonysantquees95-code/velox-gaming-search", "tonysantquees95-code/Vetorial-Drive", "tonysantquees95-code/voxix", "tonysantquees95-code/Vyntem", "tonysantquees95-code/v-space"];
+export const REPOS_PERMITIDOS = ["tonysantquees95-code/vetorial-dev-center", "tonysantquees95-code/Vindex-", "tonysantquees95-code/Vortex", "tonysantquees95-code/velox-gaming-search", "tonysantquees95-code/Vetorial-Drive", "tonysantquees95-code/voxix", "tonysantquees95-code/Vyntem", "tonysantquees95-code/v-space", "tonysantquees95-code/vetogoshi"];
 // O repositório do Vindex hoje se chama "Vindex", mas a chave de assinatura já guardada está sob "Vindex-": o apelido leva a ela (outra chave impediria atualizar por cima do app instalado).
 export const APELIDOS = { "tonysantquees95-code/vindex": "tonysantquees95-code/Vindex-" };
 export const EMISSOR = "https://token.actions.githubusercontent.com";
