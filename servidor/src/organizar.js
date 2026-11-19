@@ -15,7 +15,7 @@ const MAX_APPS = 400;
 const MAX_CATEGORIAS = 14;
 const JANELA_MS = 60 * 60_000;
 const LIMITE_POR_CONTA = 30;
-const TAM_LOTE = 60;
+const TAM_LOTE = 40;
 
 const contagem = new Map();
 export function passouDoLimite(chave, limite, agora = Date.now()) {
@@ -93,20 +93,21 @@ export async function tratarOrganizar(req, env, ctx, opcoes = {}) {
     const reserva = opcoes.ia ? null : gemini;
     const resultados = await Promise.allSettled(lotes.map(async (lote) => {
       const { sistema, mensagens } = montarPrompt(categorias, lote);
-      const pedido = { tarefa: "texto", sistema, mensagens, maxTokens: 200 + lote.length * 14, temperatura: 0, tempo: 30_000 };
+      const pedido = { tarefa: "texto", sistema, mensagens, maxTokens: 200 + lote.length * 14, temperatura: 0, tempo: 20_000 };
       let r;
-      try { r = await principal(env, pedido); } catch (e) { if (!reserva) throw e; console.error("organizar principal", e?.message); r = await reserva(env, pedido); }
+      try { r = await principal(env, pedido); } catch (e) { if (!reserva) throw e; console.error("organizar principal", e?.message); try { r = await reserva(env, pedido); } catch (g) { throw Object.assign(new Error(`${e?.message} > ${g?.message}`), { provedor: "ia", status: g?.status ?? e?.status }); } }
       return validarMapa(extrairJson(r.texto), categorias, lote);
     }));
     const mapa = {};
     let falhas = 0, semChave = false;
+    const motivos = [];
     for (const r of resultados) {
       if (r.status === "fulfilled") Object.assign(mapa, r.value);
-      else { falhas++; if (r.reason?.status === 503 || /sem_chave/.test(String(r.reason?.message))) semChave = true; console.error("organizar lote", r.reason?.message); }
+      else { falhas++; motivos.push(`${r.reason?.provedor ?? "ia"}:${r.reason?.status ?? 0}:${String(r.reason?.message ?? "").slice(0, 90)}`); if (r.reason?.status === 503 || /sem_chave/.test(String(r.reason?.message))) semChave = true; console.error("organizar lote", r.reason?.message); }
     }
     if (falhas === lotes.length) {
       if (semChave) return json({ error: "a IA ainda não está configurada no servidor" }, 503);
-      return json({ error: "a IA não respondeu agora" }, 502);
+      return json({ error: "a IA não respondeu agora", detalhe: [...new Set(motivos)].slice(0, 3).join(" | ") }, 502);
     }
     return json({ mapa });
   } catch (e) {
