@@ -10,6 +10,7 @@
  *   POST /chat                           → conversa com busca na web (Groq + Tavily, reserva Gemini) — ver chat.js
  *   POST /v1/chat, POST /v1/ocr, GET /v1/rotas → roteador de IA por função (Groq / DeepSeek / Gemini só multimodal), CORS e cache vetorial — ver ia/
  *   POST /ia/v1/chat/completions, GET /ia/v1/models → IA para os apps (compatível com a OpenAI), só com Vetorial ID — ver ia/proxy.js
+ *  POST /organizar                      → V-Space: a IA separa os apps em categorias (só nomes de apps) — ver organizar.js
  *  /id, /id/*                           → Vetorial ID: login único (JWT), dispositivos (3) e sessões (2 ativas), sincronização — ver id/
  *  /voxix/*                             → Voxix (chat para gamers): perfis, mensagens, bloqueio, denúncia e ditado — ver voxix/
  *  /dev/*                               → Painel Dev da Vetorial Tech (só o superadministrador) — ver dev/
@@ -27,6 +28,7 @@ import { ehRotaVortex, tratarVortex } from "./vortex/saves.js";
 import { ehRotaDrive, tratarDrive, limparDrive } from "./drive/drive.js";
 import { ehRotaCi, tratarCi } from "./ci/assinatura.js";
 import { ehRotaFinancas, tratarFinancas } from "./financas/ia.js";
+import { ehRotaOrganizar, tratarOrganizar } from "./organizar.js";
 import { chat, chatPreflight } from "./chat.js";
 import { comChavesDoCofre } from "./dev/cofre.js";
 import { tratarIA } from "./ia/rotas.js";
@@ -70,7 +72,7 @@ export default {
       if (caminho === "/cobranca/status" && req.method === "GET") return await cobrancaStatus(url, env);
       const ehChat = caminho === "/chat" && (req.method === "POST" || req.method === "OPTIONS");
       // as chaves de IA vêm do cofre do Vindex (guardadas 5 min); sem cofre, valem as variáveis do Worker
-      const envIA = ehRotaDaIA(caminho) || caminho.startsWith("/v1/") || ehChat || ehRotaFinancas(caminho) ? await comChavesDoCofre(env) : env;
+      const envIA = ehRotaDaIA(caminho) || caminho.startsWith("/v1/") || ehChat || ehRotaFinancas(caminho) || ehRotaOrganizar(caminho) ? await comChavesDoCofre(env) : env;
       if (ehRotaDaIA(caminho)) {
         // o app do Windows/navegador também usa a IA da conta: precisa do CORS (o celular fala direto e não precisa)
         const origem = req.headers.get("origin");
@@ -79,6 +81,7 @@ export default {
       }
       if (caminho.startsWith("/v1/")) return await tratarIA(req, envIA, ctx);
       if (ehRotaFinancas(caminho)) return await tratarFinancas(req, envIA, ctx);
+      if (ehRotaOrganizar(caminho)) return await tratarOrganizar(req, envIA, ctx);
       if (ehRotaDoId(caminho)) return await tratarId(req, env, url, caminho);
       if (ehRotaCi(caminho)) return await tratarCi(req, env, url, caminho);
       if (ehRotaVortex(caminho)) return await tratarVortex(req, env, url, caminho);
