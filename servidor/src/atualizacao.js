@@ -9,6 +9,8 @@ export const REPO_DO_DRIVE = "tonysantquees95-code/vetorial-drive";
 export const REPO_DO_VELOX = "tonysantquees95-code/velox-gaming-search";
 export const REPO_DO_VYNTEM = "tonysantquees95-code/Vyntem";
 export const REPO_DO_VOXIX = "tonysantquees95-code/voxix";
+export const REPO_DO_VSPACE = "tonysantquees95-code/v-space";
+export const REPO_DO_VETOGOSHI = "tonysantquees95-code/vetogoshi";
 export const REPO_DO_PAINEL = "tonysantquees95-code/vetorial-dev-center";
 
 const APPS = {
@@ -25,6 +27,8 @@ const APPS = {
   "vyntem-windows": { repo: REPO_DO_VYNTEM, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VyntemSetup\.exe$/i.test(n), publico: true },
   "voxix-android": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Voxix\.apk$/i.test(n), publico: true },
   "voxix-windows": { repo: REPO_DO_VOXIX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VoxixSetup\.exe$/i.test(n), publico: true },
+  "vspace-android": { repo: REPO_DO_VSPACE, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^V-Space\.apk$/i.test(n), publico: true },
+  "vetogoshi-android": { repo: REPO_DO_VETOGOSHI, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Vetogoshi\.apk$/i.test(n), publico: true },
   "paineldev-android": { repo: REPO_DO_PAINEL, tag: /^dev-1\.(\d+)$/, arquivo: (n) => /^VenusDev\.apk$/i.test(n), publico: true },
   "paineldev-windows": { repo: REPO_DO_PAINEL, tag: /^dev-1\.(\d+)$/, arquivo: (n) => /^VetorialDev-Setup\.exe$/i.test(n), publico: true },
   "velox-android": { repo: REPO_DO_VELOX, tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Velox\.apk$/i.test(n), publico: true },
