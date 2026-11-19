@@ -25,28 +25,38 @@ test("prompt manda só nomes e pacotes dos apps", () => {
   assert.match(sistema, /ferramentas/); assert.equal(mensagens[0].texto, "1|A|com.a\n2|B|com.b");
 });
 
-test("rota: responde o mapa validado, sem sessão, e freia o excesso", async () => {
+const OK = { validar: async () => ({ usuario: { id: "u1" } }), liberado: async () => true };
+const comIa = (ia, extra = {}) => ({ ...OK, ia, ...extra });
+
+test("rota: sem sessão do Vetorial ID dá 401 e a IA nem é chamada", async () => {
   _zerarLimites();
-  const ia = async () => ({ texto: '{"1":"jogos","2":"nao-existe"}' });
-  const r = await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }, { "cf-connecting-ip": "1.1.1.1" }), {}, {}, { ia });
-  assert.equal(r.status, 200); assert.deepEqual((await r.json()).mapa, { "com.a": "jogos" });
-  for (let i = 0; i < 5; i++) await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }, { "cf-connecting-ip": "1.1.1.1" }), {}, {}, { ia });
-  const r7 = await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }, { "cf-connecting-ip": "1.1.1.1" }), {}, {}, { ia });
-  assert.equal(r7.status, 429);
-  const outro = await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }, { "cf-connecting-ip": "2.2.2.2" }), {}, {}, { ia });
-  assert.equal(outro.status, 200);
+  let chamou = false;
+  const r = await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, { ia: async () => { chamou = true; return { texto: "{}" }; }, validar: async () => { const e = new Error("Entre de novo."); e.status = 401; throw e; } });
+  assert.equal(r.status, 401); assert.equal(chamou, false);
 });
 
-test("rota: sessão válida tem limite maior; pedido vazio, IA fora do ar e sem chave dão erro certo", async () => {
+test("rota: conta sem acesso ao app dá 402", async () => {
   _zerarLimites();
-  const ia = async () => ({ texto: "{}" });
-  const validar = async () => ({ usuario: { id: "u1" } });
-  for (let i = 0; i < 10; i++) assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }, { authorization: "Bearer x", "cf-connecting-ip": "3.3.3.3" }), {}, {}, { ia, validar })).status, 200);
-  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: [] }), {}, {}, { ia })).status, 400);
-  const quebra = async () => { throw new Error("rede"); };
-  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }, { "cf-connecting-ip": "4.4.4.4" }), {}, {}, { ia: quebra })).status, 502);
+  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, { ...OK, liberado: async () => false, ia: async () => ({ texto: "{}" }) })).status, 402);
+});
+
+test("rota: com sessão responde o mapa validado e freia o excesso por conta", async () => {
+  _zerarLimites();
+  const ia = async () => ({ texto: '{"1":"jogos","2":"nao-existe"}' });
+  const r = await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, comIa(ia));
+  assert.equal(r.status, 200); assert.deepEqual((await r.json()).mapa, { "com.a": "jogos" });
+  for (let i = 0; i < 29; i++) assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, comIa(ia))).status, 200);
+  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, comIa(ia))).status, 429);
+  const outra = await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, comIa(ia, { validar: async () => ({ usuario: { id: "u2" } }) }));
+  assert.equal(outra.status, 200);
+});
+
+test("rota: pedido vazio, IA fora do ar, sem chave e método errado dão o erro certo", async () => {
+  _zerarLimites();
+  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: [] }), {}, {}, comIa(async () => ({ texto: "{}" })))).status, 400);
+  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, comIa(async () => { throw new Error("rede"); }))).status, 502);
   const semChave = async () => { const e = new Error("sem_chave"); e.status = 503; throw e; };
-  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }, { "cf-connecting-ip": "5.5.5.5" }), {}, {}, { ia: semChave })).status, 503);
+  assert.equal((await tratarOrganizar(pedido({ categorias: CATS, apps: APPS }), {}, {}, comIa(semChave))).status, 503);
   assert.equal((await tratarOrganizar(new Request("https://x/organizar", { method: "GET" }), {}, {})).status, 405);
   assert.equal(passouDoLimite("k", 1, 0), false);
 });

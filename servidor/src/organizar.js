@@ -1,9 +1,10 @@
 // Categorias inteligentes do V-Space: a IA (DeepSeek) coloca cada app numa categoria.
 //   POST /organizar  { categorias: [{id, nome}], apps: [{pacote, nome}] }  → { mapa: { "<pacote>": "<idCategoria>" } }
 // Só recebe NOMES de apps e de categorias: nada de dados pessoais, uso do aparelho ou conteúdo. A chave fica aqui no servidor.
-// O V-Space não tem login, então o freio é por endereço (poucos pedidos por hora) e por tamanho; quem tiver sessão do Vetorial ID tem limite maior.
+// Só responde para quem entrou com o Vetorial ID (padrão da suíte); ainda assim é limitada por tamanho e por pedidos por hora de cada conta.
 import { deepseek } from "./ia/provedores.js";
 import { validarSessao } from "./id/conta.js";
+import { appLiberadoParaConta, MSG_SEM_ACESSO } from "./id/acesso.js";
 
 export const ehRotaOrganizar = (c) => c === "/organizar";
 
@@ -13,8 +14,7 @@ const MAX_CORPO = 80_000;
 const MAX_APPS = 400;
 const MAX_CATEGORIAS = 14;
 const JANELA_MS = 60 * 60_000;
-const LIMITE_ANONIMO = 6;
-const LIMITE_COM_ID = 30;
+const LIMITE_POR_CONTA = 30;
 
 const contagem = new Map();
 export function passouDoLimite(chave, limite, agora = Date.now()) {
@@ -70,6 +70,9 @@ export function validarMapa(o, categorias, apps) {
 export async function tratarOrganizar(req, env, ctx, opcoes = {}) {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...CABECALHOS, "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type, authorization" } });
   if (req.method !== "POST") return json({ error: "método não permitido" }, 405);
+  let quem;
+  try { quem = await (opcoes.validar ?? validarSessao)(env, req); } catch (e) { return json({ error: e?.message || "Entre de novo com o seu Vetorial ID." }, e?.status === 409 ? 409 : 401); }
+  if (!(await (opcoes.liberado ?? appLiberadoParaConta)(env, quem.usuario, "vspace"))) return json({ error: MSG_SEM_ACESSO }, 402);
   const tam = Number(req.headers.get("content-length") ?? 0);
   if (tam > MAX_CORPO) return json({ error: "pedido grande demais" }, 413);
   let p;
@@ -77,11 +80,8 @@ export async function tratarOrganizar(req, env, ctx, opcoes = {}) {
   const { categorias, apps } = limparPedido(p);
   if (categorias.length < 2 || !apps.length) return json({ error: "pedido vazio" }, 400);
 
-  let chave = req.headers.get("cf-connecting-ip") ?? "anonimo";
-  let limite = LIMITE_ANONIMO;
-  if (req.headers.get("authorization")) {
-    try { const q = await (opcoes.validar ?? validarSessao)(env, req); chave = `id:${q.usuario?.id ?? "?"}`; limite = LIMITE_COM_ID; } catch { /* sessão ruim: vale como anônimo */ }
-  }
+  const chave = `id:${quem.usuario?.id ?? "?"}`;
+  const limite = LIMITE_POR_CONTA;
   if (passouDoLimite(chave, limite, opcoes.agora)) return json({ error: "muitos pedidos; tente de novo mais tarde" }, 429);
 
   try {

@@ -11,7 +11,7 @@ export async function contaComAcesso(env, usuario, agora = Date.now()) {
 }
 /** O app está liberado para esta conta? (acesso ativo E o app incluído no plano: no teste grátis todos, depois só os do pacote.) */
 export async function appLiberadoParaConta(env, usuario, app, agora = Date.now()) {
-  if (app === "vyntem") return !!usuario; // gratuito: basta ter entrado com o Vetorial ID
+  if (app === "vyntem" || app === "vspace") return !!usuario; // gratuitos: basta ter entrado com o Vetorial ID
   if (!env.DB || !usuario || !usuario.loja) return !env.DB;
   const loja = await comPrivilegios(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(usuario.loja).first());
   if (!loja) return false;

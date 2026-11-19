@@ -447,3 +447,13 @@ test("Vindex antigo (sem app) cai em vindex pelo identificador; reinstalação d
   const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM dispositivos WHERE app = 'venus'").first();
   assert.equal(n.n, 1);
 });
+
+test("Vetorial ID: o V-Space (vspace) cria conta e entra, sem limite de aparelhos", async () => {
+  const env = ENV();
+  const base = { email: "vspace@exemplo.com", senha: "senha-forte-1", nome: "VS", dispositivo: disp(1), app: "vspace", recuperacao: REC };
+  assert.equal((await post(env, "/id/cadastrar", base)).status, 201);
+  assert.equal((await post(env, "/id/entrar", { email: base.email, senha: base.senha, dispositivo: disp(2), app: "vspace" })).status, 200);
+  assert.equal((await post(env, "/id/entrar", { email: base.email, senha: base.senha, dispositivo: disp(3), app: "vspace" })).status, 200);
+  assert.equal((await post(env, "/id/entrar", { email: base.email, senha: base.senha, dispositivo: disp(4), app: "vspace" })).status, 200);
+  assert.equal((await post(env, "/id/entrar", { email: base.email, senha: base.senha, dispositivo: disp(5), app: "vspace" })).status, 200);
+});
