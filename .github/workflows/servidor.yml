@@ -108,6 +108,27 @@ jobs:
           find "$GITHUB_WORKSPACE/site/voxix-app" -name '*.map' -delete
           test -f "$GITHUB_WORKSPACE/site/voxix-app/index.html"
 
+      # O Vindex PDF web (ferramentas de PDF no navegador, instalável) vai junto, em /pdf/. O repositório do Vindex é público.
+      # Se este passo falhar, o servidor é publicado do mesmo jeito (só a página /pdf/ fica como estava). Mexeu no Vindex PDF? Rode esta publicação de novo.
+      - name: Buscar o código do Vindex (público)
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/Vindex
+          path: vindex
+          sparse-checkout: app
+      - name: Montar o Vindex PDF web em site/pdf
+        continue-on-error: true
+        working-directory: vindex/app
+        run: |
+          npm ci --no-audit --no-fund
+          PDF_BASE=/pdf/ npm run build:pdf
+          rm -rf "$GITHUB_WORKSPACE/site/pdf"
+          cp -r dist-pdf "$GITHUB_WORKSPACE/site/pdf"
+          rm -f "$GITHUB_WORKSPACE/site/pdf/pdf-web.html"
+          find "$GITHUB_WORKSPACE/site/pdf" -name '*.map' -delete
+          test -f "$GITHUB_WORKSPACE/site/pdf/index.html"
+
       - name: Banco D1 (cria na primeira vez)
         run: |
           id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="venus") | .uuid' | head -1)
