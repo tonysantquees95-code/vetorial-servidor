@@ -4,7 +4,7 @@
 //   vetorial.tech/l/<codigo>      → link curto (redireciona e conta o clique)
 import { ErroLoja } from "./lojas.js";
 
-export const RESERVADAS = new Set(["l", "v", "api", "admin", "loja", "canais", "produtos", "pedidos", "webhook", "oauth", "saude", "chat", "v1", "atualizacao", "aviso", "cobranca", "estoque", "links", "assets", "static", "app", "www"]);
+export const RESERVADAS = new Set(["l", "v", "api", "admin", "loja", "canais", "produtos", "pedidos", "webhook", "oauth", "saude", "chat", "v1", "atualizacao", "aviso", "cobranca", "estoque", "links", "assets", "static", "app", "www", "agenda", "equipe", "site", "s", "e"]);
 
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const reais = (c) => (c === null || c === undefined ? "" : (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }));

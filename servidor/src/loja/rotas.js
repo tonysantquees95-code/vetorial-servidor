@@ -8,6 +8,8 @@ import { endereco, esc, html, corValida, lerAtributos, paginaDaVitrine, paginaDo
 import { aleatorio } from "./cripto.js";
 import { ehServico, tratarServico } from "./servicos.js";
 import { PAINEL } from "./painel.js";
+import { tratarAgendaDaLoja } from "../agenda/rotas.js";
+import { tratarSiteDaLoja } from "../meusite/rotas.js";
 import { webhookInfinitePay, webhookMercadoPago } from "./assinatura.js";
 import { groq } from "../ia/provedores.js";
 import { conectarCanal, listarCanais, publico, removerCanal, sincronizarPedidos, sincronizarProdutos, tratarWebhook } from "./sincronia.js";
@@ -203,6 +205,14 @@ export async function tratarLoja(req, env, ctx, url, caminho) {
     }
     if (caminho === "/loja/eu" && req.method === "GET") {
       return json({ id: loja.id, nome: loja.nome, slug: loja.slug, plano: loja.plano, trialFim: loja.trial_fim, ativoAte: loja.ativo_ate, acesso: acessoLiberado(loja) });
+    }
+    if (caminho.startsWith("/loja/site")) {
+      const r = await tratarSiteDaLoja(req, env, loja, url, caminho, { corpoJson, exigeAcesso });
+      if (r) return r;
+    }
+    if (caminho.startsWith("/loja/agenda")) {
+      const r = await tratarAgendaDaLoja(req, env, loja, url, caminho, { exigeAcesso });
+      if (r) return r;
     }
     if (ehServico(caminho) && caminho !== "/painel") {
       const r = await tratarServico(req, env, loja, url, caminho, { corpoJson, exigeAcesso, gerar: env.GERADOR_DE_TESTE || groq });

@@ -14,6 +14,8 @@
  *  /id, /id/*                           → Vetorial ID: login único (JWT), dispositivos (3) e sessões (2 ativas), sincronização — ver id/
  *  /voxix/*                             → Voxix (chat para gamers): perfis, mensagens, bloqueio, denúncia e ditado — ver voxix/
  *  /dev/*                               → Painel Dev da Vetorial Tech (só o superadministrador) — ver dev/
+ *  /agenda/*                            → agenda de serviços (salão, barbearia…): página do cliente, link da equipe e .ics — ver agenda/
+ *  /s/<loja>, /site/editor              → Meu site: página pública do negócio (serviços, agenda, fotos) e o editor com logo — ver meusite/
  *  /loja/*, /canais*, /produtos, /pedidos, /webhook/*, /oauth/* → lojistas, canais de venda (Nuvemshop, Mercado Livre, site próprio) e estoque central — ver loja/
  *
  * Segredos (wrangler secret): GITHUB_TOKEN (só leitura do repositório, para o canal de atualização);
@@ -35,6 +37,9 @@ import { tratarIA } from "./ia/rotas.js";
 import { comCors, preflight } from "./ia/cors.js";
 import { ehRotaDaIA, tratarProxyIA } from "./ia/proxy.js";
 import { ehRotaDaLoja, tratarLoja } from "./loja/rotas.js";
+import { ehRotaDaAgenda, tratarAgenda } from "./agenda/rotas.js";
+import { limparAntigas as limparAgenda } from "./agenda/dados.js";
+import { ehRotaDoSite, tratarSite } from "./meusite/rotas.js";
 import { ehRotaDoId, tratarId } from "./id/rotas.js";
 import { limpezaDeSessoes } from "./id/conta.js";
 import { ehRotaDev, tratarDev } from "./dev/rotas.js";
@@ -91,6 +96,8 @@ export default {
       if (ehRotaCofre(caminho)) return await tratarCofre(req, env, url, caminho);
       if (ehRotaIcone(caminho) && req.method === "GET") return await tratarIcone(req, url, caminho);
       if (ehRotaDev(caminho)) return await tratarDev(req, env, url, caminho);
+      if (ehRotaDaAgenda(caminho)) return await tratarAgenda(req, env, ctx, url, caminho);
+      if (ehRotaDoSite(caminho)) return await tratarSite(req, env, ctx, url, caminho);
       if (ehRotaDaLoja(caminho) || (env.DOMINIO_CURTO && url.hostname === env.DOMINIO_CURTO && req.method === "GET" && /^\/[a-z0-9-]{3,32}(\/[^/]+)?$/.test(caminho) && !["/saude", "/atualizacao"].includes(caminho))) {
         return await tratarLoja(req, env, ctx, url, caminho);
       }
@@ -117,6 +124,7 @@ export default {
     await limpezaDeSessoes(env);
     await limparTrafego(env);
     try { await limparDrive(env); } catch (e) { console.error("drive limpeza", e); }
+    try { await limparAgenda(env); } catch (e) { console.error("agenda limpeza", e); }
     await env.DB.prepare("DELETE FROM cobranca_avisos WHERE criado < ?").bind(Date.now() - 30 * 86400000).run();
   },
 };
