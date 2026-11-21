@@ -177,3 +177,18 @@ test("meu site: loja sem acesso não abre e nome inexistente dá 404 amigável",
   assert.equal((await publico("/s/studio-bela/foto/10")).status, 404);
   assert.ok(ErroLoja);
 });
+
+test("testador: acesso livre por tempo indeterminado, sem virar administrador", async () => {
+  const { comPrivilegios } = await import("../src/loja/lojas.js");
+  const { appsLiberados } = await import("../src/loja/assinatura.js");
+  const env = mk();
+  const reg = await registrarLoja(env, { nome: "Teste Gui", slug: "teste-gui" });
+  await env.DB.prepare("INSERT INTO usuarios (id, email, senha_hash, salt, loja, criado) VALUES ('u-gui', 'Guilherme.Gewehr@Hotmail.com', 'x', 'y', ?, 1)").bind(reg.id).run();
+  const antes = await comPrivilegios(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(reg.id).first());
+  assert.notEqual(antes.plano, "testador");
+  await env.DB.prepare("INSERT OR IGNORE INTO testadores (email, criado) VALUES ('guilherme.gewehr@hotmail.com', 1)").run();
+  const l = await comPrivilegios(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(reg.id).first());
+  assert.equal(l.plano, "testador");
+  assert.ok(l.ativo_ate > Date.now() + 5 * 365 * 864e5);
+  assert.deepEqual(appsLiberados(l), { vindex: true, vortex: true, vyntem: true });
+});

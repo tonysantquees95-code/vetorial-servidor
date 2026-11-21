@@ -48,7 +48,7 @@ const tituloDo = (pacote) => (pacote === "venus" ? titulo : `${PACOTES[pacote].n
 
 /** Quais apps estão liberados agora: no teste grátis, todos; pago, os do pacote; o dono, todos. O Vyntem é gratuito para qualquer conta do Vetorial ID. */
 export function appsLiberados(loja, agora = Date.now()) {
-  if (loja.plano === "dono") return { vindex: true, vortex: true, vyntem: true };
+  if (loja.plano === "dono" || loja.plano === "testador") return { vindex: true, vortex: true, vyntem: true };
   const pago = agora < (loja.ativo_ate || 0);
   if (pago) return { ...PACOTES[pacoteDe(loja.pacote)].apps, vyntem: true };
   const teste = agora < (loja.trial_fim || 0);

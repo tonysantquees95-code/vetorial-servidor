@@ -62,7 +62,10 @@ export async function comPrivilegios(env, loja) {
   }
   try {
     const u = await env.DB.prepare("SELECT email FROM usuarios WHERE loja = ?").bind(loja.id).first();
-    if (u && String(u.email || "").trim().toLowerCase() === emailAdmin(env)) return { ...loja, ativo_ate: SEM_FIM, plano: "dono" };
+    const email = u ? String(u.email || "").trim().toLowerCase() : "";
+    if (email && email === emailAdmin(env)) return { ...loja, ativo_ate: SEM_FIM, plano: "dono" };
+    // testador: usa tudo de graça por tempo indeterminado, mas sem poderes de administrador (plano "testador", não "dono")
+    if (email && (await env.DB.prepare("SELECT 1 AS ok FROM testadores WHERE email = ?").bind(email).first())) return { ...loja, ativo_ate: SEM_FIM, plano: "testador" };
   } catch { /* sem tabela de contas: segue sem privilégio */ }
   return loja;
 }
