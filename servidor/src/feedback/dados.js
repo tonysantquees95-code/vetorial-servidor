@@ -64,7 +64,7 @@ export async function listarRelatos(env, { status = "", app = "", tipo = "", lim
   const freq = (campo, mapa) => Object.entries(mapa).map(([id, nome]) => ({ id, nome, n: pesquisas.filter((p) => (Array.isArray(p[campo]) ? p[campo].includes(id) : p[campo] === id)).length })).filter((x) => x.n).sort((a, b) => b.n - a.n);
   const notas = pesquisas.map((p) => p.nota).filter(Boolean);
   return {
-    relatos: results.map(linha), apps: APPS,
+    relatos: results.map(linha), apps: APPS, rotulos: { ajuda: AJUDA, indicaria: INDICARIA, chamou: CHAMOU, como_conheceu: COMO_CONHECEU },
     resumo: {
       total: todos.length, novos: contar((x) => x.status === "novo"), problemas: contar((x) => x.tipo === "problema" && x.status !== "resolvido"), ideias: contar((x) => x.tipo === "ideia"), elogios: contar((x) => x.tipo === "elogio"),
       pesquisas: pesquisas.length, notaMedia: notas.length ? Math.round((10 * notas.reduce((s, n) => s + n, 0)) / notas.length) / 10 : null,
