@@ -6,6 +6,7 @@ import { TABELA } from "../ia/roteador.js";
 import { ehAdmin, criarAdmin, emailAdmin, entrarAdmin, exigirAdmin } from "./admin.js";
 import { PROJETOS, REPO_VALIDO, apksDoProjeto, buildsDoRepo, falhaDosBuilds, falhaDasVersoes, estadoGeral, linkDoApk, progressoDoBuild, listaDeVersoes, metricasDoRepo } from "./github.js";
 import { bi, esquecerProvedores, listarTrafego } from "./uso.js";
+import { listarRelatos, marcarRelato } from "../feedback/dados.js";
 import * as cofre from "./cofre.js";
 import { lerSegredo } from "./cofre.js";
 
@@ -189,6 +190,7 @@ export async function excluirUsuario(env, id) {
 const APPS_DO_PAINEL = ["venus", "vindex", "vortex", "vyntem", "velox", "drive", "voxix"];
 async function usuarios(env, agora = Date.now()) {
   const q = async (sql, ...a) => (await env.DB.prepare(sql).bind(...a).all()).results;
+  const testadores = new Set((await q("SELECT email FROM testadores")).map((x) => String(x.email).toLowerCase()));
   const [contas, devs, sess] = await Promise.all([
     q("SELECT u.id, u.email, u.nome, u.telefone, u.criado, u.rec_pin_hash AS rec, l.plano, l.pacote, l.ativo_ate AS ativoAte, l.trial_fim AS trialFim, u.bloqueado FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja ORDER BY u.criado DESC LIMIT 500"),
     q("SELECT id, usuario, app, nome, plataforma, criado, ultimo FROM dispositivos ORDER BY ultimo DESC LIMIT 3000"),
@@ -196,7 +198,7 @@ async function usuarios(env, agora = Date.now()) {
   ]);
   const lista = contas.map((c) => {
     const admin = ehAdmin(env, c.email) || c.plano === "dono";
-    const situacao = admin ? "admin" : agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
+    const situacao = admin ? "admin" : testadores.has(String(c.email).toLowerCase()) ? "testador" : agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
     const apps = {};
     for (const d of devs.filter((x) => x.usuario === c.id)) {
       const a = (apps[d.app] ||= { dispositivos: 0, ativas: 0, ultimo: 0, aparelhos: [] });
@@ -274,6 +276,9 @@ export async function tratarDev(req, env, url, caminho) {
     if (caminho === "/dev/bi" && req.method === "GET") return json(await bi(env, Number(url.searchParams.get("dias")) || 30, agora));
     if (caminho === "/dev/ferramentas" && req.method === "GET") return json(await ferramentas(env, agora));
     if (caminho === "/dev/trafego" && req.method === "GET") return json(await listarTrafego(env, { desde: Number(url.searchParams.get("desde")) || 0, limite: Number(url.searchParams.get("limite")) || 60 }, agora));
+    if (caminho === "/dev/feedback" && req.method === "GET") return json(await listarRelatos(env, { status: url.searchParams.get("status") || "", app: url.searchParams.get("app") || "", tipo: url.searchParams.get("tipo") || "", limite: Number(url.searchParams.get("limite")) || 200 }));
+    const fb = /^\/dev\/feedback\/(\d{1,10})$/.exec(caminho);
+    if (fb && req.method === "POST") return json(await marcarRelato(env, fb[1], await corpo(req)));
     if (caminho === "/dev/usuarios" && req.method === "GET") return json(await usuarios(env, agora));
     if (caminho === "/dev/dispositivos" && req.method === "GET") return json(await dispositivos(env, agora));
     if (caminho === "/dev/apk" && req.method === "GET") return json(await apk(env, url.searchParams.get("app") || ""));

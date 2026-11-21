@@ -40,6 +40,7 @@ import { ehRotaDaLoja, tratarLoja } from "./loja/rotas.js";
 import { ehRotaDaAgenda, tratarAgenda } from "./agenda/rotas.js";
 import { limparAntigas as limparAgenda } from "./agenda/dados.js";
 import { ehRotaDoSite, tratarSite } from "./meusite/rotas.js";
+import { ehRotaDoFeedback, tratarFeedback } from "./feedback/rotas.js";
 import { ehRotaDoId, tratarId } from "./id/rotas.js";
 import { limpezaDeSessoes } from "./id/conta.js";
 import { ehRotaDev, tratarDev } from "./dev/rotas.js";
@@ -98,6 +99,7 @@ export default {
       if (ehRotaDev(caminho)) return await tratarDev(req, env, url, caminho);
       if (ehRotaDaAgenda(caminho)) return await tratarAgenda(req, env, ctx, url, caminho);
       if (ehRotaDoSite(caminho)) return await tratarSite(req, env, ctx, url, caminho);
+      if (ehRotaDoFeedback(caminho)) return await tratarFeedback(req, env, ctx, url);
       if (ehRotaDaLoja(caminho) || (env.DOMINIO_CURTO && url.hostname === env.DOMINIO_CURTO && req.method === "GET" && /^\/[a-z0-9-]{3,32}(\/[^/]+)?$/.test(caminho) && !["/saude", "/atualizacao"].includes(caminho))) {
         return await tratarLoja(req, env, ctx, url, caminho);
       }
