@@ -199,7 +199,11 @@ export default {
       await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
     }],
     ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
-    pagina("vitrine", "vitrine/"),
+    ["vitrine", "vitrine/", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
+      if (await p.locator("nav.abas-m, header.topo, .faixa-ig").count()) throw new Error("a Vênus Vitrine ainda mostra o menu do site da Vetorial Tech");
+      if (!(await p.locator(".vv-topo").isVisible()) || !(await p.locator(".vv-rodape").isVisible())) throw new Error("falta o cabeçalho ou o rodapé próprios da Vitrine");
+    }],
     pagina("ferramentas-redireciona", "ferramentas.html"),
     ["home-faixa-vitrine", "", async (p) => {
       const f = p.locator("a.vv-faixa"); await f.scrollIntoViewIfNeeded();
