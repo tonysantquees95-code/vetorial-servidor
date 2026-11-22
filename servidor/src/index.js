@@ -32,6 +32,7 @@ import { ehRotaVortex, tratarVortex } from "./vortex/saves.js";
 import { ehRotaDrive, tratarDrive, limparDrive } from "./drive/drive.js";
 import { ehRotaCi, tratarCi } from "./ci/assinatura.js";
 import { ehRotaFinancas, tratarFinancas } from "./financas/ia.js";
+import { ehRotaCaixa, tratarCaixa } from "./financas/caixa.js";
 import { ehRotaOrganizar, tratarOrganizar } from "./organizar.js";
 import { chat, chatPreflight } from "./chat.js";
 import { comChavesDoCofre } from "./dev/cofre.js";
@@ -88,6 +89,7 @@ export default {
         return comCors(await tratarProxyIA(req, envIA, ctx, caminho), origem, env);
       }
       if (caminho.startsWith("/v1/")) return await tratarIA(req, envIA, ctx);
+      if (ehRotaCaixa(caminho)) return await tratarCaixa(req, env, url);
       if (ehRotaFinancas(caminho)) return await tratarFinancas(req, envIA, ctx);
       if (ehRotaOrganizar(caminho)) return await tratarOrganizar(req, envIA, ctx);
       if (ehRotaDoId(caminho)) return await tratarId(req, env, url, caminho);
