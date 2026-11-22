@@ -147,7 +147,7 @@ const zap = (tel, msg) => {
 /**
  * A página inteira. `dados`: {loja, cfg, servicos, equipe, produtos, fotos (números), base (/s/<loja>), agenda (link) ou null, vitrine (link)}.
  */
-export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos = [], fotos = [], base, agenda = null, vitrine = null, previa = false }) {
+export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos = [], fotos = [], base, agenda = null, vitrine = null, previa = false, marca = "venus", catalogo = null, fotoUrl = null }) {
   const tema = TEMAS[cfg.tema] || TEMAS.creme;
   const cor = hex(cfg.cor, "#C2185B");
   const nome = loja.titulo || loja.nome || "Meu negócio";
@@ -160,6 +160,7 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
   const botoes = [
     agenda ? `<a class="bt" href="${esc(agenda)}">Agendar horário</a>` : "",
     whats ? `<a class="bt${agenda ? " sec" : ""}" href="${esc(whats)}">Chamar no WhatsApp</a>` : "",
+    catalogo ? `<a class="bt sec" href="${esc(catalogo)}">Ver catálogo</a>` : "",
     insta ? `<a class="bt sec" href="${esc(insta)}" rel="noopener">Instagram</a>` : "",
   ].join("");
 
@@ -169,7 +170,7 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
     if (s.id === "servicos" && servicos.length) {
       partes.push(`<section id="servicos"><div class="max"><h2>${agenda ? "Serviços e preços" : "Serviços"}</h2><div class="grade">${servicos.map((x) => {
         const href = agenda ? `${agenda}${agenda.includes("?") ? "&" : "?"}s=${encodeURIComponent(x.id)}` : null;
-        const miolo = `<div class="linha"><b>${esc(x.nome)}</b>${x.preco_centavos !== null && x.preco_centavos !== undefined ? `<span class="preco">${reais(x.preco_centavos)}</span>` : ""}</div>${x.descricao ? `<small>${esc(x.descricao)}</small>` : ""}<small>${duracao(x.duracao_min)}</small>${href ? `<span class="ag">Agendar →</span>` : ""}`;
+        const miolo = `<div class="linha"><b>${esc(x.nome)}</b>${x.preco_centavos !== null && x.preco_centavos !== undefined ? `<span class="preco">${reais(x.preco_centavos)}</span>` : ""}</div>${x.descricao ? `<small>${esc(x.descricao)}</small>` : ""}${x.duracao_min > 0 ? `<small>${duracao(x.duracao_min)}</small>` : ""}${href ? `<span class="ag">Agendar →</span>` : ""}`;
         return href ? `<a class="cartao" href="${esc(href)}">${miolo}</a>` : `<div class="cartao">${miolo}</div>`;
       }).join("")}</div></div></section>`);
     } else if (s.id === "produtos" && produtos.length) {
@@ -184,7 +185,7 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
     } else if (s.id === "equipe" && equipe.length) {
       partes.push(`<section id="equipe"><div class="max"><h2>Nossa equipe</h2><div class="equipe">${equipe.map((p) => `<div class="pessoa"><b>${esc(p.nome)}</b>${p.funcao ? `<small>${esc(p.funcao)}</small>` : ""}</div>`).join("")}</div></div></section>`);
     } else if (s.id === "galeria" && fotos.length) {
-      partes.push(`<section id="galeria"><div class="max"><h2>Nosso trabalho</h2><div class="fotos">${fotos.map((n) => `<img loading="lazy" src="${esc(base)}/foto/${n}" alt="Foto ${n} de ${esc(nome)}">`).join("")}</div></div></section>`);
+      partes.push(`<section id="galeria"><div class="max"><h2>Nosso trabalho</h2><div class="fotos">${fotos.map((n) => `<img loading="lazy" src="${esc(fotoUrl ? fotoUrl(n) : `${base}/foto/${n}`)}" alt="Foto ${n} de ${esc(nome)}">`).join("")}</div></div></section>`);
     } else if (s.id === "depoimentos" && cfg.depoimentos.length) {
       partes.push(`<section id="depoimentos"><div class="max"><h2>Quem já veio</h2><div class="grade">${cfg.depoimentos.map((d) => `<div class="dep"><p>“${esc(d.texto)}”</p><small>${esc(d.nome)}</small></div>`).join("")}</div></div></section>`);
     } else if (s.id === "contato" && (whats || cfg.endereco || cfg.horario || insta)) {
@@ -206,7 +207,7 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script></head><body>
 <header class="topo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></header>
 ${partes.join("\n")}
-<footer class="rodape">Site feito com a Vênus · <b>VETORIAL TECH</b></footer>
+${marca === "vitrine" ? '<footer class="rodape">Feito com a <a href="/vitrine/">Vênus Vitrine</a> · <b>VETORIAL TECH</b></footer>' : marca === false ? "" : '<footer class="rodape">Site feito com a Vênus · <b>VETORIAL TECH</b></footer>'}
 ${cta || cta2 ? `<div class="fixa">${cta}${cta2}</div>` : ""}</body></html>`;
 }
 

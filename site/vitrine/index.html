@@ -11,7 +11,7 @@
 <meta property="og:image" content="/icone-vitrine.png">
 <link rel="icon" href="../icone-vitrine.png">
 <link rel="stylesheet" href="../estilo.css?v=10">
-<link rel="stylesheet" href="ferramentas.css?v=9">
+<link rel="stylesheet" href="ferramentas.css?v=10">
 </head>
 <body>
 <header class="vv-topo"><div class="wrap">
@@ -33,6 +33,7 @@
     <button type="button" role="tab" id="aba-panfleto" aria-selected="false" aria-controls="painel-panfleto" class="fr-aba" tabindex="-1">Panfleto</button>
     <button type="button" role="tab" id="aba-logo" aria-selected="false" aria-controls="painel-logo" class="fr-aba" tabindex="-1">Logo</button>
     <button type="button" role="tab" id="aba-catalogo" aria-selected="false" aria-controls="painel-catalogo" class="fr-aba" tabindex="-1">Catálogo</button>
+    <button type="button" role="tab" id="aba-site" aria-selected="false" aria-controls="painel-site" class="fr-aba" tabindex="-1">Site</button>
   </div>
 
   <div id="painel-link" role="tabpanel" aria-labelledby="aba-link" class="cartao fr-painel">
@@ -238,6 +239,61 @@
     </div>
   </div>
 
+  <div id="painel-site" role="tabpanel" aria-labelledby="aba-site" class="cartao fr-painel" hidden>
+    <h2>Seu site no ar em 5 minutos</h2>
+    <p class="fr-ajuda">Grátis e sem mensalidade. Escolha o ramo, preencha o básico e veja o site ficando pronto ao lado. Os textos já vêm prontos para você ajustar.</p>
+    <div class="fr-ct-grade">
+      <div class="fr-ct-form">
+        <label class="fr-rotulo" for="fr-st-nicho">Ramo do negócio</label>
+        <select id="fr-st-nicho" class="fr-campo"></select>
+        <label class="fr-rotulo" for="fr-st-nome">Nome do negócio</label>
+        <input id="fr-st-nome" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Studio da Ana">
+        <label class="fr-rotulo" for="fr-st-whats">WhatsApp com DDD</label>
+        <input id="fr-st-whats" class="fr-campo" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="(51) 99999-8888">
+        <label class="fr-rotulo" for="fr-st-slogan">Frase de destaque</label>
+        <input id="fr-st-slogan" class="fr-campo" type="text" maxlength="90" autocomplete="off">
+        <label class="fr-rotulo" for="fr-st-sobre">Sobre o negócio</label>
+        <textarea id="fr-st-sobre" class="fr-campo" rows="4" maxlength="700"></textarea>
+        <label class="fr-rotulo" for="fr-st-horario">Horário de atendimento (opcional)</label>
+        <input id="fr-st-horario" class="fr-campo" type="text" maxlength="160" autocomplete="off" placeholder="Seg a sáb, 9h às 19h">
+        <label class="fr-rotulo" for="fr-st-endereco">Endereço (opcional)</label>
+        <input id="fr-st-endereco" class="fr-campo" type="text" maxlength="160" autocomplete="off" placeholder="Rua, número, bairro, cidade">
+        <label class="fr-rotulo" for="fr-st-insta">Instagram (opcional)</label>
+        <input id="fr-st-insta" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="@seuperfil">
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Tema</legend><div id="fr-st-temas" class="fr-ct-temas"></div></fieldset>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend><div id="fr-st-cores" class="fr-ct-cores"></div></fieldset>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Logo (opcional)</legend><div id="fr-st-logos" class="fr-ct-temas"></div></fieldset>
+        <div id="fr-st-convite" class="fr-lg-convite" hidden>
+          <h3>Este tema é para quem assina a Vênus</h3>
+          <p class="fr-ajuda">Você já vê como ele fica ao lado. Para publicar com ele, assine a Vênus (mais temas, mais fotos e sem a marca). Ou escolha um tema grátis.</p>
+          <div class="fr-linha"><a class="btn" href="../#preco">Ver planos</a><button type="button" id="fr-st-ja-assino" class="btn sec">Já assino, entrar</button></div>
+        </div>
+        <h3 class="fr-ct-h">Serviços ou produtos <small id="fr-st-cont-serv"></small></h3>
+        <ul id="fr-st-servicos" class="fr-ct-produtos"></ul>
+        <div class="fr-linha"><button type="button" id="fr-st-add-serv" class="btn sec">+ Adicionar serviço</button></div>
+        <h3 class="fr-ct-h">Fotos <small id="fr-st-cont-fotos"></small></h3>
+        <div id="fr-st-fotos" class="fr-st-fotos"></div>
+        <p class="fr-ajuda fr-peq">Foto: JPG ou PNG, a gente reduz no seu aparelho.</p>
+      </div>
+      <div class="fr-ct-previa">
+        <div class="fr-ct-moldura"><iframe id="fr-st-frame" title="Prévia do site" sandbox loading="lazy"></iframe></div>
+        <div class="fr-linha fr-centro"><button type="button" id="fr-st-publicar" class="btn">Publicar meu site</button></div>
+        <p id="fr-st-aviso" class="fr-aviso" role="alert" hidden></p>
+        <div id="fr-st-pronto" class="fr-resultado" hidden>
+          <p class="fr-ok">Seu site está no ar!</p>
+          <output id="fr-st-link" class="fr-curto"></output>
+          <div class="fr-linha fr-centro">
+            <a id="fr-st-abrir" class="btn p" target="_blank" rel="noopener">Abrir</a>
+            <button type="button" id="fr-st-copiar" class="btn sec p">Copiar link</button>
+            <a id="fr-st-whats-enviar" class="btn sec p" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+          </div>
+          <div class="fr-ct-qr"><img id="fr-st-qr" alt="QR code do seu site" width="160" height="160"><a id="fr-st-qr-baixar" class="btn sec p" download="qr-site.svg">Baixar QR code</a></div>
+          <p class="fr-ajuda fr-peq">Quer agenda online, estoque e vendas no mesmo lugar? A <b>Vênus</b> faz isso por você. <a class="mais" href="../">Conhecer a Vênus</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="fr-gancho cartao">
     <h3>Quer isso funcionando sozinho?</h3>
     <p>A <b>Vênus</b> responde seus clientes no WhatsApp, controla estoque e pedidos e já cria link, QR e panfleto da sua loja. <a class="mais" href="../">Conhecer a Vênus</a></p>
@@ -269,6 +325,7 @@
 <script src="panfleto.js" defer></script>
 <script src="logo.js" defer></script>
 <script src="catalogo.js" defer></script>
+<script src="sitevitrine.js" defer></script>
 <script>
   document.getElementById("ano").textContent = new Date().getFullYear();
   (() => { const e = document.getElementById("entrar-topo"); if (e) e.href = VENUS.entrar("vitrine/"); })();

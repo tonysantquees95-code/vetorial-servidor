@@ -216,3 +216,19 @@ details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:non
 @media(max-width:560px){.vv-faixa{flex-wrap:wrap}.vv-go{width:100%;text-align:center;box-sizing:border-box}}
 @media(max-width:860px){.vv-faixa{margin-left:auto;margin-right:auto}}
 @media(min-width:1001px) and (max-width:1380px){.topo nav{gap:9px}.topo nav a{font-size:12.5px}}
+
+/* menu do topo enxuto: Apps e Grátis abrem uma lista; o Instagram vira só o ícone, com espaço */
+.topo .ig span{display:none}.topo .ig{padding:10px 12px}
+.topo .wrap{gap:16px}.topo .wrap .ig{margin-right:auto;margin-left:6px}
+.topo nav{gap:20px}.topo nav a,.topo nav summary{font-size:14px}
+.mn{position:relative}.mn summary{list-style:none;cursor:pointer;color:var(--suave);padding:6px 0;display:flex;align-items:center;gap:5px;user-select:none}
+.mn summary::-webkit-details-marker{display:none}
+.mn summary::after{content:"";width:6px;height:6px;border-right:1.8px solid currentColor;border-bottom:1.8px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.mn[open] summary,.mn summary:hover{color:#fff}.mn[open] summary::after{transform:rotate(-135deg) translateY(-1px)}
+.mn-lista{position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);min-width:210px;display:grid;gap:2px;padding:8px;border-radius:16px;background:#0d1020f2;border:1px solid var(--borda);box-shadow:0 20px 60px #000a;backdrop-filter:blur(14px);z-index:30;white-space:normal}
+.topo nav .mn-lista a{display:block;padding:10px 12px;border-radius:10px;font-size:14px;color:#fff}
+.mn-lista a:hover{background:#ffffff14}.mn-lista small{display:block;color:var(--suave);font-size:12px;margin-top:2px}
+@media(max-width:1000px){.mn.ocultar{display:none}}
+@media(min-width:1001px) and (max-width:1380px){.topo nav{gap:14px}.topo nav a,.topo nav summary{font-size:13px}}
+.topo details.mn{border:0;background:none;box-shadow:none;padding:0;margin:0;border-radius:0}
+.topo details.mn summary{border:0;background:none;box-shadow:none;padding:6px 2px;margin:0;font-weight:400;border-radius:0}

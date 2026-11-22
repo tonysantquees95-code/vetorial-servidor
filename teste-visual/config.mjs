@@ -220,6 +220,56 @@ export default {
         await p.locator("#fr-ct-pronto").scrollIntoViewIfNeeded();
       }
     }]),
+    ...[["site-login", false], ["site-publicar", true]].map(([nome, logado]) => [nome, "vitrine/", async (p) => {
+      const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
+      const temas = [["creme", "Creme", true], ["claro", "Claro", true], ["rosa", "Rosa suave", false], ["escuro", "Escuro", false], ["noite", "Azul noite", false]].map(([id, nome, gratis]) => ({ id, nome, gratis, fundo: "#fff", texto: "#000" }));
+      const textos = Object.fromEntries(["salao", "barbearia", "manicure", "estetica", "loja", "outro"].map((id) => [id, { slogan: "Beleza e cuidado do seu jeito", sobre: "{nome} é um espaço pensado para você." }]));
+      let postado = null;
+      await p.route(/\/sitev(\/|$)/, async (r) => {
+        const u = new URL(r.request().url()), m = r.request().method();
+        if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
+        const j = (status, corpo) => r.fulfill({ status, contentType: "application/json", headers: cab, body: JSON.stringify(corpo) });
+        if (u.pathname.endsWith("/modelos")) return j(200, { limites: { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } }, nichos: [{ id: "salao", nome: "Salão de beleza" }, { id: "loja", nome: "Loja" }, { id: "outro", nome: "Outro negócio" }].concat([]), temas, logos: [{ id: "mod-1", nome: "Moderno 1", gratis: true }], textos });
+        if (u.pathname.endsWith("/previa")) return j(200, { html: '<body style="font-family:system-ui;margin:0;padding:24px"><h1>Studio da Ana</h1><p>Prévia do site</p></body>', erros: [] });
+        if (m === "GET") return j(200, { site: null, assinante: false, limites: { fotos: 6, servicos: 8 } });
+        postado = JSON.parse(r.request().postData() || "{}");
+        return j(200, { ok: true, assinante: false, site: { slug: "studio-da-ana", link: "https://v.test/w/studio-da-ana", nome: postado.nome, whats: "5551999998888", nicho: "salao", cfg: { tema: postado.tema, cor: postado.cor, slogan: "", sobre: "" }, servicos: [], fotos: [], logoModelo: "", visitas: 0 } });
+      });
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
+      if (logado) await p.evaluate(() => localStorage.setItem("ferramentas.token", "token-de-teste"));
+      await p.click("#aba-site");
+      await p.waitForSelector("#fr-st-temas button");
+      if ((await p.locator("#fr-st-temas button").count()) !== 5) throw new Error("deveriam aparecer os 5 temas (grátis e bloqueados)");
+      await p.fill("#fr-st-nome", "Studio da Ana"); await p.fill("#fr-st-whats", "(51) 99999-8888");
+      if (!/Studio da Ana/.test(await p.inputValue("#fr-st-sobre"))) throw new Error("o texto pronto não usou o nome do negócio");
+      await p.click("#fr-st-add-serv");
+      await p.fill('#fr-st-servicos input[aria-label="Nome do serviço"]', "Corte"); await p.fill('#fr-st-servicos input[aria-label="Preço (R$)"]', "60,00");
+      await p.click('#fr-st-temas button:has-text("Azul noite")'); await ESPERA(p);
+      if (!logado && !(await p.locator("#fr-st-convite").isVisible())) throw new Error("o convite do tema bloqueado não apareceu");
+      await p.click('#fr-st-temas button:has-text("Creme")');
+      await p.click("#fr-st-publicar"); await ESPERA(p);
+      if (!logado) {
+        if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao publicar o site");
+        if (!/site/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para o site");
+        await p.keyboard.press("Escape");
+      } else {
+        if (!postado || postado.nome !== "Studio da Ana" || postado.servicos[0].preco !== 6000) throw new Error("o pedido de publicar saiu errado");
+        if (!(await p.locator("#fr-st-pronto").isVisible())) throw new Error("o site publicado não apareceu");
+        await p.locator("#fr-st-pronto").scrollIntoViewIfNeeded();
+      }
+    }]),
+    ["menu-topo", "", async (p) => {
+      const largura = await p.evaluate(() => window.innerWidth);
+      if (largura <= 1000) return; // no celular quem manda são as abas de baixo
+      const itens = await p.locator(".topo nav > a:visible, .topo nav > details:visible").count();
+      if (itens > 6) throw new Error("o menu do topo está com itens demais na mesma linha: " + itens);
+      await p.click(".topo details.mn:nth-of-type(1) summary");
+      if (!(await p.locator(".topo details.mn[open] .mn-lista").isVisible())) throw new Error("a lista de Apps não abriu");
+      if ((await p.locator(".topo details.mn[open] .mn-lista a").count()) < 5) throw new Error("a lista de Apps está incompleta");
+      await p.click(".topo details.mn:nth-of-type(2) summary");
+      if ((await p.locator(".topo details.mn[open]").count()) !== 1) throw new Error("só um menu deveria ficar aberto");
+      if (!(await p.locator('.topo details.mn[open] a[href="vitrine/"]').isVisible())) throw new Error("a Vitrine não está na lista Grátis");
+    }],
     ["ferramentas-link-ok", "vitrine/", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       const meu = { codigo: "abc234", curto: "https://v.test/l/abc234", destino: "https://minhaloja.com.br/promocao-do-mes-com-um-endereco-bem-comprido-para-testar", criado: 1, cliques: 7, ultimoClique: null, ativo: true };

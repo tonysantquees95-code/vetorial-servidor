@@ -12,3 +12,11 @@ window.VENUS.web = `${window.VENUS.api}/app/`;
 
 // Redes da Vetorial Tech. Preencha o endereço quando o Instagram existir: o link aparece sozinho em todas as páginas.
 window.VENUS.instagram = "https://www.instagram.com/vetorial_tech/";
+
+// fecha o menu "Apps/Grátis" ao tocar fora ou ao abrir o outro
+(() => {
+  const menus = () => document.querySelectorAll(".topo details.mn");
+  document.addEventListener("click", (e) => { for (const m of menus()) if (m.open && !m.contains(e.target)) m.open = false; });
+  document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.matches("details.mn") && e.target.open) for (const m of menus()) if (m !== e.target) m.open = false; }, true);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const m of menus()) m.open = false; });
+})();
