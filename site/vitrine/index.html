@@ -11,7 +11,7 @@
 <meta property="og:image" content="/icone-vitrine.png">
 <link rel="icon" href="../icone-vitrine.png">
 <link rel="stylesheet" href="../estilo.css?v=10">
-<link rel="stylesheet" href="ferramentas.css?v=7">
+<link rel="stylesheet" href="ferramentas.css?v=9">
 </head>
 <body>
 <header class="vv-topo"><div class="wrap">
@@ -32,6 +32,7 @@
     <button type="button" role="tab" id="aba-qr" aria-selected="false" aria-controls="painel-qr" class="fr-aba" tabindex="-1">QR code</button>
     <button type="button" role="tab" id="aba-panfleto" aria-selected="false" aria-controls="painel-panfleto" class="fr-aba" tabindex="-1">Panfleto</button>
     <button type="button" role="tab" id="aba-logo" aria-selected="false" aria-controls="painel-logo" class="fr-aba" tabindex="-1">Logo</button>
+    <button type="button" role="tab" id="aba-catalogo" aria-selected="false" aria-controls="painel-catalogo" class="fr-aba" tabindex="-1">Catálogo</button>
   </div>
 
   <div id="painel-link" role="tabpanel" aria-labelledby="aba-link" class="cartao fr-painel">
@@ -195,11 +196,52 @@
     </div>
   </div>
 
+  <div id="painel-catalogo" role="tabpanel" aria-labelledby="aba-catalogo" class="cartao fr-painel" hidden>
+    <h2>Seu catálogo no WhatsApp em 5 minutos</h2>
+    <p class="fr-ajuda">Sem site e sem mensalidade. Coloque seus produtos, veja ficando pronto ao lado e publique: seus clientes montam o pedido e ele chega pronto no seu WhatsApp.</p>
+    <div class="fr-ct-grade">
+      <div class="fr-ct-form">
+        <label class="fr-rotulo" for="fr-ct-nome">Nome da sua loja</label>
+        <input id="fr-ct-nome" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Loja da Ana">
+        <label class="fr-rotulo" for="fr-ct-whats">WhatsApp com DDD (os pedidos chegam aqui)</label>
+        <input id="fr-ct-whats" class="fr-campo" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="(51) 99999-8888">
+        <label class="fr-rotulo" for="fr-ct-desc">Frase de apresentação (opcional)</label>
+        <input id="fr-ct-desc" class="fr-campo" type="text" maxlength="200" autocomplete="off" placeholder="Moda e presentes com entrega em Porto Alegre">
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Tema</legend><div id="fr-ct-temas" class="fr-ct-temas"></div></fieldset>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend><div id="fr-ct-cores" class="fr-ct-cores"></div></fieldset>
+        <div id="fr-ct-convite" class="fr-lg-convite" hidden>
+          <h3>Este tema é para quem assina a Vênus</h3>
+          <p class="fr-ajuda">Você já vê como ele fica ao lado. Para publicar com ele, assine a Vênus (tema, até 60 produtos e sem marca). Ou escolha um dos temas grátis.</p>
+          <div class="fr-linha"><a class="btn" href="../#preco">Ver planos</a><button type="button" id="fr-ct-ja-assino" class="btn sec">Já assino, entrar</button></div>
+        </div>
+        <h3 class="fr-ct-h">Produtos <small id="fr-ct-contagem"></small></h3>
+        <ul id="fr-ct-produtos" class="fr-ct-produtos"></ul>
+        <div class="fr-linha"><button type="button" id="fr-ct-add" class="btn sec">+ Adicionar produto</button></div>
+        <p class="fr-ajuda fr-peq">Foto: JPG ou PNG, a gente reduz no seu aparelho. O preço é opcional.</p>
+      </div>
+      <div class="fr-ct-previa">
+        <div class="fr-ct-moldura"><iframe id="fr-ct-frame" title="Prévia do catálogo" sandbox="allow-scripts" loading="lazy"></iframe></div>
+        <div class="fr-linha fr-centro"><button type="button" id="fr-ct-publicar" class="btn">Publicar meu catálogo</button></div>
+        <p id="fr-ct-aviso" class="fr-aviso" role="alert" hidden></p>
+        <div id="fr-ct-pronto" class="fr-resultado" hidden>
+          <p class="fr-ok">Seu catálogo está no ar!</p>
+          <output id="fr-ct-link" class="fr-curto"></output>
+          <div class="fr-linha fr-centro">
+            <a id="fr-ct-abrir" class="btn p" target="_blank" rel="noopener">Abrir</a>
+            <button type="button" id="fr-ct-copiar" class="btn sec p">Copiar link</button>
+            <a id="fr-ct-whats-enviar" class="btn sec p" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+          </div>
+          <div class="fr-ct-qr"><img id="fr-ct-qr" alt="QR code do seu catálogo" width="160" height="160"><a id="fr-ct-qr-baixar" class="btn sec p" download="qr-catalogo.svg">Baixar QR code</a></div>
+          <p class="fr-ajuda fr-peq">Quer o estoque e os pedidos controlados sozinhos? A <b>Vênus</b> faz isso por você. <a class="mais" href="../">Conhecer a Vênus</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="fr-gancho cartao">
     <h3>Quer isso funcionando sozinho?</h3>
     <p>A <b>Vênus</b> responde seus clientes no WhatsApp, controla estoque e pedidos e já cria link, QR e panfleto da sua loja. <a class="mais" href="../">Conhecer a Vênus</a></p>
   </div>
-  <p class="fr-breve">Em breve aqui: catálogo digital com pedido pelo WhatsApp.</p>
 </div></section>
 
 <div id="fr-janela" class="fr-janela" role="dialog" aria-modal="true" aria-labelledby="fr-j-titulo" hidden>
@@ -226,6 +268,7 @@
 <script src="ferramentas.js" defer></script>
 <script src="panfleto.js" defer></script>
 <script src="logo.js" defer></script>
+<script src="catalogo.js" defer></script>
 <script>
   document.getElementById("ano").textContent = new Date().getFullYear();
   (() => { const e = document.getElementById("entrar-topo"); if (e) e.href = VENUS.entrar("vitrine/"); })();

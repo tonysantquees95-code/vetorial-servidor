@@ -180,6 +180,46 @@ export default {
         await p.locator("#fr-lg-grade").scrollIntoViewIfNeeded();
       }
     }]),
+    ...[["catalogo-login", false], ["catalogo-publicar", true]].map(([nome, logado]) => [nome, "vitrine/", async (p) => {
+      const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
+      const cores = ["#c2185b", "#1d4ed8", "#15803d", "#c2410c", "#6d4aff", "#0e9f8e"];
+      const temas = [["claro", "Claro", true], ["escuro", "Escuro", true], ["boutique", "Boutique", false], ["gourmet", "Gourmet", false], ["tech", "Tech", false], ["natural", "Natural", false]].map(([id, nome, gratis]) => ({ id, nome, gratis }));
+      let postado = null;
+      await p.route(/\/catalogo(\/|$)/, async (r) => {
+        const u = new URL(r.request().url()), m = r.request().method();
+        if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
+        const j = (status, corpo) => r.fulfill({ status, contentType: "application/json", headers: cab, body: JSON.stringify(corpo) });
+        if (u.pathname.endsWith("/modelos")) return j(200, { limiteGratis: 12, limitePago: 60, cores, temas });
+        if (u.pathname.endsWith("/previa")) return j(200, { html: '<body style="font-family:system-ui;margin:0;padding:24px"><h1>Loja da Ana</h1><p>Prévia do catálogo</p></body>', erros: [] });
+        if (m === "GET") return j(200, { catalogo: null, assinante: false, limiteProdutos: 12 });
+        postado = JSON.parse(r.request().postData() || "{}");
+        return j(200, { ok: true, assinante: false, limiteProdutos: 12, catalogo: { slug: "loja-da-ana", nome: postado.nome, whats: "5551999998888", descricao: "", tema: postado.tema, cor: postado.cor, produtos: postado.produtos.map((x) => ({ ...x, foto: "" })), visitas: 0, link: "https://v.test/c/loja-da-ana" } });
+      });
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
+      if (logado) await p.evaluate(() => localStorage.setItem("ferramentas.token", "token-de-teste"));
+      await p.click("#aba-catalogo");
+      await p.waitForSelector("#fr-ct-temas button");
+      if ((await p.locator("#fr-ct-temas button").count()) !== 6) throw new Error("deveriam aparecer os 6 temas (grátis e bloqueados)");
+      if ((await p.locator("#fr-ct-cores button").count()) !== 6) throw new Error("deveriam aparecer as 6 cores");
+      await p.fill("#fr-ct-nome", "Loja da Ana"); await p.fill("#fr-ct-whats", "(51) 99999-8888");
+      await p.fill('#fr-ct-produtos input[aria-label="Nome do produto"]', "Vestido azul"); await p.fill('#fr-ct-produtos input[aria-label="Preço (R$)"]', "129,90");
+      await p.click("#fr-ct-add");
+      if ((await p.locator("#fr-ct-produtos li").count()) !== 2) throw new Error("o segundo produto não apareceu");
+      await p.click('#fr-ct-temas button:has-text("Boutique")'); await ESPERA(p);
+      if (!logado && !(await p.locator("#fr-ct-convite").isVisible())) throw new Error("o convite do tema bloqueado não apareceu");
+      await p.click('#fr-ct-temas button:has-text("Claro")');
+      await p.click("#fr-ct-publicar"); await ESPERA(p);
+      if (!logado) {
+        if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao publicar");
+        if (!/cat[aá]logo/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para o catálogo");
+        await p.keyboard.press("Escape");
+      } else {
+        if (!postado || postado.nome !== "Loja da Ana" || postado.produtos[0].preco !== 12990) throw new Error("o pedido de publicar saiu errado");
+        if (!(await p.locator("#fr-ct-pronto").isVisible())) throw new Error("o catálogo publicado não apareceu");
+        if (!/\/c\/loja-da-ana/.test(await p.locator("#fr-ct-link").innerText())) throw new Error("o link do catálogo não apareceu");
+        await p.locator("#fr-ct-pronto").scrollIntoViewIfNeeded();
+      }
+    }]),
     ["ferramentas-link-ok", "vitrine/", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       const meu = { codigo: "abc234", curto: "https://v.test/l/abc234", destino: "https://minhaloja.com.br/promocao-do-mes-com-um-endereco-bem-comprido-para-testar", criado: 1, cliques: 7, ultimoClique: null, ativo: true };
