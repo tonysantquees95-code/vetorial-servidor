@@ -92,6 +92,43 @@ export default {
       await p.keyboard.press("Escape"); await ESPERA(p);
       if (await p.locator("#fr-janela").isVisible()) throw new Error("Esc não fechou a janela");
     }],
+    ["panfleto-pede-id", "ferramentas.html", async (p) => {
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
+      await p.click("#aba-panfleto");
+      if (!(await p.locator("#painel-panfleto").isVisible())) throw new Error("a aba do panfleto não abriu");
+      await p.fill("#fr-pf-loja", "Loja da Ana"); await p.fill("#fr-pf-titulo", "Semana do Cliente com descontos de verdade em toda a loja"); await p.fill("#fr-pf-por", "49,90"); await p.fill("#fr-pf-de", "79,90");
+      await p.fill("#fr-pf-whats", "(51) 99999-8888"); await p.fill("#fr-pf-insta", "lojadaana"); await p.waitForTimeout(400);
+      if (await p.locator("#fr-pf-baixar").isVisible()) throw new Error("os botões de baixar apareceram antes de gerar");
+      await p.click("#fr-pf-gerar"); await ESPERA(p);
+      if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao gerar");
+      if (!/panfleto/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para o panfleto");
+    }],
+    ...["promo", "lanc", "simples"].flatMap((modelo) => ["a4", "quadrado"].map((formato) => [`panfleto-${modelo}-${formato}`, "ferramentas.html", async (p) => {
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
+      let uso = 0;
+      await p.route("**/panfleto/uso", async (r) => {
+        const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
+        const m = r.request().method();
+        if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
+        if (m === "POST") uso++;
+        return r.fulfill({ status: 200, contentType: "application/json", headers: cab, body: JSON.stringify({ ok: true, ilimitado: false, limite: 2, usados: uso, restantes: 2 - uso }) });
+      });
+      await p.route("**/ferramentas/qr**", async (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", headers: { "access-control-allow-origin": "*" }, body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><rect width="29" height="29" fill="#fff"/><path d="M4,4h7v7h-7z M18,4h7v7h-7z M4,18h7v7h-7z" fill="#000"/></svg>' }));
+      await p.click("#aba-panfleto");
+      await p.click(`label.fr-op:has(input[value="${modelo}"])`); await p.click(`label.fr-op:has(input[value="${formato}"])`);
+      await p.fill("#fr-pf-loja", "Loja da Ana"); await p.fill("#fr-pf-titulo", "Semana do Cliente"); await p.fill("#fr-pf-desc", "Todos os produtos com frete grátis para Porto Alegre.");
+      await p.fill("#fr-pf-por", "49,90"); await p.fill("#fr-pf-de", "79,90"); await p.fill("#fr-pf-whats", "(51) 99999-8888"); await p.fill("#fr-pf-insta", "lojadaana"); await p.fill("#fr-pf-valid", "Até 30/11 ou enquanto durar o estoque");
+      await p.waitForTimeout(900);
+      await p.click("#fr-pf-gerar"); await ESPERA(p);
+      if (uso !== 1) throw new Error("o uso do panfleto não foi contado uma vez");
+      if (!(await p.locator("#fr-pf-baixar").isVisible())) throw new Error("os botões de baixar não apareceram depois de gerar");
+      const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.click("#fr-pf-pdf")]);
+      if (!/^panfleto-.*\.pdf$/.test(dl.suggestedFilename())) throw new Error("nome do PDF estranho: " + dl.suggestedFilename());
+      const [dl2] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.click("#fr-pf-png")]);
+      if (!/\.png$/.test(dl2.suggestedFilename())) throw new Error("nome da imagem estranho: " + dl2.suggestedFilename());
+      if (uso !== 1) throw new Error("baixar de novo não deveria gastar outro panfleto");
+      await p.locator("#painel-panfleto").scrollIntoViewIfNeeded();
+    }])),
     ["ferramentas-link-ok", "ferramentas.html", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       const meu = { codigo: "abc234", curto: "https://v.test/l/abc234", destino: "https://minhaloja.com.br/promocao-do-mes-com-um-endereco-bem-comprido-para-testar", criado: 1, cliques: 7, ultimoClique: null, ativo: true };

@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ferramentas grátis · Vetorial Tech</title>
-<meta name="description" content="Encurtador de link e gerador de QR code grátis, para quem vende pelo WhatsApp e pelo Instagram. Em breve: panfleto, logo e catálogo.">
+<meta name="description" content="Encurtador de link, QR code e panfleto prontos para imprimir ou mandar no WhatsApp, grátis. Em breve: logo e catálogo.">
 <meta name="theme-color" content="#070914">
 <meta property="og:title" content="Ferramentas grátis · Vetorial Tech">
 <meta property="og:description" content="Encurtador de link e gerador de QR code grátis, para quem vende pelo WhatsApp e pelo Instagram.">
 <meta property="og:image" content="/icone/vindex.png">
 <link rel="icon" href="favicon.png">
 <link rel="stylesheet" href="estilo.css?v=8">
-<link rel="stylesheet" href="ferramentas.css?v=1">
+<link rel="stylesheet" href="ferramentas.css?v=3">
 </head>
 <body>
 <header class="topo"><div class="wrap">
@@ -25,13 +25,14 @@
 <section class="hero fr-hero"><div class="wrap fr-um">
   <span class="etiqueta">Grátis · sem cadastro para começar</span>
   <h1>Ferramentas grátis para <em>quem vende pelo WhatsApp e Instagram</em>.</h1>
-  <p class="sub">Encurte links e crie QR codes em segundos. Você usa à vontade e só cria a conta no Vetorial ID quando for gerar o link curto.</p>
+  <p class="sub">Encurte links, crie QR codes e monte panfletos em minutos. Você usa à vontade e só entra com o Vetorial ID na hora de gerar.</p>
 </div></section>
 
 <section class="fr-ferr"><div class="wrap">
   <div class="fr-abas" role="tablist" aria-label="Ferramentas">
     <button type="button" role="tab" id="aba-link" aria-selected="true" aria-controls="painel-link" class="fr-aba">Link curto</button>
     <button type="button" role="tab" id="aba-qr" aria-selected="false" aria-controls="painel-qr" class="fr-aba" tabindex="-1">QR code</button>
+    <button type="button" role="tab" id="aba-panfleto" aria-selected="false" aria-controls="painel-panfleto" class="fr-aba" tabindex="-1">Panfleto</button>
   </div>
 
   <div id="painel-link" role="tabpanel" aria-labelledby="aba-link" class="cartao fr-painel">
@@ -98,17 +99,78 @@
     </div>
   </div>
 
+  <div id="painel-panfleto" role="tabpanel" aria-labelledby="aba-panfleto" class="cartao fr-painel" hidden>
+    <h2>Seu panfleto pronto em 1 minuto</h2>
+    <p class="fr-ajuda">Sem programa, sem designer. Preencha, veja ficando pronto ao lado e, quando gostar, toque em “Gerar panfleto” para baixar em PDF ou imagem.</p>
+    <div class="fr-pf-grade">
+      <div class="fr-pf-form">
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Modelo</legend>
+          <label class="fr-op"><input type="radio" name="fr-pf-modelo" value="promo" checked><span>Promoção</span></label>
+          <label class="fr-op"><input type="radio" name="fr-pf-modelo" value="lanc"><span>Lançamento</span></label>
+          <label class="fr-op"><input type="radio" name="fr-pf-modelo" value="simples"><span>Simples</span></label>
+        </fieldset>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Formato</legend>
+          <label class="fr-op"><input type="radio" name="fr-pf-formato" value="a4" checked><span>A4 (imprimir)</span></label>
+          <label class="fr-op"><input type="radio" name="fr-pf-formato" value="quadrado"><span>Quadrado (Instagram)</span></label>
+        </fieldset>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#c2185b" checked><span style="--c:#c2185b" title="Rosa"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#1d4ed8"><span style="--c:#1d4ed8" title="Azul"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#15803d"><span style="--c:#15803d" title="Verde"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#c2410c"><span style="--c:#c2410c" title="Laranja"></span></label>
+        </fieldset>
+        <label class="fr-rotulo" for="fr-pf-loja">Nome da sua loja</label>
+        <input id="fr-pf-loja" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Loja da Ana">
+        <label class="fr-rotulo" for="fr-pf-titulo">Título da oferta</label>
+        <input id="fr-pf-titulo" class="fr-campo" type="text" maxlength="60" autocomplete="off" placeholder="Semana do Cliente">
+        <label class="fr-rotulo" for="fr-pf-desc">Descrição curta (opcional)</label>
+        <textarea id="fr-pf-desc" class="fr-campo" rows="2" maxlength="140" placeholder="Todos os produtos com frete grátis."></textarea>
+        <div class="fr-dois">
+          <div><label class="fr-rotulo" for="fr-pf-de">Preço “de” (opcional)</label>
+          <input id="fr-pf-de" class="fr-campo" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="79,90"></div>
+          <div><label class="fr-rotulo" for="fr-pf-por">Preço “por”</label>
+          <input id="fr-pf-por" class="fr-campo" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="49,90"></div>
+        </div>
+        <label class="fr-rotulo" for="fr-pf-foto">Foto do produto (opcional)</label>
+        <input id="fr-pf-foto" class="fr-campo" type="file" accept="image/png,image/jpeg">
+        <p id="fr-pf-foto-info" class="fr-ajuda fr-peq">JPG ou PNG de até 3 MB. A foto fica só no seu aparelho.</p>
+        <label class="fr-rotulo" for="fr-pf-whats">WhatsApp com DDD</label>
+        <input id="fr-pf-whats" class="fr-campo" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="(51) 99999-8888">
+        <label class="fr-rotulo" for="fr-pf-insta">Instagram (opcional)</label>
+        <input id="fr-pf-insta" class="fr-campo" type="text" maxlength="31" autocomplete="off" placeholder="@minhaloja">
+        <label class="fr-rotulo" for="fr-pf-valid">Validade (opcional)</label>
+        <input id="fr-pf-valid" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Até 30/11 ou enquanto durar o estoque">
+      </div>
+      <div class="fr-pf-previa">
+        <div class="fr-pf-moldura"><canvas id="fr-pf-canvas" width="1240" height="1754" role="img" aria-label="Prévia do panfleto"></canvas></div>
+        <div class="fr-linha fr-centro">
+          <button type="button" id="fr-pf-gerar" class="btn">Gerar panfleto</button>
+        </div>
+        <div id="fr-pf-baixar" class="fr-pf-baixar" hidden>
+          <p class="fr-ok">Pronto! Escolha como baixar:</p>
+          <div class="fr-linha fr-centro">
+            <button type="button" id="fr-pf-pdf" class="btn p">Baixar PDF</button>
+            <button type="button" id="fr-pf-png" class="btn sec p">Baixar imagem</button>
+          </div>
+          <p class="fr-ajuda fr-peq">Quer um panfleto novo todo mês, com o seu estoque e as suas fotos? A <b>Vênus</b> faz por você. <a class="mais" href="./">Conhecer a Vênus</a></p>
+        </div>
+        <p id="fr-pf-aviso" class="fr-aviso" role="alert" hidden></p>
+        <p id="fr-pf-limite" class="fr-ajuda fr-peq" hidden></p>
+      </div>
+    </div>
+  </div>
+
   <div class="fr-gancho cartao">
     <h3>Quer isso funcionando sozinho?</h3>
     <p>A <b>Vênus</b> responde seus clientes no WhatsApp, controla estoque e pedidos e já cria link, QR e panfleto da sua loja. <a class="mais" href="./">Conhecer a Vênus</a></p>
   </div>
-  <p class="fr-breve">Em breve aqui: panfleto, logo e catálogo digital com pedido pelo WhatsApp.</p>
+  <p class="fr-breve">Em breve aqui: logo e catálogo digital com pedido pelo WhatsApp.</p>
 </div></section>
 
 <div id="fr-janela" class="fr-janela" role="dialog" aria-modal="true" aria-labelledby="fr-j-titulo" hidden>
   <div class="fr-caixa">
     <h3 id="fr-j-titulo">Quase lá!</h3>
-    <p>Para guardar o seu link curto e te mostrar quantos cliques ele teve, entre com o seu <b>Vetorial ID</b>. É grátis e uma conta só serve para todos os nossos apps. Assim a gente também melhora as ferramentas.</p>
+    <p id="fr-j-texto">Para guardar o seu link curto e te mostrar quantos cliques ele teve, entre com o seu <b>Vetorial ID</b>. É grátis e uma conta só serve para todos os nossos apps. Assim a gente também melhora as ferramentas.</p>
     <p id="fr-j-erro" class="fr-aviso" role="alert" hidden></p>
     <div class="fr-linha">
       <button type="button" id="fr-j-entrar" class="btn">Entrar com o Vetorial ID</button>
@@ -123,6 +185,7 @@
 <script src="config.js"></script>
 <script src="vitrine.js" defer></script>
 <script src="ferramentas.js" defer></script>
+<script src="panfleto.js" defer></script>
 <script>
   document.getElementById("ano").textContent = new Date().getFullYear();
   (() => { const e = document.getElementById("entrar-topo"); if (e) e.href = VENUS.entrar("ferramentas.html"); })();

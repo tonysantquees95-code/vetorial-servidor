@@ -42,7 +42,7 @@
   }
 
   // ------------------------------------------------------------ abas
-  const abas = [["aba-link", "painel-link"], ["aba-qr", "painel-qr"]];
+  const abas = [["aba-link", "painel-link"], ["aba-qr", "painel-qr"], ["aba-panfleto", "painel-panfleto"]];
   function abrirAba(idAba) {
     for (const [a, p] of abas) {
       const ativa = a === idAba;
@@ -63,17 +63,20 @@
 
   // ------------------------------------------------------------ link curto
   const dizer = (id, texto) => { const e = $(id); e.textContent = texto || ""; e.hidden = !texto; };
-  let pendente = false;
+  let pendente = null; // o que fazer assim que a pessoa entrar (criar o link, gerar o panfleto...)
+  let focoAntes = null;
   const janela = $("fr-janela");
-  const abrirJanela = (erro) => { dizer("fr-j-erro", erro || ""); janela.hidden = false; $("fr-j-entrar").focus(); };
-  const fecharJanela = () => { janela.hidden = true; $("fr-encurtar").focus(); };
-  $("fr-j-fechar").addEventListener("click", () => { pendente = false; fecharJanela(); });
-  janela.addEventListener("keydown", (e) => { if (e.key === "Escape") { pendente = false; fecharJanela(); } });
+  const TEXTO_PADRAO = $("fr-j-texto").textContent;
+  const abrirJanela = (erro, texto) => { focoAntes = document.activeElement; $("fr-j-texto").textContent = texto || TEXTO_PADRAO; dizer("fr-j-erro", erro || ""); janela.hidden = false; $("fr-j-entrar").focus(); };
+  const fecharJanela = () => { janela.hidden = true; if (focoAntes && focoAntes.focus) focoAntes.focus(); };
+  $("fr-j-fechar").addEventListener("click", () => { pendente = null; fecharJanela(); });
+  janela.addEventListener("keydown", (e) => { if (e.key === "Escape") { pendente = null; fecharJanela(); } });
   $("fr-j-entrar").addEventListener("click", async () => {
     const ok = await entrarComVetorialId();
     if (!ok) return dizer("fr-j-erro", "Não deu para entrar agora. Se a janela fechou sozinha, libere pop-ups para este site e toque de novo.");
     fecharJanela();
-    if (pendente) { pendente = false; criarLink(); }
+    const fazer = pendente; pendente = null;
+    if (fazer) fazer();
   });
 
   let ultimo = "";
@@ -81,12 +84,12 @@
     dizer("fr-aviso-link", "");
     const destino = $("fr-destino").value.trim();
     if (!destino) return dizer("fr-aviso-link", "Cole o endereço que você quer encurtar.");
-    if (!lerToken()) { pendente = true; return abrirJanela(); } // só aqui, na hora de gerar, pede o Vetorial ID
+    if (!lerToken()) { pendente = criarLink; return abrirJanela(); } // só aqui, na hora de gerar, pede o Vetorial ID
     const botao = $("fr-encurtar");
     botao.disabled = true;
     try {
       const r = await chamar("POST", "/links", { destino });
-      if (r.status === 401) { guardarToken(""); pendente = true; return abrirJanela("Sua sessão venceu. Entre de novo para continuar."); }
+      if (r.status === 401) { guardarToken(""); pendente = criarLink; return abrirJanela("Sua sessão venceu. Entre de novo para continuar."); }
       if (r.status !== 201) return dizer("fr-aviso-link", r.corpo.error || "Não consegui criar o link agora. Tente de novo.");
       ultimo = r.corpo.link.curto;
       $("fr-curto").textContent = ultimo;
@@ -217,4 +220,12 @@
 
   mostrarTipo();
   carregarMeus();
+
+  // Peças que as outras ferramentas (panfleto.js) usam: a mesma conta, a mesma janela "Quase lá!".
+  window.FR = {
+    API, $, dizer, baixar, lerToken, guardarToken, chamar,
+    /** Pede o Vetorial ID e, ao entrar, roda `depois`. `texto` troca a explicação da janela. */
+    pedirEntrada(depois, erro, texto) { pendente = depois; abrirJanela(erro, texto); },
+  };
+  document.dispatchEvent(new Event("fr-pronto"));
 })();
