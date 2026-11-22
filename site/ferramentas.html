@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ferramentas grátis · Vetorial Tech</title>
-<meta name="description" content="Encurtador de link, QR code e panfleto prontos para imprimir ou mandar no WhatsApp, grátis. Em breve: logo e catálogo.">
+<meta name="description" content="Encurtador de link, QR code, panfleto e logo prontos para usar no WhatsApp e no Instagram, grátis. Em breve: catálogo.">
 <meta name="theme-color" content="#070914">
 <meta property="og:title" content="Ferramentas grátis · Vetorial Tech">
 <meta property="og:description" content="Encurtador de link e gerador de QR code grátis, para quem vende pelo WhatsApp e pelo Instagram.">
 <meta property="og:image" content="/icone/vindex.png">
 <link rel="icon" href="favicon.png">
 <link rel="stylesheet" href="estilo.css?v=8">
-<link rel="stylesheet" href="ferramentas.css?v=3">
+<link rel="stylesheet" href="ferramentas.css?v=4">
 </head>
 <body>
 <header class="topo"><div class="wrap">
@@ -25,7 +25,7 @@
 <section class="hero fr-hero"><div class="wrap fr-um">
   <span class="etiqueta">Grátis · sem cadastro para começar</span>
   <h1>Ferramentas grátis para <em>quem vende pelo WhatsApp e Instagram</em>.</h1>
-  <p class="sub">Encurte links, crie QR codes e monte panfletos em minutos. Você usa à vontade e só entra com o Vetorial ID na hora de gerar.</p>
+  <p class="sub">Encurte links, crie QR codes, panfletos e logos em minutos. Você usa à vontade e só entra com o Vetorial ID na hora de gerar.</p>
 </div></section>
 
 <section class="fr-ferr"><div class="wrap">
@@ -33,6 +33,7 @@
     <button type="button" role="tab" id="aba-link" aria-selected="true" aria-controls="painel-link" class="fr-aba">Link curto</button>
     <button type="button" role="tab" id="aba-qr" aria-selected="false" aria-controls="painel-qr" class="fr-aba" tabindex="-1">QR code</button>
     <button type="button" role="tab" id="aba-panfleto" aria-selected="false" aria-controls="painel-panfleto" class="fr-aba" tabindex="-1">Panfleto</button>
+    <button type="button" role="tab" id="aba-logo" aria-selected="false" aria-controls="painel-logo" class="fr-aba" tabindex="-1">Logo</button>
   </div>
 
   <div id="painel-link" role="tabpanel" aria-labelledby="aba-link" class="cartao fr-painel">
@@ -160,11 +161,47 @@
     </div>
   </div>
 
+  <div id="painel-logo" role="tabpanel" aria-labelledby="aba-logo" class="cartao fr-painel" hidden>
+    <h2>Veja todos os estilos antes de decidir</h2>
+    <p class="fr-ajuda">São 48 modelos de logo. Os <b>12 grátis</b> você cria na hora; os outros aparecem aqui para você ver como ficam com o seu nome e liberam com a assinatura da Vênus.</p>
+    <label class="fr-rotulo" for="fr-lg-nome">Nome do seu negócio</label>
+    <input id="fr-lg-nome" class="fr-campo" type="text" maxlength="32" autocomplete="off" placeholder="Loja da Ana">
+    <label class="fr-rotulo" for="fr-lg-sub">Frase abaixo do nome (opcional)</label>
+    <input id="fr-lg-sub" class="fr-campo" type="text" maxlength="34" autocomplete="off" placeholder="Moda e presentes">
+    <fieldset class="fr-tipos fr-lg-cats"><legend class="fr-rotulo">Estilo</legend>
+      <div id="fr-lg-cats" class="fr-lg-chips"></div>
+    </fieldset>
+    <p id="fr-lg-carregando" class="fr-ajuda">Carregando os modelos…</p>
+    <ul id="fr-lg-grade" class="fr-lg-grade" aria-label="Modelos de logo"></ul>
+    <p id="fr-lg-escolhido" class="fr-ajuda fr-lg-escolhido" aria-live="polite">Toque num modelo para escolher.</p>
+    <div id="fr-lg-convite" class="fr-lg-convite" hidden>
+      <h3>Este modelo é para quem assina a Vênus</h3>
+      <p class="fr-ajuda">Você já viu como ele fica com o seu nome. Com a assinatura, libera os 48 modelos, sem limite e sem marca.</p>
+      <div class="fr-linha">
+        <a class="btn" href="./#preco">Ver planos</a>
+        <button type="button" id="fr-lg-ja-assino" class="btn sec">Já assino, entrar</button>
+        <button type="button" id="fr-lg-ver-gratis" class="btn sec">Ver os grátis</button>
+      </div>
+    </div>
+    <div class="fr-linha"><button type="button" id="fr-lg-criar" class="btn">Criar meu logo</button></div>
+    <p id="fr-lg-aviso" class="fr-aviso" role="alert" hidden></p>
+    <p id="fr-lg-limite" class="fr-ajuda fr-peq" hidden></p>
+    <div id="fr-lg-pronto" class="fr-resultado" hidden>
+      <p class="fr-ok">Seu logo está pronto!</p>
+      <div class="fr-lg-final"><img id="fr-lg-final" alt="Seu logo" width="320" height="168"></div>
+      <div class="fr-linha fr-centro">
+        <button type="button" id="fr-lg-png" class="btn p">Baixar imagem (PNG)</button>
+        <button type="button" id="fr-lg-svg" class="btn sec p">Baixar SVG</button>
+      </div>
+      <p class="fr-ajuda fr-peq">Quer o site da sua loja pronto com esse logo? A <b>Vênus</b> monta para você. <a class="mais" href="./">Conhecer a Vênus</a></p>
+    </div>
+  </div>
+
   <div class="fr-gancho cartao">
     <h3>Quer isso funcionando sozinho?</h3>
     <p>A <b>Vênus</b> responde seus clientes no WhatsApp, controla estoque e pedidos e já cria link, QR e panfleto da sua loja. <a class="mais" href="./">Conhecer a Vênus</a></p>
   </div>
-  <p class="fr-breve">Em breve aqui: logo e catálogo digital com pedido pelo WhatsApp.</p>
+  <p class="fr-breve">Em breve aqui: catálogo digital com pedido pelo WhatsApp.</p>
 </div></section>
 
 <div id="fr-janela" class="fr-janela" role="dialog" aria-modal="true" aria-labelledby="fr-j-titulo" hidden>
@@ -186,6 +223,7 @@
 <script src="vitrine.js" defer></script>
 <script src="ferramentas.js" defer></script>
 <script src="panfleto.js" defer></script>
+<script src="logo.js" defer></script>
 <script>
   document.getElementById("ano").textContent = new Date().getFullYear();
   (() => { const e = document.getElementById("entrar-topo"); if (e) e.href = VENUS.entrar("ferramentas.html"); })();

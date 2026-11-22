@@ -27,6 +27,7 @@ import { ehRotaVindex, tratarVindex } from "./vindex/rotas.js";
 import { ehRotaPdf, tratarPdf } from "./pdf/uso.js";
 import { ehRotaDeLinks, tratarLinks } from "./ferramentas/links.js";
 import { ehRotaDePanfleto, tratarPanfleto } from "./panfleto/uso.js";
+import { ehRotaDeLogo, tratarLogo } from "./ferramentas/logo.js";
 import { ehRotaVoxix, tratarVoxix } from "./voxix/rotas.js";
 import { ehRotaCofre, tratarCofre } from "./vindex/cofre.js";
 import { ehRotaIcone, tratarIcone } from "./icone.js";
@@ -99,6 +100,7 @@ export default {
       if (ehRotaVortex(caminho)) return await tratarVortex(req, env, url, caminho);
       if (ehRotaDrive(caminho)) return await tratarDrive(req, env, url, caminho);
       if (ehRotaPdf(caminho)) return await tratarPdf(req, env, url, caminho);
+      if (ehRotaDeLogo(caminho)) return await tratarLogo(req, env, url, caminho);
       if (ehRotaDeLinks(caminho)) return await tratarLinks(req, env, url, caminho);
       if (ehRotaDePanfleto(caminho)) return await tratarPanfleto(req, env, url, caminho);
       if (ehRotaVindex(caminho)) return await tratarVindex(req, env, url, caminho);

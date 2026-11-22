@@ -129,6 +129,57 @@ export default {
       if (uso !== 1) throw new Error("baixar de novo não deveria gastar outro panfleto");
       await p.locator("#painel-panfleto").scrollIntoViewIfNeeded();
     }])),
+    ...[["logo-vitrine", false], ["logo-bloqueado", true], ["logo-criar", false]].map(([nome, bloqueado]) => [nome, "ferramentas.html", async (p) => {
+      const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
+      const cats = ["moderno", "elegante", "classico", "divertido", "forte", "natural", "luxo", "minimalista"].map((id) => ({ id, nome: id[0].toUpperCase() + id.slice(1) }));
+      const modelos = cats.flatMap((c) => [1, 2, 3, 4, 5, 6].map((n) => ({ id: `${c.id}-${n}`, nome: `${c.nome} ${n}`, categoria: c.id, gratis: n === 1 || (c.id === "elegante" && n === 2) })));
+      const svg = (cor) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" width="360" height="360"><rect width="360" height="360" rx="34" fill="${cor}"/><circle cx="180" cy="130" r="70" fill="#fff" fill-opacity=".3"/><text x="180" y="260" text-anchor="middle" font-size="46" font-weight="800" fill="#fff">Logo</text></svg>`;
+      let criou = 0, corpoPost = null;
+      await p.route(/\/ferramentas\/logo/, async (r) => {
+        const u = new URL(r.request().url()), m = r.request().method();
+        if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
+        if (u.pathname.endsWith("/modelos")) return r.fulfill({ status: 200, contentType: "application/json", headers: cab, body: JSON.stringify({ limite: 2, categorias: cats, modelos }) });
+        if (u.pathname.endsWith("/previa")) return r.fulfill({ status: 200, contentType: "image/svg+xml", headers: cab, body: svg(["#c2185b", "#1d4ed8", "#15803d", "#c2410c", "#6d4aff", "#0e9f8e"][u.searchParams.get("modelo").length % 6]) });
+        if (u.pathname.endsWith("/situacao")) return r.fulfill({ status: 200, contentType: "application/json", headers: cab, body: JSON.stringify({ ilimitado: false, assinante: false, limite: 2, usados: criou, restantes: 2 - criou }) });
+        criou++; corpoPost = JSON.parse(r.request().postData() || "{}");
+        return r.fulfill({ status: 200, contentType: "application/json", headers: cab, body: JSON.stringify({ ok: true, ilimitado: false, assinante: false, limite: 2, usados: criou, restantes: 2 - criou, svg: svg("#c2185b") }) });
+      });
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
+      if (nome === "logo-criar") await p.evaluate(() => localStorage.setItem("ferramentas.token", "token-de-teste"));
+      await p.click("#aba-logo");
+      await p.waitForSelector(".fr-lg-modelo");
+      const total = await p.locator(".fr-lg-modelo").count();
+      if (total !== 48) throw new Error("a vitrine deveria mostrar 48 modelos e mostrou " + total);
+      if ((await p.locator(".fr-lg-selo.tranca").count()) !== 39) throw new Error("deveria haver 39 modelos bloqueados à mostra (mock)");
+      await p.fill("#fr-lg-nome", "Loja da Ana"); await p.fill("#fr-lg-sub", "Moda e presentes");
+      await p.click('#fr-lg-cats button:has-text("Só os grátis")');
+      if ((await p.locator(".fr-lg-modelo").count()) !== 9) throw new Error("o filtro de grátis deveria mostrar só os livres (mock: 9)");
+      await p.click('#fr-lg-cats button:has-text("Todos")');
+      if (bloqueado) {
+        await p.click('.fr-lg-modelo[aria-label^="Luxo 3,"]'); await ESPERA(p);
+        if (!(await p.locator("#fr-lg-convite").isVisible())) throw new Error("o convite da assinatura não apareceu no modelo bloqueado");
+        if ((await p.locator('.fr-lg-modelo[aria-pressed="true"]').count()) !== 1) throw new Error("o modelo escolhido não ficou marcado");
+        await p.click("#fr-lg-criar"); await ESPERA(p);
+        if (criou) throw new Error("modelo bloqueado não deveria tentar criar sem assinatura");
+        await p.locator("#fr-lg-convite").scrollIntoViewIfNeeded();
+      } else if (nome === "logo-criar") {
+        await p.click('.fr-lg-modelo[aria-label^="Moderno 1,"]'); await p.click("#fr-lg-criar"); await ESPERA(p);
+        if (criou !== 1 || !corpoPost || corpoPost.modelo !== "moderno-1" || corpoPost.nome !== "Loja da Ana" || corpoPost.subtitulo !== "Moda e presentes") throw new Error("o pedido de criação saiu errado");
+        if (!(await p.locator("#fr-lg-pronto").isVisible())) throw new Error("o logo pronto não apareceu");
+        const [d1] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.click("#fr-lg-svg")]);
+        if (!/^logo-loja-da-ana\.svg$/.test(d1.suggestedFilename())) throw new Error("nome do SVG estranho: " + d1.suggestedFilename());
+        const [d2] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.click("#fr-lg-png")]);
+        if (!/\.png$/.test(d2.suggestedFilename())) throw new Error("nome do PNG estranho: " + d2.suggestedFilename());
+        if (criou !== 1) throw new Error("baixar não deveria gastar outro logo");
+        await p.locator("#fr-lg-pronto").scrollIntoViewIfNeeded();
+      } else {
+        await p.click('.fr-lg-modelo[aria-label^="Moderno 1,"]'); await p.click("#fr-lg-criar"); await ESPERA(p);
+        if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao criar o logo");
+        if (!/logo/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para o logo");
+        await p.keyboard.press("Escape");
+        await p.locator("#fr-lg-grade").scrollIntoViewIfNeeded();
+      }
+    }]),
     ["ferramentas-link-ok", "ferramentas.html", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       const meu = { codigo: "abc234", curto: "https://v.test/l/abc234", destino: "https://minhaloja.com.br/promocao-do-mes-com-um-endereco-bem-comprido-para-testar", criado: 1, cliques: 7, ultimoClique: null, ativo: true };

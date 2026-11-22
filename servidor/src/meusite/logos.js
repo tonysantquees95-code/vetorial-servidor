@@ -66,6 +66,12 @@ export const SIMBOLOS = {
   espelho: { nome: "Espelho", nichos: ["salao", "estetica"], d: '<circle cx="32" cy="25" r="18"/><path d="M32 43 V58"/><path d="M22 20 Q25 14 31 13"/>' },
   secador: { nome: "Secador", nichos: ["salao"], d: '<rect x="6" y="14" width="40" height="22" rx="11"/><rect x="46" y="18" width="10" height="14" rx="2"/><path d="M20 36 L18 56 H28 L30 36"/>' },
   bigode: { nome: "Bigode", nichos: ["barbearia"], d: '<path d="M32 30 C26 22 14 22 8 30 C14 30 18 34 22 38 C26 40 30 36 32 34 C34 36 38 40 42 38 C46 34 50 30 56 30 C50 22 38 22 32 30 Z"/>' },
+  sacola: { nome: "Sacola", nichos: ["loja", "outro"], d: '<path d="M12 22 H52 L48 56 H16 Z"/><path d="M22 22 V16 A10 10 0 0 1 42 16 V22"/>' },
+  raio: { nome: "Raio", nichos: ["outro", "loja"], d: '<path d="M36 6 L14 36 H30 L26 58 L50 26 H34 Z"/>' },
+  pata: { nome: "Patinha", nichos: ["outro", "loja"], d: '<ellipse cx="32" cy="42" rx="13" ry="11"/><circle cx="14" cy="28" r="5"/><circle cx="26" cy="16" r="5"/><circle cx="38" cy="16" r="5"/><circle cx="50" cy="28" r="5"/>' },
+  xicara: { nome: "Xícara", nichos: ["outro", "loja", "estetica"], d: '<path d="M10 24 H44 V38 A14 14 0 0 1 30 52 H24 A14 14 0 0 1 10 38 Z"/><path d="M44 28 H50 A6 6 0 0 1 50 40 H44"/><path d="M20 8 Q24 12 20 16 M30 8 Q34 12 30 16"/>' },
+  controle: { nome: "Controle", nichos: ["outro", "loja"], d: '<path d="M16 22 H48 Q58 24 58 40 Q58 50 52 50 Q46 50 42 44 H22 Q18 50 12 50 Q6 50 6 40 Q6 24 16 22 Z"/><path d="M18 31 V39 M14 35 H22"/><circle cx="42" cy="32" r="2"/><circle cx="48" cy="38" r="2"/>' },
+  brilho: { nome: "Brilho", nichos: ["manicure", "estetica", "loja", "outro"], d: '<path d="M32 6 C34 22 42 30 58 32 C42 34 34 42 32 58 C30 42 22 34 6 32 C22 30 30 22 32 6 Z"/>' },
   lua: { nome: "Lua", nichos: ["estetica", "outro", "loja"], d: '<path d="M44 8 A24 24 0 1 0 56 40 A19 19 0 0 1 44 8 Z"/>' },
   inicial: { nome: "Inicial do nome", nichos: [], d: "" },
 };

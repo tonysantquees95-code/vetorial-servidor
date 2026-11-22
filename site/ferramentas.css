@@ -57,7 +57,29 @@
 .fr-pf-baixar{margin-top:6px;padding-top:10px;border-top:1px solid var(--borda)}
 .fr-pf-baixar[hidden]{display:none}
 .fr-pf-baixar .fr-peq{margin-top:14px;text-align:center}
+.fr-lg-chips{display:flex;flex-wrap:wrap;gap:8px}
+.fr-lg-chip{font:inherit;font-weight:600;color:var(--suave);background:var(--painel);border:1px solid var(--borda);border-radius:12px;padding:9px 16px;cursor:pointer}
+.fr-lg-chip[aria-pressed="true"]{color:#fff;border-color:#ec6fd6;background:#ec6fd622}
+.fr-lg-grade{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.fr-lg-modelo{position:relative;display:block;width:100%;font:inherit;text-align:left;color:var(--texto);background:var(--painel);border:2px solid var(--borda);border-radius:16px;padding:10px;cursor:pointer;box-sizing:border-box}
+.fr-lg-modelo img{display:block;width:100%;height:auto;border-radius:10px;aspect-ratio:1/1;object-fit:contain;background:#ffffff0d}
+.fr-lg-modelo[aria-pressed="true"]{border-color:#ec6fd6;box-shadow:0 0 0 3px #ec6fd655}
+.fr-lg-modelo:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.fr-lg-nome{display:block;margin:8px 2px 0;font-size:13.5px;font-weight:700}
+.fr-lg-selo{display:inline-flex;align-items:center;gap:5px;margin:4px 2px 0;font-size:12.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#15803d33;color:#9be8b5}
+.fr-lg-selo.tranca{background:#ffffff14;color:#ffd27a}
+.fr-lg-selo svg{width:13px;height:13px}
+.fr-lg-tique{position:absolute;top:-9px;right:-9px;width:28px;height:28px;border-radius:50%;background:#ec6fd6;color:#12142a;display:none;align-items:center;justify-content:center;font-weight:900}
+.fr-lg-modelo[aria-pressed="true"] .fr-lg-tique{display:flex}
+.fr-lg-escolhido{margin:14px 0 0}
+.fr-lg-convite{margin:14px 0 0;padding:16px;border:1px solid #ffd27a66;border-radius:16px;background:#ffd27a10}
+.fr-lg-convite[hidden]{display:none}
+.fr-lg-convite h3{margin:0 0 6px;font-size:18px}
+.fr-lg-final{background:#fff;border-radius:14px;padding:12px;display:grid;place-items:center;margin:0 0 12px}
+.fr-lg-final img{display:block;width:100%;max-width:360px;height:auto}
+@media (max-width:900px){.fr-lg-grade{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:640px){
+  .fr-lg-grade{grid-template-columns:repeat(2,minmax(0,1fr))}
   .fr-pf-grade{grid-template-columns:minmax(0,1fr)}
   .fr-pf-previa{order:-1;position:static}
   .fr-pf-moldura canvas{max-height:60vh}
