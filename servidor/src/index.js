@@ -21,6 +21,7 @@
  * Segredos (wrangler secret): GITHUB_TOKEN (só leitura do repositório, para o canal de atualização);
  * GROQ_API_KEY, TAVILY_API_KEY e GEMINI_API_KEY (conversa); DEEPSEEK_API_KEY e APP_TOKEN (opcional) para o roteador /v1.
  */
+import { verificarAlertas } from "./dev/alertas.js";
 import { ehAtalho, responderAtalho } from "./atalhos.js";
 import { ehRotaVindex, tratarVindex } from "./vindex/rotas.js";
 import { ehRotaVoxix, tratarVoxix } from "./voxix/rotas.js";
@@ -120,6 +121,7 @@ export default {
   async scheduled(evento, env) {
     if (evento.cron === "*/10 * * * *") { // posts agendados da Central de Marketing
       await publicarVencidos(env);
+      try { await verificarAlertas(env); } catch (e) { console.error("alertas", e); }
       return;
     }
     await env.DB.prepare("DELETE FROM avisos WHERE criado < ?").bind(Date.now() - 7 * 86400000).run();
