@@ -94,19 +94,6 @@ jobs:
           node scripts/montar-demo.mjs vyntem demo-src/vyntem/app site/demo/vyntem
           test -f site/demo/vyntem/index.html
 
-      - name: Teste visual do site (7 tamanhos de tela)
-        working-directory: .
-        run: |
-          npm i --no-save --no-audit --no-fund playwright-core
-          CHROME=$(which google-chrome) node teste-visual/telas.mjs
-      - name: Guardar as fotos das telas
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: fotos-do-site
-          path: teste-visual/fotos
-          if-no-files-found: ignore
-
       # A Vênus web (/app) é montada a partir do código do Venus-core (privado), só em leitura. Mexeu na Vênus web? Rode esta publicação de novo (Actions › Run workflow).
       - name: Buscar o código da Vênus web (leitura)
         uses: actions/checkout@v4
@@ -119,6 +106,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      # Demonstração da Vênus na home: o mesmo app, com conta de mentira e respostas prontas (build VITE_DEMO=1, que a Vênus publicada nunca usa).
+      - name: Montar a demonstração da Vênus em site/demo/venus
+        continue-on-error: true
+        working-directory: venus-core/venus-apps
+        run: |
+          npm ci --no-audit --no-fund
+          cd apps/dois-em-um
+          VITE_DEMO=1 VENUS_BASE=./ npx vite build --mode capacitor --outDir dist-demo
+          cd "$GITHUB_WORKSPACE"
+          node scripts/montar-demo.mjs venus venus-core/venus-apps/apps/dois-em-um site/demo/venus
+          test -f site/demo/venus/index.html
+
+      - name: Teste visual do site (7 tamanhos de tela)
+        working-directory: .
+        run: |
+          npm i --no-save --no-audit --no-fund playwright-core
+          CHROME=$(which google-chrome) node teste-visual/telas.mjs
+      - name: Guardar as fotos das telas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fotos-do-site
+          path: teste-visual/fotos
+          if-no-files-found: ignore
 
       - name: Conferir o site (scripts e segredos)
         working-directory: .

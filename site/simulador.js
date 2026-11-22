@@ -49,7 +49,7 @@ function abrirApp(id, foco) {
 }
 
 /* ---- o app de verdade (modo demonstração, em /demo/<app>/) dentro do celular, na largura de um celular de verdade ---- */
-var REAIS = { vindex: 1, vortex: 1, vyntem: 1 }, LARGURA_REAL = 390;
+var REAIS = { venus: 1, vindex: 1, vortex: 1, vyntem: 1 }, LARGURA_REAL = 390;
 function telaReal(t, id) {
   // sem a demonstração publicada (passo de montagem falhou), segue a tela de exemplo de antes
   fetch("/demo/" + id + "/demo-shim.js", { method: "HEAD" }).then(function (r) { if (!r.ok && atual === id) { t.innerHTML = ""; TELAS[id](t); } }, function () { if (atual === id) { t.innerHTML = ""; TELAS[id](t); } });

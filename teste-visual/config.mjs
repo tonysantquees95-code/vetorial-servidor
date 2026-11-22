@@ -1,5 +1,5 @@
 // Telas do site que o teste visual visita: [nome, página, passos].
-const REAIS = ["vindex", "vortex", "vyntem"];
+const REAIS = ["venus", "vindex", "vortex", "vyntem"];
 const APPS = ["venus", "vindex", "vortex", "velox", "vyntem", "voxix"];
 const ABA = (p, id) => p.locator("#abas button").nth(APPS.indexOf(id));
 const ESPERA = (p) => p.waitForTimeout(350);
@@ -9,10 +9,6 @@ export default {
   porta: 4191,
   cenarios: [
     ["home", "", async () => {}],
-    ["home-simulador-venus", "", async (p) => {
-      await p.locator("#simulador").scrollIntoViewIfNeeded();
-      const campo = p.locator("#tela button").first(); await campo.click(); await ESPERA(p);
-    }],
     ...APPS.map((id) => [`home-simulador-${id}`, "", async (p) => {
       await p.locator("#simulador").scrollIntoViewIfNeeded();
       await ABA(p, id).click(); await ESPERA(p);
@@ -20,6 +16,11 @@ export default {
       if (REAIS.includes(id) && (await p.locator("#tela iframe").count())) { // o app de verdade, em /demo/<app>/, dentro do celular
         const f = p.frameLocator("#tela iframe"); await f.locator("body").waitFor();
         await p.waitForFunction(() => { const d = document.querySelector("#tela iframe")?.contentDocument; return d && d.body && d.body.innerText.trim().length > 20; }, null, { timeout: 15000 }).catch(() => { throw new Error(`o app ${id} não abriu dentro do celular`); });
+        if (id === "venus") { // pergunta de verdade à Vênus e espera a resposta pronta
+          const campo = f.locator("input, textarea").first(); await campo.fill("Qual o prazo de entrega?"); await campo.press("Enter");
+          await f.getByText("dias úteis").first().waitFor({ timeout: 8000 }).catch(() => { throw new Error("a Vênus da demonstração não respondeu"); });
+          return;
+        }
         const abas = await f.locator("nav button:visible").all();
         for (const b of abas.slice(0, 4)) { await b.click({ timeout: 2000 }).catch(() => {}); await p.waitForTimeout(250); }
         await p.locator("#simulador").scrollIntoViewIfNeeded();

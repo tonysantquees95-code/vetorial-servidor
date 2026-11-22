@@ -5,19 +5,20 @@ import { cpSync, readFileSync, writeFileSync, rmSync, readdirSync, statSync } fr
 import { join } from "node:path";
 
 const [, , app, pasta, saida] = process.argv;
-const termosDe = { vindex: "src/apresentacao.ts", vortex: "src/termos.ts", vyntem: "src/apresentacao.ts" };
-if (!termosDe[app] || !pasta || !saida) { console.error("uso: montar-demo.mjs vindex|vortex|vyntem <pasta> <saida>"); process.exit(1); }
+const termosDe = { vindex: "src/apresentacao.ts", vortex: "src/termos.ts", vyntem: "src/apresentacao.ts", venus: "src/apresentacao/dados.ts" };
+if (!termosDe[app] || !pasta || !saida) { console.error("uso: montar-demo.mjs vindex|vortex|vyntem|venus <pasta> <saida>"); process.exit(1); }
 const termos = readFileSync(join(pasta, termosDe[app]), "utf8").match(/VERSAO_DOS_TERMOS\s*=\s*(\d+)/)[1];
 const licenca = { acesso: true, apps: { vindex: true, vortex: true, vyntem: true }, pacote: "admin", emTeste: false };
 const sessao = JSON.stringify({ token: "demo", email: "demo@exemplo.com", nome: "Demonstração", licenca });
 const sementes = {
   vindex: { "vindex.tour": "1", "vindex.termos": termos, "vindex.sessao": sessao, "vindex.permissoes.vistas2": "1", "vindex.novidades.vistas": "9999" },
   vortex: { "vortex.tour": "1", "vortex.termos": termos, "vortex:configurado": "1", "vortex.novidades.vistas": "9999" },
+  venus: { "venus.tour": "1", "venus.termos": termos, "venus.novidades.vistas": "9999", "venus:loja-guiada": "1" },
   vyntem: { "vyntem.tour": "1", "vyntem.termos": termos, "vyntem.sessao": sessao, "vyntem.novidades.vistas": "9999" },
 }[app];
 
 rmSync(saida, { recursive: true, force: true });
-cpSync(join(pasta, "dist"), saida, { recursive: true });
+cpSync(join(pasta, app === "venus" ? "dist-demo" : "dist"), saida, { recursive: true });
 (function limpar(d) { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) limpar(p); else if (f.endsWith(".map")) rmSync(p); } })(saida);
 
 // Vyntem: o app de verdade precisa de alguns lançamentos para a demonstração não aparecer vazia (datas contam a partir de hoje).
@@ -41,6 +42,34 @@ if (app === "vyntem") {
   } catch (e) {}`;
 }
 
+
+// Vênus: a conversa de verdade, mas quem responde é uma lista de respostas prontas (nada de IA nem servidor na demonstração).
+let iaVenus = "";
+if (app === "venus") {
+  iaVenus = `
+  var RESPOSTAS = [
+    [/prazo|entrega|chega|frete|envio|correio/i, "O prazo de entrega da TecnoPonto é de 2 a 4 dias úteis para Porto Alegre e região e de 5 a 9 dias úteis para o resto do Brasil. O frete é grátis acima de R$ 199. Quer que eu calcule pelo seu CEP?"],
+    [/estoque|fone|bluetooth|tem /i, "Tenho sim: o Fone Bluetooth com cancelamento de ruído custa R$ 189,90 e temos 12 em estoque. Quer que eu separe um para você e gere o Pix?"],
+    [/pix|pagar|pagamento|cart[aã]o|parcel/i, "Aceitamos Pix (com 5% de desconto), cartão em até 6x sem juros e boleto. Se for no Pix, eu gero o código na hora e dou baixa no estoque assim que o pagamento cair."],
+    [/vend|faturei|faturamento|hoje|resumo/i, "Hoje a loja vendeu R$ 1.284,50 em 9 pedidos. O mais vendido foi o Fone Bluetooth (4 unidades). Há 2 pedidos aguardando pagamento e 1 para despachar."],
+    [/troca|devol|garantia|arrepend/i, "Você pode trocar ou devolver em até 7 dias após receber, sem custo, se o produto estiver na embalagem. A garantia dos eletrônicos é de 12 meses."],
+    [/hor[aá]rio|aberto|funciona|atendimento|endere[cç]o|onde/i, "Atendemos de segunda a sábado, das 9h às 19h, e a Vênus responde 24 horas por dia. A loja física fica em Porto Alegre, e o envio sai todo dia útil até as 16h."],
+    [/oi|ol[aá]|bom dia|boa tarde|boa noite/i, "Oi! Eu sou a Vênus. Posso responder sobre prazo de entrega, estoque, formas de pagamento, trocas e o resumo de vendas do dia. O que você quer saber?"]
+  ];
+  var FALHA = "Esta é uma demonstração, então só respondo algumas perguntas prontas. Tente: “Qual o prazo de entrega?”, “Tem fone bluetooth?”, “Como posso pagar?”, “Quanto vendi hoje?” ou “Como funciona a troca?”";
+  function resposta(t) { for (var i = 0; i < RESPOSTAS.length; i++) if (RESPOSTAS[i][0].test(t)) return RESPOSTAS[i][1]; return FALHA; }
+  var pronta = window.fetch;
+  window.fetch = function (u, o) {
+    var alvo; try { alvo = new URL(String(u && u.url ? u.url : u), location.href); } catch (e) { return pronta.apply(null, arguments); }
+    if (/\\/v1\\/chat$/.test(alvo.pathname) || /\\/chat\\/completions$/.test(alvo.pathname)) {
+      var ultima = ""; try { var c = JSON.parse(o && o.body || "{}"); var m = (c.mensagens || c.messages || []).filter(function (x) { return (x.papel || x.role) === "user"; }).pop(); ultima = m ? (m.texto || m.content || "") : ""; } catch (e) {}
+      var r = resposta(ultima);
+      return new Promise(function (ok) { setTimeout(function () { ok(new Response(JSON.stringify({ resposta: r, choices: [{ message: { content: r } }] }), { status: 200, headers: { "Content-Type": "application/json" } })); }, 900 + Math.min(1200, r.length * 8)); });
+    }
+    return pronta.apply(null, arguments);
+  };`;
+}
+
 const shim = `// Demonstração do ${app}: dados de exemplo, nada sai do navegador.
 (function () {
   try { var s = ${JSON.stringify(sementes)}; for (var k in s) if (localStorage.getItem(k) === null) localStorage.setItem(k, s[k]); } catch (e) {}
@@ -55,6 +84,7 @@ const shim = `// Demonstração do ${app}: dados de exemplo, nada sai do navegad
     if (alvo.origin === location.origin && alvo.pathname.indexOf(base) === 0 && feita) return feita.apply(null, arguments);
     return Promise.reject(new TypeError("Demonstração: sem internet"));
   };
+  ${iaVenus}
 })();
 `;
 writeFileSync(join(saida, "demo-shim.js"), shim);
