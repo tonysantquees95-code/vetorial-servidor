@@ -215,3 +215,4 @@ details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:non
 .vv-go{flex:none;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg,#ec6fd6,#7aa2ff);color:#12142a;padding:10px 14px;border-radius:12px;white-space:nowrap}
 @media(max-width:560px){.vv-faixa{flex-wrap:wrap}.vv-go{width:100%;text-align:center;box-sizing:border-box}}
 @media(max-width:860px){.vv-faixa{margin-left:auto;margin-right:auto}}
+@media(min-width:1001px) and (max-width:1380px){.topo nav{gap:9px}.topo nav a{font-size:12.5px}}
