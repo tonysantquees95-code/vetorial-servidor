@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vênus Vitrine · ferramentas grátis para vender mais · Vetorial Tech</title>
+<meta name="description" content="Vênus Vitrine: link curto, QR code, panfleto e logo grátis para quem vende pelo WhatsApp e pelo Instagram. Teste sem compromisso. Em breve: site e catálogo.">
+<meta name="theme-color" content="#070914">
+<meta property="og:title" content="Vênus Vitrine · ferramentas grátis · Vetorial Tech">
+<meta property="og:description" content="Link curto, QR code, panfleto e logo grátis para quem vende pelo WhatsApp e pelo Instagram.">
+<meta property="og:image" content="/icone-vitrine.png">
+<link rel="icon" href="../icone-vitrine.png">
+<link rel="stylesheet" href="../estilo.css?v=9">
+<link rel="stylesheet" href="ferramentas.css?v=5">
+</head>
+<body>
+<header class="topo"><div class="wrap">
+  <a class="marca vv-marca" href="./" aria-label="Vênus Vitrine, por Vetorial Tech"><img src="logo-vitrine.svg" alt="" width="46" height="46"><span><b>Vênus Vitrine</b><small>por Vetorial Tech</small></span></a>
+  <a class="ig" href="https://www.instagram.com/vetorial_tech/" target="_blank" rel="noopener" aria-label="Instagram da Vetorial Tech"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".9" fill="currentColor" stroke="none"/></svg><span>@vetorial_tech</span></a>
+  <nav><a class="ocultar" href="../">Vênus</a><a class="ocultar" href="../vindex.html">Vindex</a><a class="ocultar" href="../vortex.html">Vortex</a><a class="ocultar" href="../velox.html">Velox · grátis</a><a class="ocultar" href="../vyntem.html">Vyntem · grátis</a><a class="ocultar" href="../pdf/">Vindex PDF</a><a class="ocultar" href="./" aria-current="page">Vênus Vitrine</a><a class="ocultar" href="../voxix.html">Voxix · em breve</a><a class="ocultar" href="../#preco">Preço</a><a class="ocultar" href="../quem-somos.html">Quem somos</a><a class="btn p" id="entrar-topo" href="../conta.html">Entrar</a></nav>
+</div>
+<a class="faixa-ig" href="https://www.instagram.com/vetorial_tech/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".9" fill="currentColor" stroke="none"/></svg> Siga a gente no Instagram: <b>@vetorial_tech</b></a>
+<nav class="abas-m" aria-label="Produtos"><a href="../">Vênus</a><a href="../vindex.html">Vindex</a><a href="../vortex.html">Vortex</a><a href="../velox.html">Velox</a><a href="../vyntem.html">Vyntem</a><a href="../voxix.html">Voxix</a><a href="../pdf/">Vindex PDF</a><a href="./" aria-current="page">Vitrine</a><a href="../#preco">Preço</a><a href="../quem-somos.html">Quem somos</a></nav></header>
+<main>
+<section class="hero fr-hero"><div class="wrap fr-um">
+  <span class="etiqueta">Vênus Vitrine · grátis · sem compromisso</span>
+  <h1>Seu negócio pronto para vender, <em>sem programa e sem designer</em>.</h1>
+  <p class="sub">A <b>Vênus Vitrine</b> reúne ferramentas grátis para quem vende pelo WhatsApp e pelo Instagram: link curto, QR code, panfleto e logo. Teste à vontade e só entre com o Vetorial ID na hora de gerar.</p>
+</div></section>
+
+<section class="fr-ferr"><div class="wrap">
+  <div class="fr-abas" role="tablist" aria-label="Ferramentas">
+    <button type="button" role="tab" id="aba-link" aria-selected="true" aria-controls="painel-link" class="fr-aba">Link curto</button>
+    <button type="button" role="tab" id="aba-qr" aria-selected="false" aria-controls="painel-qr" class="fr-aba" tabindex="-1">QR code</button>
+    <button type="button" role="tab" id="aba-panfleto" aria-selected="false" aria-controls="painel-panfleto" class="fr-aba" tabindex="-1">Panfleto</button>
+    <button type="button" role="tab" id="aba-logo" aria-selected="false" aria-controls="painel-logo" class="fr-aba" tabindex="-1">Logo</button>
+  </div>
+
+  <div id="painel-link" role="tabpanel" aria-labelledby="aba-link" class="cartao fr-painel">
+    <h2>Encurtador de link</h2>
+    <p class="fr-ajuda">Cole o endereço da sua loja, do catálogo ou da promoção. O link curto fica bonito na bio e no WhatsApp, e você vê quantos clientes clicaram.</p>
+    <label class="fr-rotulo" for="fr-destino">Endereço para encurtar</label>
+    <input id="fr-destino" class="fr-campo" type="url" inputmode="url" autocomplete="off" placeholder="minhaloja.com.br/promocao-do-mes">
+    <div class="fr-linha"><button type="button" id="fr-encurtar" class="btn">Encurtar link</button></div>
+    <p id="fr-aviso-link" class="fr-aviso" role="alert" hidden></p>
+    <div id="fr-resultado" class="fr-resultado" hidden>
+      <p class="fr-ajuda">Seu link curto:</p>
+      <output id="fr-curto" class="fr-curto"></output>
+      <div class="fr-linha">
+        <button type="button" id="fr-copiar" class="btn sec p">Copiar</button>
+        <a id="fr-whats" class="btn sec p" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+        <button type="button" id="fr-qr-do-link" class="btn sec p">Fazer o QR code deste link</button>
+      </div>
+    </div>
+    <div id="fr-meus" class="fr-meus" hidden>
+      <h3>Seus links</h3>
+      <ul id="fr-lista" class="fr-lista"></ul>
+    </div>
+  </div>
+
+  <div id="painel-qr" role="tabpanel" aria-labelledby="aba-qr" class="cartao fr-painel" hidden>
+    <h2>Gerador de QR code</h2>
+    <p class="fr-ajuda">Grátis e sem cadastro. O QR code fica na hora, nada é guardado.</p>
+    <div class="fr-qr-grade">
+      <div>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">O que o QR code abre?</legend>
+          <label class="fr-op"><input type="radio" name="fr-tipo" value="link" checked><span>Um link</span></label>
+          <label class="fr-op"><input type="radio" name="fr-tipo" value="whats"><span>Um WhatsApp</span></label>
+          <label class="fr-op"><input type="radio" name="fr-tipo" value="texto"><span>Um texto</span></label>
+        </fieldset>
+        <div id="fr-q-link">
+          <label class="fr-rotulo" for="fr-q-url">Endereço</label>
+          <input id="fr-q-url" class="fr-campo" type="url" inputmode="url" autocomplete="off" placeholder="minhaloja.com.br">
+        </div>
+        <div id="fr-q-whats" hidden>
+          <label class="fr-rotulo" for="fr-q-fone">WhatsApp com DDD</label>
+          <input id="fr-q-fone" class="fr-campo" type="tel" inputmode="tel" autocomplete="off" placeholder="(51) 99999-8888">
+          <label class="fr-rotulo" for="fr-q-msg">Mensagem pronta (opcional)</label>
+          <input id="fr-q-msg" class="fr-campo" type="text" maxlength="200" placeholder="Oi! Vim pelo QR code.">
+        </div>
+        <div id="fr-q-texto" hidden>
+          <label class="fr-rotulo" for="fr-q-txt">Texto</label>
+          <textarea id="fr-q-txt" class="fr-campo" rows="3" maxlength="500" placeholder="Wi-Fi da loja: senha 12345678"></textarea>
+        </div>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#000000" checked><span style="--c:#000000" title="Preto"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#c2185b"><span style="--c:#c2185b" title="Rosa"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#1d4ed8"><span style="--c:#1d4ed8" title="Azul"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#15803d"><span style="--c:#15803d" title="Verde"></span></label>
+        </fieldset>
+      </div>
+      <div class="fr-previa">
+        <div class="fr-moldura"><img id="fr-qr-img" alt="Prévia do QR code" width="240" height="240" hidden><p id="fr-qr-vazio" class="fr-ajuda">Preencha ao lado para ver o QR code.</p></div>
+        <div class="fr-linha">
+          <button type="button" id="fr-baixar-png" class="btn p" disabled>Baixar PNG</button>
+          <button type="button" id="fr-baixar-svg" class="btn sec p" disabled>Baixar SVG</button>
+        </div>
+        <p id="fr-aviso-qr" class="fr-aviso" role="alert" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="painel-panfleto" role="tabpanel" aria-labelledby="aba-panfleto" class="cartao fr-painel" hidden>
+    <h2>Seu panfleto pronto em 1 minuto</h2>
+    <p class="fr-ajuda">Sem programa, sem designer. Preencha, veja ficando pronto ao lado e, quando gostar, toque em “Gerar panfleto” para baixar em PDF ou imagem.</p>
+    <div class="fr-pf-grade">
+      <div class="fr-pf-form">
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Modelo</legend>
+          <label class="fr-op"><input type="radio" name="fr-pf-modelo" value="promo" checked><span>Promoção</span></label>
+          <label class="fr-op"><input type="radio" name="fr-pf-modelo" value="lanc"><span>Lançamento</span></label>
+          <label class="fr-op"><input type="radio" name="fr-pf-modelo" value="simples"><span>Simples</span></label>
+        </fieldset>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Formato</legend>
+          <label class="fr-op"><input type="radio" name="fr-pf-formato" value="a4" checked><span>A4 (imprimir)</span></label>
+          <label class="fr-op"><input type="radio" name="fr-pf-formato" value="quadrado"><span>Quadrado (Instagram)</span></label>
+        </fieldset>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#c2185b" checked><span style="--c:#c2185b" title="Rosa"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#1d4ed8"><span style="--c:#1d4ed8" title="Azul"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#15803d"><span style="--c:#15803d" title="Verde"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-pf-cor" value="#c2410c"><span style="--c:#c2410c" title="Laranja"></span></label>
+        </fieldset>
+        <label class="fr-rotulo" for="fr-pf-loja">Nome da sua loja</label>
+        <input id="fr-pf-loja" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Loja da Ana">
+        <label class="fr-rotulo" for="fr-pf-titulo">Título da oferta</label>
+        <input id="fr-pf-titulo" class="fr-campo" type="text" maxlength="60" autocomplete="off" placeholder="Semana do Cliente">
+        <label class="fr-rotulo" for="fr-pf-desc">Descrição curta (opcional)</label>
+        <textarea id="fr-pf-desc" class="fr-campo" rows="2" maxlength="140" placeholder="Todos os produtos com frete grátis."></textarea>
+        <div class="fr-dois">
+          <div><label class="fr-rotulo" for="fr-pf-de">Preço “de” (opcional)</label>
+          <input id="fr-pf-de" class="fr-campo" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="79,90"></div>
+          <div><label class="fr-rotulo" for="fr-pf-por">Preço “por”</label>
+          <input id="fr-pf-por" class="fr-campo" type="text" inputmode="decimal" maxlength="14" autocomplete="off" placeholder="49,90"></div>
+        </div>
+        <label class="fr-rotulo" for="fr-pf-foto">Foto do produto (opcional)</label>
+        <input id="fr-pf-foto" class="fr-campo" type="file" accept="image/png,image/jpeg">
+        <p id="fr-pf-foto-info" class="fr-ajuda fr-peq">JPG ou PNG de até 3 MB. A foto fica só no seu aparelho.</p>
+        <label class="fr-rotulo" for="fr-pf-whats">WhatsApp com DDD</label>
+        <input id="fr-pf-whats" class="fr-campo" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="(51) 99999-8888">
+        <label class="fr-rotulo" for="fr-pf-insta">Instagram (opcional)</label>
+        <input id="fr-pf-insta" class="fr-campo" type="text" maxlength="31" autocomplete="off" placeholder="@minhaloja">
+        <label class="fr-rotulo" for="fr-pf-valid">Validade (opcional)</label>
+        <input id="fr-pf-valid" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Até 30/11 ou enquanto durar o estoque">
+      </div>
+      <div class="fr-pf-previa">
+        <div class="fr-pf-moldura"><canvas id="fr-pf-canvas" width="1240" height="1754" role="img" aria-label="Prévia do panfleto"></canvas></div>
+        <div class="fr-linha fr-centro">
+          <button type="button" id="fr-pf-gerar" class="btn">Gerar panfleto</button>
+        </div>
+        <div id="fr-pf-baixar" class="fr-pf-baixar" hidden>
+          <p class="fr-ok">Pronto! Escolha como baixar:</p>
+          <div class="fr-linha fr-centro">
+            <button type="button" id="fr-pf-pdf" class="btn p">Baixar PDF</button>
+            <button type="button" id="fr-pf-png" class="btn sec p">Baixar imagem</button>
+          </div>
+          <p class="fr-ajuda fr-peq">Quer um panfleto novo todo mês, com o seu estoque e as suas fotos? A <b>Vênus</b> faz por você. <a class="mais" href="../">Conhecer a Vênus</a></p>
+        </div>
+        <p id="fr-pf-aviso" class="fr-aviso" role="alert" hidden></p>
+        <p id="fr-pf-limite" class="fr-ajuda fr-peq" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="painel-logo" role="tabpanel" aria-labelledby="aba-logo" class="cartao fr-painel" hidden>
+    <h2>Veja todos os estilos antes de decidir</h2>
+    <p class="fr-ajuda">São 48 modelos de logo. Os <b>12 grátis</b> você cria na hora; os outros aparecem aqui para você ver como ficam com o seu nome e liberam com a assinatura da Vênus.</p>
+    <label class="fr-rotulo" for="fr-lg-nome">Nome do seu negócio</label>
+    <input id="fr-lg-nome" class="fr-campo" type="text" maxlength="32" autocomplete="off" placeholder="Loja da Ana">
+    <label class="fr-rotulo" for="fr-lg-sub">Frase abaixo do nome (opcional)</label>
+    <input id="fr-lg-sub" class="fr-campo" type="text" maxlength="34" autocomplete="off" placeholder="Moda e presentes">
+    <fieldset class="fr-tipos fr-lg-cats"><legend class="fr-rotulo">Estilo</legend>
+      <div id="fr-lg-cats" class="fr-lg-chips"></div>
+    </fieldset>
+    <p id="fr-lg-carregando" class="fr-ajuda">Carregando os modelos…</p>
+    <ul id="fr-lg-grade" class="fr-lg-grade" aria-label="Modelos de logo"></ul>
+    <p id="fr-lg-escolhido" class="fr-ajuda fr-lg-escolhido" aria-live="polite">Toque num modelo para escolher.</p>
+    <div id="fr-lg-convite" class="fr-lg-convite" hidden>
+      <h3>Este modelo é para quem assina a Vênus</h3>
+      <p class="fr-ajuda">Você já viu como ele fica com o seu nome. Com a assinatura, libera os 48 modelos, sem limite e sem marca.</p>
+      <div class="fr-linha">
+        <a class="btn" href="../#preco">Ver planos</a>
+        <button type="button" id="fr-lg-ja-assino" class="btn sec">Já assino, entrar</button>
+        <button type="button" id="fr-lg-ver-gratis" class="btn sec">Ver os grátis</button>
+      </div>
+    </div>
+    <div class="fr-linha"><button type="button" id="fr-lg-criar" class="btn">Criar meu logo</button></div>
+    <p id="fr-lg-aviso" class="fr-aviso" role="alert" hidden></p>
+    <p id="fr-lg-limite" class="fr-ajuda fr-peq" hidden></p>
+    <div id="fr-lg-pronto" class="fr-resultado" hidden>
+      <p class="fr-ok">Seu logo está pronto!</p>
+      <div class="fr-lg-final"><img id="fr-lg-final" alt="Seu logo" width="320" height="168"></div>
+      <div class="fr-linha fr-centro">
+        <button type="button" id="fr-lg-png" class="btn p">Baixar imagem (PNG)</button>
+        <button type="button" id="fr-lg-svg" class="btn sec p">Baixar SVG</button>
+      </div>
+      <p class="fr-ajuda fr-peq">Quer o site da sua loja pronto com esse logo? A <b>Vênus</b> monta para você. <a class="mais" href="../">Conhecer a Vênus</a></p>
+    </div>
+  </div>
+
+  <div class="fr-gancho cartao">
+    <h3>Quer isso funcionando sozinho?</h3>
+    <p>A <b>Vênus</b> responde seus clientes no WhatsApp, controla estoque e pedidos e já cria link, QR e panfleto da sua loja. <a class="mais" href="../">Conhecer a Vênus</a></p>
+  </div>
+  <p class="fr-breve">Em breve aqui: catálogo digital com pedido pelo WhatsApp.</p>
+</div></section>
+
+<div id="fr-janela" class="fr-janela" role="dialog" aria-modal="true" aria-labelledby="fr-j-titulo" hidden>
+  <div class="fr-caixa">
+    <h3 id="fr-j-titulo">Quase lá!</h3>
+    <p id="fr-j-texto">Para guardar o seu link curto e te mostrar quantos cliques ele teve, entre com o seu <b>Vetorial ID</b>. É grátis e uma conta só serve para todos os nossos apps. Assim a gente também melhora as ferramentas.</p>
+    <p id="fr-j-erro" class="fr-aviso" role="alert" hidden></p>
+    <div class="fr-linha">
+      <button type="button" id="fr-j-entrar" class="btn">Entrar com o Vetorial ID</button>
+      <button type="button" id="fr-j-fechar" class="btn sec">Agora não</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<footer><div class="wrap"><b>VETORIAL TECH</b><br><a href="../">Vênus</a> · <a href="../vindex.html">Vindex</a> · <a href="../vortex.html">Vortex</a> · <a href="../velox.html">Velox</a><a href="../vyntem.html">Vyntem</a> · <a href="../voxix.html">Voxix</a> · <a href="../pdf/">Vindex PDF</a> · <a data-instagram hidden href="#" rel="noopener" target="_blank">Instagram</a> · <a href="./">Vênus Vitrine</a> · <a href="../seguranca.html">Banco não abre?</a><br><small>© <span id="ano"></span> Vetorial Tech</small></div></footer>
+
+<script src="../config.js"></script>
+<script src="../vitrine.js" defer></script>
+<script src="ferramentas.js" defer></script>
+<script src="panfleto.js" defer></script>
+<script src="logo.js" defer></script>
+<script>
+  document.getElementById("ano").textContent = new Date().getFullYear();
+  (() => { const e = document.getElementById("entrar-topo"); if (e) e.href = VENUS.entrar("vitrine/"); })();
+</script>
+<script src="../logos-animados.js" defer></script>
+</body>
+</html>

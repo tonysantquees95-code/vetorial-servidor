@@ -1,4 +1,4 @@
-// Ferramentas grátis: link curto (pede o Vetorial ID só na hora de criar) e QR code (livre, sem conta).
+// Vênus Vitrine (ferramentas grátis): link curto (pede o Vetorial ID só na hora de criar) e QR code (livre, sem conta).
 // Páginas montadas só com texto (textContent), nunca innerHTML.
 (() => {
   const API = (window.VENUS && window.VENUS.api) || "";
@@ -18,7 +18,7 @@
   function entrarComVetorialId() {
     return new Promise((resolve) => {
       const origem = new URL(API).origin;
-      const j = window.open(`${API}/id?plataforma=web&nome=${encodeURIComponent("Ferramentas Vetorial")}`, "vetorial-id", "width=460,height=720");
+      const j = window.open(`${API}/id?plataforma=web&nome=${encodeURIComponent("Vênus Vitrine")}`, "vetorial-id", "width=460,height=720");
       if (!j) return resolve(false);
       let feito = false;
       const fim = (ok) => { if (feito) return; feito = true; window.removeEventListener("message", ouvir); clearInterval(t); resolve(ok); };

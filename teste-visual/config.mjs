@@ -68,7 +68,7 @@ export default {
       if (!/Pronto/.test(await p.locator("#espera-msg").innerText())) throw new Error("o aviso de sucesso não apareceu");
       if (!enviado || enviado.email !== "pessoa@exemplo.com" || enviado.site !== "") throw new Error("o pedido saiu errado");
     }],
-    ["ferramentas-qr", "ferramentas.html", async (p) => {
+    ["ferramentas-qr", "vitrine/", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")));
       let pedido = "";
       await p.route("**/ferramentas/qr**", async (r) => {
@@ -84,7 +84,7 @@ export default {
       await p.click('label.fr-op:has(input[value="whats"])'); await p.fill("#fr-q-fone", "(51) 99999-8888"); await p.waitForTimeout(900);
       if (!decodeURIComponent(pedido).includes("https://wa.me/5551999998888")) throw new Error("o QR do WhatsApp saiu errado: " + pedido);
     }],
-    ["ferramentas-pede-id", "ferramentas.html", async (p) => {
+    ["ferramentas-pede-id", "vitrine/", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
       await p.fill("#fr-destino", "minhaloja.com.br/promocao"); await p.click("#fr-encurtar"); await ESPERA(p);
       if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu");
@@ -92,7 +92,7 @@ export default {
       await p.keyboard.press("Escape"); await ESPERA(p);
       if (await p.locator("#fr-janela").isVisible()) throw new Error("Esc não fechou a janela");
     }],
-    ["panfleto-pede-id", "ferramentas.html", async (p) => {
+    ["panfleto-pede-id", "vitrine/", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
       await p.click("#aba-panfleto");
       if (!(await p.locator("#painel-panfleto").isVisible())) throw new Error("a aba do panfleto não abriu");
@@ -103,7 +103,7 @@ export default {
       if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao gerar");
       if (!/panfleto/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para o panfleto");
     }],
-    ...["promo", "lanc", "simples"].flatMap((modelo) => ["a4", "quadrado"].map((formato) => [`panfleto-${modelo}-${formato}`, "ferramentas.html", async (p) => {
+    ...["promo", "lanc", "simples"].flatMap((modelo) => ["a4", "quadrado"].map((formato) => [`panfleto-${modelo}-${formato}`, "vitrine/", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       let uso = 0;
       await p.route("**/panfleto/uso", async (r) => {
@@ -129,7 +129,7 @@ export default {
       if (uso !== 1) throw new Error("baixar de novo não deveria gastar outro panfleto");
       await p.locator("#painel-panfleto").scrollIntoViewIfNeeded();
     }])),
-    ...[["logo-vitrine", false], ["logo-bloqueado", true], ["logo-criar", false]].map(([nome, bloqueado]) => [nome, "ferramentas.html", async (p) => {
+    ...[["logo-vitrine", false], ["logo-bloqueado", true], ["logo-criar", false]].map(([nome, bloqueado]) => [nome, "vitrine/", async (p) => {
       const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
       const cats = ["moderno", "elegante", "classico", "divertido", "forte", "natural", "luxo", "minimalista"].map((id) => ({ id, nome: id[0].toUpperCase() + id.slice(1) }));
       const modelos = cats.flatMap((c) => [1, 2, 3, 4, 5, 6].map((n) => ({ id: `${c.id}-${n}`, nome: `${c.nome} ${n}`, categoria: c.id, gratis: n === 1 || (c.id === "elegante" && n === 2) })));
@@ -180,7 +180,7 @@ export default {
         await p.locator("#fr-lg-grade").scrollIntoViewIfNeeded();
       }
     }]),
-    ["ferramentas-link-ok", "ferramentas.html", async (p) => {
+    ["ferramentas-link-ok", "vitrine/", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       const meu = { codigo: "abc234", curto: "https://v.test/l/abc234", destino: "https://minhaloja.com.br/promocao-do-mes-com-um-endereco-bem-comprido-para-testar", criado: 1, cliques: 7, ultimoClique: null, ativo: true };
       let corpo = null;
@@ -198,6 +198,18 @@ export default {
       if (!/7 cliques/.test(await p.locator("#fr-lista").innerText())) throw new Error("a contagem de cliques não apareceu");
       await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
     }],
-    ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta", "ferramentas"].map((n) => pagina(n, `${n}.html`)),
+    ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
+    pagina("vitrine", "vitrine/"),
+    pagina("ferramentas-redireciona", "ferramentas.html"),
+    ["home-faixa-vitrine", "", async (p) => {
+      const f = p.locator("a.vv-faixa"); await f.scrollIntoViewIfNeeded();
+      if (!(await f.isVisible())) throw new Error("a faixa da Vênus Vitrine não aparece na home");
+      if (!/vitrine\/$/.test(await f.getAttribute("href"))) throw new Error("a faixa da Vitrine aponta para o lugar errado");
+    }],
+    ["vindex-faixa-pdf", "vindex.html", async (p) => {
+      const f = p.locator("a.vv-faixa"); await f.scrollIntoViewIfNeeded();
+      if (!(await f.isVisible())) throw new Error("a faixa do Vindex PDF não aparece na página do Vindex");
+      if (!/pdf\/$/.test(await f.getAttribute("href"))) throw new Error("a faixa do PDF aponta para o lugar errado");
+    }],
   ],
 };

@@ -1,4 +1,4 @@
-/* Ferramentas grátis (ferramentas.html). Classes com prefixo fr- para não colidir com o estilo.css. */
+/* Vênus Vitrine (vitrine/index.html). Classes com prefixo fr- para não colidir com o estilo.css. */
 .fr-hero .wrap.fr-um{display:block;max-width:820px}
 .fr-hero h1{margin:10px 0 12px}
 .fr-ferr{padding:10px 0 50px}
@@ -88,3 +88,10 @@
   .fr-previa{order:-1}
   .fr-aba{flex:1;text-align:center}
 }
+
+.vv-marca{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff}
+.vv-marca img{width:46px;height:46px;display:block}
+.vv-marca span{display:grid;line-height:1.15}
+.vv-marca b{font-size:20px;font-weight:800;letter-spacing:.2px}
+.vv-marca span{letter-spacing:0}
+.vv-marca small{font-size:12px;color:var(--suave);font-weight:600}

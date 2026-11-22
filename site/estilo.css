@@ -203,3 +203,15 @@ details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:non
 .espera-msg{min-height:1.4em;margin:10px 0 0;font-size:14px;color:var(--suave)}
 .espera-msg.ok{color:var(--verde)}.espera-msg.erro{color:#ff9bb0}
 @media(max-width:480px){.espera .btn{width:100%}}
+
+/* Faixa de destaque para as portas de entrada grátis (Vênus Vitrine, Vindex PDF) */
+.vv-faixa{display:flex;align-items:center;gap:14px;margin-top:18px;padding:14px 16px;max-width:560px;border:1px solid #ec6fd666;border-radius:18px;background:linear-gradient(135deg,#ec6fd61c,#7aa2ff1c);text-decoration:none;color:var(--texto);text-align:left;box-sizing:border-box}
+.vv-faixa:hover{border-color:#ec6fd6;background:linear-gradient(135deg,#ec6fd62e,#7aa2ff2e)}
+.vv-faixa:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.vv-faixa img{flex:none;display:block;width:auto;height:52px}
+.vv-txt{display:grid;gap:3px;min-width:0;flex:1}
+.vv-txt b{font-size:16px;line-height:1.25}
+.vv-txt small{font-size:13.5px;color:var(--suave);line-height:1.4}
+.vv-go{flex:none;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg,#ec6fd6,#7aa2ff);color:#12142a;padding:10px 14px;border-radius:12px;white-space:nowrap}
+@media(max-width:560px){.vv-faixa{flex-wrap:wrap}.vv-go{width:100%;text-align:center;box-sizing:border-box}}
+@media(max-width:860px){.vv-faixa{margin-left:auto;margin-right:auto}}
