@@ -68,6 +68,48 @@ export default {
       if (!/Pronto/.test(await p.locator("#espera-msg").innerText())) throw new Error("o aviso de sucesso não apareceu");
       if (!enviado || enviado.email !== "pessoa@exemplo.com" || enviado.site !== "") throw new Error("o pedido saiu errado");
     }],
-    ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
+    ["ferramentas-qr", "ferramentas.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")));
+      let pedido = "";
+      await p.route("**/ferramentas/qr**", async (r) => {
+        pedido = r.request().url();
+        return r.fulfill({ status: 200, contentType: "image/svg+xml", headers: { "access-control-allow-origin": "*" }, body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><rect width="29" height="29" fill="#fff"/><path d="M4,4h7v7h-7z M18,4h7v7h-7z M4,18h7v7h-7z" fill="#000"/></svg>' });
+      });
+      await p.click("#aba-qr");
+      if (!(await p.locator("#painel-qr").isVisible())) throw new Error("a aba do QR code não abriu");
+      await p.fill("#fr-q-url", "minhaloja.com.br"); await p.waitForTimeout(900);
+      if (!(await p.locator("#fr-qr-img").isVisible())) throw new Error("a prévia do QR code não apareceu");
+      if (await p.locator("#fr-baixar-png").isDisabled()) throw new Error("o botão de baixar ficou desligado");
+      if (!pedido.includes(encodeURIComponent("https://minhaloja.com.br"))) throw new Error("o QR foi pedido com o endereço errado: " + pedido);
+      await p.click('label.fr-op:has(input[value="whats"])'); await p.fill("#fr-q-fone", "(51) 99999-8888"); await p.waitForTimeout(900);
+      if (!decodeURIComponent(pedido).includes("https://wa.me/5551999998888")) throw new Error("o QR do WhatsApp saiu errado: " + pedido);
+    }],
+    ["ferramentas-pede-id", "ferramentas.html", async (p) => {
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
+      await p.fill("#fr-destino", "minhaloja.com.br/promocao"); await p.click("#fr-encurtar"); await ESPERA(p);
+      if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu");
+      if (!(await p.locator("#fr-j-entrar").isVisible())) throw new Error("o botão de entrar não está visível");
+      await p.keyboard.press("Escape"); await ESPERA(p);
+      if (await p.locator("#fr-janela").isVisible()) throw new Error("Esc não fechou a janela");
+    }],
+    ["ferramentas-link-ok", "ferramentas.html", async (p) => {
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
+      const meu = { codigo: "abc234", curto: "https://v.test/l/abc234", destino: "https://minhaloja.com.br/promocao-do-mes-com-um-endereco-bem-comprido-para-testar", criado: 1, cliques: 7, ultimoClique: null, ativo: true };
+      let corpo = null;
+      await p.route("**/links", async (r) => {
+        const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,DELETE,OPTIONS" };
+        const m = r.request().method();
+        if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
+        if (m === "POST") { corpo = JSON.parse(r.request().postData() || "{}"); return r.fulfill({ status: 201, contentType: "application/json", headers: cab, body: JSON.stringify({ ok: true, link: meu }) }); }
+        return r.fulfill({ status: 200, contentType: "application/json", headers: cab, body: JSON.stringify({ limite: 20, ilimitado: false, links: [meu] }) });
+      });
+      await p.fill("#fr-destino", "minhaloja.com.br/promocao"); await p.click("#fr-encurtar"); await ESPERA(p);
+      if (!/\/l\/abc234/.test(await p.locator("#fr-curto").innerText())) throw new Error("o link curto não apareceu");
+      if (!corpo || corpo.destino !== "minhaloja.com.br/promocao") throw new Error("o pedido saiu errado");
+      if (!(await p.locator("#fr-lista .fr-item").count())) throw new Error("a lista de links não apareceu");
+      if (!/7 cliques/.test(await p.locator("#fr-lista").innerText())) throw new Error("a contagem de cliques não apareceu");
+      await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
+    }],
+    ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta", "ferramentas"].map((n) => pagina(n, `${n}.html`)),
   ],
 };

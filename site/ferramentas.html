@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ferramentas grátis · Vetorial Tech</title>
+<meta name="description" content="Encurtador de link e gerador de QR code grátis, para quem vende pelo WhatsApp e pelo Instagram. Em breve: panfleto, logo e catálogo.">
+<meta name="theme-color" content="#070914">
+<meta property="og:title" content="Ferramentas grátis · Vetorial Tech">
+<meta property="og:description" content="Encurtador de link e gerador de QR code grátis, para quem vende pelo WhatsApp e pelo Instagram.">
+<meta property="og:image" content="/icone/vindex.png">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="estilo.css?v=8">
+<link rel="stylesheet" href="ferramentas.css?v=1">
+</head>
+<body>
+<header class="topo"><div class="wrap">
+  <a class="marca" href="./" aria-label="Vetorial Tech"><img src="logo-oficial-cab.png" alt="Vetorial Tech" width="234" height="72"></a>
+  <a class="ig" href="https://www.instagram.com/vetorial_tech/" target="_blank" rel="noopener" aria-label="Instagram da Vetorial Tech"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".9" fill="currentColor" stroke="none"/></svg><span>@vetorial_tech</span></a>
+  <nav><a class="ocultar" href="./">Vênus</a><a class="ocultar" href="vindex.html">Vindex</a><a class="ocultar" href="vortex.html">Vortex</a><a class="ocultar" href="velox.html">Velox · grátis</a><a class="ocultar" href="vyntem.html">Vyntem · grátis</a><a class="ocultar" href="voxix.html">Voxix · em breve</a><a class="ocultar" href="./#preco">Preço</a><a class="ocultar" href="quem-somos.html">Quem somos</a><a class="btn p" id="entrar-topo" href="conta.html">Entrar</a></nav>
+</div>
+<a class="faixa-ig" href="https://www.instagram.com/vetorial_tech/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r=".9" fill="currentColor" stroke="none"/></svg> Siga a gente no Instagram: <b>@vetorial_tech</b></a>
+<nav class="abas-m" aria-label="Produtos"><a href="./">Vênus</a><a href="vindex.html">Vindex</a><a href="vortex.html">Vortex</a><a href="velox.html">Velox</a><a href="vyntem.html">Vyntem</a><a href="voxix.html">Voxix</a><a href="./#preco">Preço</a><a href="quem-somos.html">Quem somos</a></nav></header>
+<main>
+<section class="hero fr-hero"><div class="wrap fr-um">
+  <span class="etiqueta">Grátis · sem cadastro para começar</span>
+  <h1>Ferramentas grátis para <em>quem vende pelo WhatsApp e Instagram</em>.</h1>
+  <p class="sub">Encurte links e crie QR codes em segundos. Você usa à vontade e só cria a conta no Vetorial ID quando for gerar o link curto.</p>
+</div></section>
+
+<section class="fr-ferr"><div class="wrap">
+  <div class="fr-abas" role="tablist" aria-label="Ferramentas">
+    <button type="button" role="tab" id="aba-link" aria-selected="true" aria-controls="painel-link" class="fr-aba">Link curto</button>
+    <button type="button" role="tab" id="aba-qr" aria-selected="false" aria-controls="painel-qr" class="fr-aba" tabindex="-1">QR code</button>
+  </div>
+
+  <div id="painel-link" role="tabpanel" aria-labelledby="aba-link" class="cartao fr-painel">
+    <h2>Encurtador de link</h2>
+    <p class="fr-ajuda">Cole o endereço da sua loja, do catálogo ou da promoção. O link curto fica bonito na bio e no WhatsApp, e você vê quantos clientes clicaram.</p>
+    <label class="fr-rotulo" for="fr-destino">Endereço para encurtar</label>
+    <input id="fr-destino" class="fr-campo" type="url" inputmode="url" autocomplete="off" placeholder="minhaloja.com.br/promocao-do-mes">
+    <div class="fr-linha"><button type="button" id="fr-encurtar" class="btn">Encurtar link</button></div>
+    <p id="fr-aviso-link" class="fr-aviso" role="alert" hidden></p>
+    <div id="fr-resultado" class="fr-resultado" hidden>
+      <p class="fr-ajuda">Seu link curto:</p>
+      <output id="fr-curto" class="fr-curto"></output>
+      <div class="fr-linha">
+        <button type="button" id="fr-copiar" class="btn sec p">Copiar</button>
+        <a id="fr-whats" class="btn sec p" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+        <button type="button" id="fr-qr-do-link" class="btn sec p">Fazer o QR code deste link</button>
+      </div>
+    </div>
+    <div id="fr-meus" class="fr-meus" hidden>
+      <h3>Seus links</h3>
+      <ul id="fr-lista" class="fr-lista"></ul>
+    </div>
+  </div>
+
+  <div id="painel-qr" role="tabpanel" aria-labelledby="aba-qr" class="cartao fr-painel" hidden>
+    <h2>Gerador de QR code</h2>
+    <p class="fr-ajuda">Grátis e sem cadastro. O QR code fica na hora, nada é guardado.</p>
+    <div class="fr-qr-grade">
+      <div>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">O que o QR code abre?</legend>
+          <label class="fr-op"><input type="radio" name="fr-tipo" value="link" checked><span>Um link</span></label>
+          <label class="fr-op"><input type="radio" name="fr-tipo" value="whats"><span>Um WhatsApp</span></label>
+          <label class="fr-op"><input type="radio" name="fr-tipo" value="texto"><span>Um texto</span></label>
+        </fieldset>
+        <div id="fr-q-link">
+          <label class="fr-rotulo" for="fr-q-url">Endereço</label>
+          <input id="fr-q-url" class="fr-campo" type="url" inputmode="url" autocomplete="off" placeholder="minhaloja.com.br">
+        </div>
+        <div id="fr-q-whats" hidden>
+          <label class="fr-rotulo" for="fr-q-fone">WhatsApp com DDD</label>
+          <input id="fr-q-fone" class="fr-campo" type="tel" inputmode="tel" autocomplete="off" placeholder="(51) 99999-8888">
+          <label class="fr-rotulo" for="fr-q-msg">Mensagem pronta (opcional)</label>
+          <input id="fr-q-msg" class="fr-campo" type="text" maxlength="200" placeholder="Oi! Vim pelo QR code.">
+        </div>
+        <div id="fr-q-texto" hidden>
+          <label class="fr-rotulo" for="fr-q-txt">Texto</label>
+          <textarea id="fr-q-txt" class="fr-campo" rows="3" maxlength="500" placeholder="Wi-Fi da loja: senha 12345678"></textarea>
+        </div>
+        <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#000000" checked><span style="--c:#000000" title="Preto"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#c2185b"><span style="--c:#c2185b" title="Rosa"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#1d4ed8"><span style="--c:#1d4ed8" title="Azul"></span></label>
+          <label class="fr-cor"><input type="radio" name="fr-cor" value="#15803d"><span style="--c:#15803d" title="Verde"></span></label>
+        </fieldset>
+      </div>
+      <div class="fr-previa">
+        <div class="fr-moldura"><img id="fr-qr-img" alt="Prévia do QR code" width="240" height="240" hidden><p id="fr-qr-vazio" class="fr-ajuda">Preencha ao lado para ver o QR code.</p></div>
+        <div class="fr-linha">
+          <button type="button" id="fr-baixar-png" class="btn p" disabled>Baixar PNG</button>
+          <button type="button" id="fr-baixar-svg" class="btn sec p" disabled>Baixar SVG</button>
+        </div>
+        <p id="fr-aviso-qr" class="fr-aviso" role="alert" hidden></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-gancho cartao">
+    <h3>Quer isso funcionando sozinho?</h3>
+    <p>A <b>Vênus</b> responde seus clientes no WhatsApp, controla estoque e pedidos e já cria link, QR e panfleto da sua loja. <a class="mais" href="./">Conhecer a Vênus</a></p>
+  </div>
+  <p class="fr-breve">Em breve aqui: panfleto, logo e catálogo digital com pedido pelo WhatsApp.</p>
+</div></section>
+
+<div id="fr-janela" class="fr-janela" role="dialog" aria-modal="true" aria-labelledby="fr-j-titulo" hidden>
+  <div class="fr-caixa">
+    <h3 id="fr-j-titulo">Quase lá!</h3>
+    <p>Para guardar o seu link curto e te mostrar quantos cliques ele teve, entre com o seu <b>Vetorial ID</b>. É grátis e uma conta só serve para todos os nossos apps. Assim a gente também melhora as ferramentas.</p>
+    <p id="fr-j-erro" class="fr-aviso" role="alert" hidden></p>
+    <div class="fr-linha">
+      <button type="button" id="fr-j-entrar" class="btn">Entrar com o Vetorial ID</button>
+      <button type="button" id="fr-j-fechar" class="btn sec">Agora não</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<footer><div class="wrap"><b>VETORIAL TECH</b><br><a href="./">Vênus</a> · <a href="vindex.html">Vindex</a> · <a href="vortex.html">Vortex</a> · <a href="velox.html">Velox</a><a href="vyntem.html">Vyntem</a> · <a href="voxix.html">Voxix</a> · <a data-instagram hidden href="#" rel="noopener" target="_blank">Instagram</a> · <a href="ferramentas.html">Ferramentas grátis</a> · <a href="seguranca.html">Banco não abre?</a><br><small>© <span id="ano"></span> Vetorial Tech</small></div></footer>
+
+<script src="config.js"></script>
+<script src="vitrine.js" defer></script>
+<script src="ferramentas.js" defer></script>
+<script>
+  document.getElementById("ano").textContent = new Date().getFullYear();
+  (() => { const e = document.getElementById("entrar-topo"); if (e) e.href = VENUS.entrar("ferramentas.html"); })();
+</script>
+<script src="logos-animados.js" defer></script>
+</body>
+</html>
