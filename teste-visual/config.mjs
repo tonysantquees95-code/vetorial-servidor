@@ -1,4 +1,5 @@
 // Telas do site que o teste visual visita: [nome, página, passos].
+const REAIS = ["vindex", "vortex", "vyntem"];
 const APPS = ["venus", "vindex", "vortex", "velox", "vyntem", "voxix"];
 const ABA = (p, id) => p.locator("#abas button").nth(APPS.indexOf(id));
 const ESPERA = (p) => p.waitForTimeout(350);
@@ -15,6 +16,15 @@ export default {
     ...APPS.map((id) => [`home-simulador-${id}`, "", async (p) => {
       await p.locator("#simulador").scrollIntoViewIfNeeded();
       await ABA(p, id).click(); await ESPERA(p);
+      if ((await ABA(p, id).getAttribute("aria-selected")) !== "true") throw new Error(`a aba de ${id} não ficou selecionada`);
+      if (REAIS.includes(id) && (await p.locator("#tela iframe").count())) { // o app de verdade, em /demo/<app>/, dentro do celular
+        const f = p.frameLocator("#tela iframe"); await f.locator("body").waitFor();
+        await p.waitForFunction(() => { const d = document.querySelector("#tela iframe")?.contentDocument; return d && d.body && d.body.innerText.trim().length > 20; }, null, { timeout: 15000 }).catch(() => { throw new Error(`o app ${id} não abriu dentro do celular`); });
+        const abas = await f.locator("nav button:visible").all();
+        for (const b of abas.slice(0, 4)) { await b.click({ timeout: 2000 }).catch(() => {}); await p.waitForTimeout(250); }
+        await p.locator("#simulador").scrollIntoViewIfNeeded();
+        return;
+      }
       if (!(await p.locator("#tela").innerText()).trim()) throw new Error(`a tela de ${id} ficou vazia`);
       for (const b of await p.locator("#tela button:visible").all()) { await b.click({ timeout: 2000 }).catch(() => {}); await p.waitForTimeout(120); }
       await p.locator("#simulador").scrollIntoViewIfNeeded();

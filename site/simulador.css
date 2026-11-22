@@ -3,3 +3,7 @@
 .sim-video .sim-aparelho-video { max-width: 280px; }
 .sim-tela-video { height: auto; aspect-ratio: 1080 / 2388; background: #05030b; }
 .sim-tela-video video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* app de verdade dentro do celular */
+.sim-real{position:absolute;left:0;right:0;top:30px;bottom:0;overflow:hidden;background:#000;border-radius:0 0 34px 34px}
+.sim-real-f{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#000;display:block}

@@ -43,6 +43,57 @@ jobs:
             exit 1
           fi
 
+      # Demonstração de verdade na home ("Veja a Suíte Vetorial em ação"): o próprio app (modo demonstração) rodando dentro do celular do site.
+      # Os repositórios são públicos. Se algum passo falhar, a home usa a tela de exemplo de antes e o servidor sobe do mesmo jeito.
+      - name: Buscar o código do vindex (demonstração)
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/Vindex
+          path: demo-src/vindex
+          sparse-checkout: app
+      - name: Montar a demonstração do vindex em site/demo/vindex
+        continue-on-error: true
+        run: |
+          cd demo-src/vindex/app
+          npm ci --no-audit --no-fund
+          npm run build
+          cd "$GITHUB_WORKSPACE"
+          node scripts/montar-demo.mjs vindex demo-src/vindex/app site/demo/vindex
+          test -f site/demo/vindex/index.html
+      - name: Buscar o código do vortex (demonstração)
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/vortex
+          path: demo-src/vortex
+          sparse-checkout: app
+      - name: Montar a demonstração do vortex em site/demo/vortex
+        continue-on-error: true
+        run: |
+          cd demo-src/vortex/app
+          npm ci --no-audit --no-fund
+          npm run build
+          cd "$GITHUB_WORKSPACE"
+          node scripts/montar-demo.mjs vortex demo-src/vortex/app site/demo/vortex
+          test -f site/demo/vortex/index.html
+      - name: Buscar o código do vyntem (demonstração)
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/vyntem
+          path: demo-src/vyntem
+          sparse-checkout: app
+      - name: Montar a demonstração do vyntem em site/demo/vyntem
+        continue-on-error: true
+        run: |
+          cd demo-src/vyntem/app
+          npm ci --no-audit --no-fund
+          npm run build
+          cd "$GITHUB_WORKSPACE"
+          node scripts/montar-demo.mjs vyntem demo-src/vyntem/app site/demo/vyntem
+          test -f site/demo/vyntem/index.html
+
       - name: Teste visual do site (7 tamanhos de tela)
         working-directory: .
         run: |

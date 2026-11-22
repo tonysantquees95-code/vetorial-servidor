@@ -45,7 +45,25 @@ function abrirApp(id, foco) {
   ORDEM.forEach(function (x) { var t = $("#aba-" + x); t.setAttribute("aria-selected", x === id); t.setAttribute("aria-pressed", x === id); t.tabIndex = x === id ? 0 : -1; if (x === id) { t.style.background = "#EC6FD622"; t.style.borderColor = "#EC6FD6"; if (foco) t.focus(); t.scrollIntoView({ inline: "center", block: "nearest" }); } else { t.style.background = ""; t.style.borderColor = ""; } });
   $("#tela").setAttribute("aria-labelledby", "aba-" + id);
   $("#descricao").innerHTML = '<h3 class="text-2xl font-black sm:text-3xl">' + a.titulo + '</h3><p class="mt-3 text-suave">' + a.texto + '</p><ul class="mt-5 space-y-2">' + a.pontos.map(function (p) { return '<li class="flex gap-2"><span class="text-verde">✓</span><span class="min-w-0">' + p + '</span></li>'; }).join("") + '</ul><a class="sim-btn mt-6" href="' + a.cta[1] + '" onclick="return ir(\'' + a.cta[1].slice(1) + '\')">' + a.cta[0] + '</a>';
-  var t = $("#tela"); t.innerHTML = ""; TELAS[id](t);
+  var t = $("#tela"); t.innerHTML = ""; (REAIS[id] ? telaReal : TELAS[id])(t, id);
+}
+
+/* ---- o app de verdade (modo demonstração, em /demo/<app>/) dentro do celular, na largura de um celular de verdade ---- */
+var REAIS = { vindex: 1, vortex: 1, vyntem: 1 }, LARGURA_REAL = 390;
+function telaReal(t, id) {
+  // sem a demonstração publicada (passo de montagem falhou), segue a tela de exemplo de antes
+  fetch("/demo/" + id + "/demo-shim.js", { method: "HEAD" }).then(function (r) { if (!r.ok && atual === id) { t.innerHTML = ""; TELAS[id](t); } }, function () { if (atual === id) { t.innerHTML = ""; TELAS[id](t); } });
+  var caixa = el('<div class="sim-real"></div>'), f = document.createElement("iframe");
+  f.className = "sim-real-f"; f.title = APPS[id].nome + " funcionando (demonstração)"; f.src = "/demo/" + id + "/"; f.setAttribute("allow", "");
+  f.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-modals"); f.setAttribute("referrerpolicy", "no-referrer");
+  caixa.appendChild(f); t.appendChild(caixa);
+  function ajusta() {
+    var w = caixa.clientWidth, h = caixa.clientHeight; if (!w) return;
+    var k = w / LARGURA_REAL; f.style.width = LARGURA_REAL + "px"; f.style.height = Math.round(h / k) + "px"; f.style.transform = "scale(" + k + ")";
+  }
+  ajusta();
+  if (window.ResizeObserver) { var ro = new ResizeObserver(ajusta); ro.observe(caixa); }
+  else window.addEventListener("resize", ajusta);
 }
 
 /* ---- barra de topo de cada app ---- */
