@@ -24,6 +24,7 @@
 import { verificarAlertas } from "./dev/alertas.js";
 import { ehAtalho, responderAtalho } from "./atalhos.js";
 import { ehRotaVindex, tratarVindex } from "./vindex/rotas.js";
+import { ehRotaPdf, tratarPdf } from "./pdf/uso.js";
 import { ehRotaVoxix, tratarVoxix } from "./voxix/rotas.js";
 import { ehRotaCofre, tratarCofre } from "./vindex/cofre.js";
 import { ehRotaIcone, tratarIcone } from "./icone.js";
@@ -93,6 +94,7 @@ export default {
       if (ehRotaCi(caminho)) return await tratarCi(req, env, url, caminho);
       if (ehRotaVortex(caminho)) return await tratarVortex(req, env, url, caminho);
       if (ehRotaDrive(caminho)) return await tratarDrive(req, env, url, caminho);
+      if (ehRotaPdf(caminho)) return await tratarPdf(req, env, url, caminho);
       if (ehRotaVindex(caminho)) return await tratarVindex(req, env, url, caminho);
       if (ehRotaVoxix(caminho)) return await tratarVoxix(req, env, url, caminho);
       if (ehRotaCofre(caminho)) return await tratarCofre(req, env, url, caminho);
