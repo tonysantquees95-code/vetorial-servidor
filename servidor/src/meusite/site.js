@@ -1,6 +1,7 @@
 // Meu site: a página do negócio (serviços, agenda, sobre, equipe, fotos, contato) montada a partir de poucas escolhas.
 // Não tem JavaScript: é HTML puro, rápido no celular, e quem edita nunca escreve HTML (tudo é texto escapado).
 import { FONTES, logoSvg, NICHOS, normalizarEspec } from "./logos.js";
+import { bannerSvg } from "./banners.js";
 
 export const TEMAS = {
   claro: { nome: "Claro", fundo: "#FFFFFF", painel: "#F6F3F1", texto: "#241B1F", suave: "#6E6469", borda: "#0000001a" },
@@ -19,7 +20,9 @@ export const SECOES = {
   contato: "Contato e horário",
 };
 const ORDEM_PADRAO = ["servicos", "produtos", "sobre", "equipe", "galeria", "depoimentos", "contato"];
-const FONTES_DO_SITE = ["moderna", "elegante", "classica", "arredondada"];
+const FONTES_DO_SITE = ["moderna", "elegante", "classica", "arredondada", "forte", "cursiva"];
+/** Formatos de página. "classico" é o do Meu site das lojas; os outros são do site da Vitrine. */
+export const LAYOUTS_SITE = ["classico", "banner", "servicos", "loja", "cartao", "galeria"];
 export const MAX_FOTOS = 9;
 
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -38,7 +41,7 @@ export function secoesDoRamo(nicho) {
 
 export function siteInicial(nicho = "outro", paleta = null) {
   const n = NICHOS[nicho] ? nicho : "outro";
-  return { nicho: n, tema: ["barbearia"].includes(n) ? "escuro" : "creme", fonte: "moderna", cor: paleta?.principal || "#C2185B", slogan: "", sobre: "", endereco: "", horario: "", instagram: "", secoes: secoesDoRamo(n), depoimentos: [], publicado: false, logo: null };
+  return { nicho: n, tema: ["barbearia"].includes(n) ? "escuro" : "creme", fonte: "moderna", layout: "classico", cor: paleta?.principal || "#C2185B", slogan: "", sobre: "", endereco: "", horario: "", instagram: "", secoes: secoesDoRamo(n), depoimentos: [], publicado: false, logo: null };
 }
 
 /** Confere o que veio do editor, campo por campo. O que não vier fica como estava. */
@@ -67,6 +70,7 @@ export function normalizarSite(d = {}, anterior = null) {
     nicho,
     tema: tem("tema") && TEMAS[d.tema] ? d.tema : base.tema,
     fonte: tem("fonte") && FONTES_DO_SITE.includes(d.fonte) ? d.fonte : base.fonte,
+    layout: tem("layout") && LAYOUTS_SITE.includes(d.layout) ? d.layout : base.layout || "classico",
     cor: tem("cor") ? hex(d.cor, base.cor) : base.cor,
     slogan: tem("slogan") ? linha(d.slogan, 90) : base.slogan,
     sobre: tem("sobre") ? texto(d.sobre, 700) : base.sobre,
@@ -95,7 +99,7 @@ export function textosModelo(nicho, nome, cidade = "") {
   return { slogan, sobre };
 }
 
-function css(t, fonte, cor) {
+function css(t, fonte, cor, layout = "classico") {
   const f = FONTES[fonte] || FONTES.moderna;
   const sobre = corSobre(cor);
   return `:root{--cor:${cor};--sobre:${sobre};--fundo:${t.fundo};--painel:${t.painel};--texto:${t.texto};--suave:${t.suave};--borda:${t.borda};--titulo:${f.familia}}
@@ -122,7 +126,17 @@ section{padding:30px 0 6px}h2{font-size:clamp(22px,5vw,28px);margin-bottom:14px}
 .rodape{text-align:center;color:var(--suave);font-size:12px;padding:34px 12px 22px}.rodape b{letter-spacing:.12em}
 .fixa{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--fundo) 92%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--borda)}
 .fixa .bt{flex:1;max-width:420px;text-align:center;padding:13px 10px}
-@media(min-width:760px){.fixa{display:none}body{padding-bottom:0}}`;
+@media(min-width:760px){.fixa{display:none}body{padding-bottom:0}}${camadaDoLayout(layout)}`;
+}
+/** O que muda de um formato para o outro (a ordem das seções vem do `cfg.secoes`). */
+function camadaDoLayout(l) {
+  const banner = `.topo.cb{position:relative;padding:0;background:none;text-align:left;overflow:hidden}.cb .banner{display:block;width:100%;height:clamp(170px,38vw,300px);object-fit:cover}.cb .miolo{position:relative;max-width:960px;margin:0 auto;padding:0 18px 26px}.cb .logo{margin-top:-46px;position:relative;background:var(--fundo);padding:8px;border-radius:20px;border:1px solid var(--borda);max-width:150px;max-height:100px}.cb h1{margin-top:12px}.cb .slogan{margin-left:0}.cb .botoes{justify-content:flex-start}`;
+  if (l === "banner") return banner;
+  if (l === "servicos") return banner + `.cb .banner{height:clamp(110px,24vw,190px)}#servicos .grade{grid-template-columns:1fr}#servicos .cartao{flex-direction:row;flex-wrap:wrap;align-items:baseline;border-radius:14px}#servicos .linha{flex:1;min-width:60%}`;
+  if (l === "galeria") return banner + `#galeria{padding-top:6px}.fotos{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.fotos img{aspect-ratio:4/3;border-radius:18px}.fotos img:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;height:100%}`;
+  if (l === "loja") return banner + `.grade{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}#servicos .cartao{text-align:center;align-items:center;padding:22px 14px;border-radius:22px}#servicos .linha{flex-direction:column;align-items:center;gap:6px}.pedido{margin-top:8px;display:inline-block;padding:9px 16px;border-radius:30px;background:var(--cor);color:var(--sobre);font-weight:700;font-size:14px;text-decoration:none}.fotos{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}`;
+  if (l === "cartao") return `body{display:flex;justify-content:center}.pagina{width:100%;max-width:480px;background:var(--fundo)}.topo{padding:36px 18px 18px}.logo{border-radius:50%;width:112px;height:112px;object-fit:contain;background:var(--painel);padding:10px;max-width:none;max-height:none;border:2px solid var(--cor)}.botoes{flex-direction:column;align-items:stretch}.botoes .bt{text-align:center;font-size:17px}.grade,.fotos{grid-template-columns:1fr 1fr}#servicos .grade{grid-template-columns:1fr}section{padding:20px 0 4px}.max{padding:0 16px}`;
+  return "";
 }
 /** Texto branco ou preto por cima da cor do botão, o que tiver mais contraste. */
 export function corSobre(cor) {
@@ -149,6 +163,7 @@ const zap = (tel, msg) => {
  */
 export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos = [], fotos = [], base, agenda = null, vitrine = null, previa = false, marca = "venus", catalogo = null, fotoUrl = null }) {
   const tema = TEMAS[cfg.tema] || TEMAS.creme;
+  const layout = LAYOUTS_SITE.includes(cfg.layout) ? cfg.layout : "classico";
   const cor = hex(cfg.cor, "#C2185B");
   const nome = loja.titulo || loja.nome || "Meu negócio";
   const modelo = textosModelo(cfg.nicho, nome);
@@ -169,8 +184,8 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
     if (!s.ativa) continue;
     if (s.id === "servicos" && servicos.length) {
       partes.push(`<section id="servicos"><div class="max"><h2>${agenda ? "Serviços e preços" : "Serviços"}</h2><div class="grade">${servicos.map((x) => {
-        const href = agenda ? `${agenda}${agenda.includes("?") ? "&" : "?"}s=${encodeURIComponent(x.id)}` : null;
-        const miolo = `<div class="linha"><b>${esc(x.nome)}</b>${x.preco_centavos !== null && x.preco_centavos !== undefined ? `<span class="preco">${reais(x.preco_centavos)}</span>` : ""}</div>${x.descricao ? `<small>${esc(x.descricao)}</small>` : ""}${x.duracao_min > 0 ? `<small>${duracao(x.duracao_min)}</small>` : ""}${href ? `<span class="ag">Agendar →</span>` : ""}`;
+        const href = agenda ? `${agenda}${agenda.includes("?") ? "&" : "?"}s=${encodeURIComponent(x.id)}` : layout === "loja" ? zap(loja.whatsapp, `Olá! Quero: ${x.nome}`) : null;
+        const miolo = `<div class="linha"><b>${esc(x.nome)}</b>${x.preco_centavos !== null && x.preco_centavos !== undefined ? `<span class="preco">${reais(x.preco_centavos)}</span>` : ""}</div>${x.descricao ? `<small>${esc(x.descricao)}</small>` : ""}${layout === "loja" && whats ? `<span class="pedido">Pedir no WhatsApp</span>` : ""}${x.duracao_min > 0 ? `<small>${duracao(x.duracao_min)}</small>` : ""}${href ? `<span class="ag">Agendar →</span>` : ""}`;
         return href ? `<a class="cartao" href="${esc(href)}">${miolo}</a>` : `<div class="cartao">${miolo}</div>`;
       }).join("")}</div></div></section>`);
     } else if (s.id === "produtos" && produtos.length) {
@@ -199,15 +214,19 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
     ...(loja.whatsapp ? { telephone: `+${soDigitos(loja.whatsapp).length <= 11 ? "55" : ""}${soDigitos(loja.whatsapp)}` } : {}),
     ...(cfg.endereco ? { address: { "@type": "PostalAddress", streetAddress: cfg.endereco } } : {}),
   };
+  const comBanner = ["banner", "servicos", "galeria", "loja"].includes(layout);
+  const cabeca = comBanner
+    ? `<header class="topo cb"><img class="banner" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(bannerSvg(cfg.nicho, cor))}" alt=""><div class="miolo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></div></header>`
+    : `<header class="topo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></header>`;
   const cta = agenda ? `<a class="bt" href="${esc(agenda)}">Agendar horário</a>` : "";
   const cta2 = whats ? `<a class="bt${agenda ? " sec" : ""}" href="${esc(whats)}">WhatsApp</a>` : "";
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(nome)} · ${esc(slogan)}</title><meta name="description" content="${esc(`${slogan}. ${sobre}`.slice(0, 155))}"><meta property="og:title" content="${esc(nome)}"><meta property="og:description" content="${esc(slogan)}"><meta property="og:type" content="website">
-<meta name="theme-color" content="${esc(tema.fundo)}">${previa ? '<meta name="robots" content="noindex">' : ""}<style>${css(tema, cfg.fonte, cor)}</style>
-<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script></head><body>
-<header class="topo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></header>
+<meta name="theme-color" content="${esc(tema.fundo)}">${previa ? '<meta name="robots" content="noindex">' : ""}<style>${css(tema, cfg.fonte, cor, layout)}</style>
+<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script></head><body>${layout === "cartao" ? '<div class="pagina">' : ""}
+${cabeca}
 ${partes.join("\n")}
 ${marca === "vitrine" ? '<footer class="rodape">Feito com a <a href="/vitrine/">Vênus Vitrine</a> · <b>VETORIAL TECH</b></footer>' : marca === false ? "" : '<footer class="rodape">Site feito com a Vênus · <b>VETORIAL TECH</b></footer>'}
-${cta || cta2 ? `<div class="fixa">${cta}${cta2}</div>` : ""}</body></html>`;
+${layout === "cartao" ? "</div>" : ""}${cta || cta2 ? `<div class="fixa">${cta}${cta2}</div>` : ""}</body></html>`;
 }
 

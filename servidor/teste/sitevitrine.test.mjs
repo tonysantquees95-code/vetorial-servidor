@@ -92,3 +92,32 @@ test("plano pago: tema bloqueado, mais fotos e sem a marca", async () => {
   const j = await r.json(); assert.equal(j.assinante, true); assert.equal(j.site.fotos.length, 8);
   assert.ok(!(await (await chamar(env, "GET", `/w/${j.site.slug}`)).text()).includes("Vênus Vitrine</a>"));
 });
+
+test("formatos de página: cada um muda a estrutura; os de assinatura ficam bloqueados no grátis", async () => {
+  const env = ENV(), u = await usuario(env);
+  const m = await (await chamar(env, "GET", "/sitev/modelos")).json();
+  assert.deepEqual(m.layouts.map((l) => l.id), ["banner", "servicos", "loja", "cartao", "galeria"]);
+  assert.deepEqual(m.layouts.filter((l) => l.gratis).map((l) => l.id), ["banner", "servicos"]);
+  const previa = async (layout, extra = {}) => (await (await chamar(env, "POST", "/sitev/previa", { corpo: base({ layout, ...extra }) })).json()).html;
+  const banner = await previa("banner"), cartao = await previa("cartao"), loja = await previa("loja");
+  assert.ok(banner.includes('class="banner"') && banner.includes("data:image/svg+xml")); assert.ok(!banner.includes('<div class="pagina">'));
+  assert.ok(cartao.includes('<div class="pagina">') && !cartao.includes('class="banner"'));
+  assert.ok(loja.includes("Pedir no WhatsApp") && loja.includes("Quero%3A%20Corte"));
+  // a ordem das seções muda: na galeria as fotos vêm antes dos serviços
+  const gal = await previa("galeria", { fotos: [{ fotoNova: JPEG }] });
+  assert.ok(gal.indexOf('id="galeria"') < gal.indexOf('id="servicos"'));
+  // banner diferente por ramo, igual para o mesmo ramo
+  const a = await previa("banner", { nicho: "barbearia" }), b = await previa("banner", { nicho: "manicure" }), a2 = await previa("banner", { nicho: "barbearia" });
+  assert.notEqual(a.match(/data:image\/svg\+xml[^"]*/)[0], b.match(/data:image\/svg\+xml[^"]*/)[0]); assert.equal(a.match(/data:image\/svg\+xml[^"]*/)[0], a2.match(/data:image\/svg\+xml[^"]*/)[0]);
+  // publicar: livre passa, de assinatura é 403
+  assert.equal((await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ layout: "servicos" }) })).status, 200);
+  const t = await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ layout: "cartao" }) });
+  assert.equal(t.status, 403); assert.equal((await t.json()).codigo, "assinatura");
+  assert.ok((await (await chamar(env, "GET", "/w/studio-da-ana")).text()).includes('class="banner"'));
+});
+
+test("fonte nova e layout inválido caem no padrão", async () => {
+  const env = ENV(), u = await usuario(env);
+  const r = await (await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ layout: "inventado", fonte: "cursiva" }) })).json();
+  assert.equal(r.site.cfg.layout, "banner"); assert.equal(r.site.cfg.fonte, "cursiva");
+});

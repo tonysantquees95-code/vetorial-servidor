@@ -5,9 +5,16 @@ import { semLimite } from "../pdf/uso.js";
 import { fotoValida, numeroWhats, slugDe, slugValido } from "../catalogo/dados.js";
 import { especDoModelo, listaPublica, modeloPorId } from "../meusite/modelos-logo.js";
 import { logoSvg, NICHOS } from "../meusite/logos.js";
-import { normalizarSite, renderizarSite, siteInicial, TEMAS, textosModelo } from "../meusite/site.js";
+import { LAYOUTS_SITE, normalizarSite, renderizarSite, siteInicial, TEMAS, textosModelo } from "../meusite/site.js";
 
 export const TEMAS_GRATIS = ["creme", "claro"];
+export const LAYOUTS = [
+  { id: "banner", nome: "Banner no topo", desc: "Faixa grande com a arte do seu ramo, depois serviços e contato.", gratis: true, ordem: ["servicos", "sobre", "galeria", "depoimentos", "contato"] },
+  { id: "servicos", nome: "Serviços em lista", desc: "Banner baixo e a lista de preços logo de cara. Bom para salão e barbearia.", gratis: true, ordem: ["servicos", "contato", "sobre", "galeria", "depoimentos"] },
+  { id: "loja", nome: "Vitrine de produtos", desc: "Cartões de produto com botão de pedir no WhatsApp, como uma loja.", gratis: false, ordem: ["galeria", "servicos", "sobre", "depoimentos", "contato"] },
+  { id: "cartao", nome: "Cartão de visita", desc: "Uma coluna só, com botões grandes. Perfeito para quem vive do Instagram.", gratis: false, ordem: ["servicos", "sobre", "contato"] },
+  { id: "galeria", nome: "Galeria de fotos", desc: "As fotos em destaque, para quem vende pelo visual.", gratis: false, ordem: ["galeria", "sobre", "servicos", "depoimentos", "contato"] },
+];
 export const LIMITES = { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } };
 const RESERVADOS = new Set(["admin", "api", "app", "www", "vitrine", "painel", "dev", "login", "suporte", "vetorial", "venus", "loja", "site", "teste"]);
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
@@ -30,8 +37,9 @@ export function normalizarSiteVitrine(d = {}, { assinante = false } = {}) {
   const whats = numeroWhats(d.whats);
   if (!whats) erros.push("Coloque o WhatsApp com DDD, para os clientes falarem com você.");
   const nicho = NICHOS[d.nicho] ? d.nicho : "outro";
-  const cfg = normalizarSite({ nicho, tema: d.tema, fonte: d.fonte, cor: d.cor, slogan: d.slogan, sobre: d.sobre, endereco: d.endereco, horario: d.horario, instagram: d.instagram, depoimentos: assinante ? d.depoimentos : (Array.isArray(d.depoimentos) ? d.depoimentos.slice(0, 2) : []), publicado: true, logo: null }, { ...siteInicial(nicho), tema: "creme" });
-  cfg.secoes = [["servicos", true], ["produtos", false], ["sobre", true], ["equipe", false], ["galeria", true], ["depoimentos", true], ["contato", true]].map(([id, ativa]) => ({ id, ativa }));
+  const layout = LAYOUTS.find((l) => l.id === d.layout) || LAYOUTS[0];
+  const cfg = normalizarSite({ nicho, layout: layout.id, tema: d.tema, fonte: d.fonte, cor: d.cor, slogan: d.slogan, sobre: d.sobre, endereco: d.endereco, horario: d.horario, instagram: d.instagram, depoimentos: assinante ? d.depoimentos : (Array.isArray(d.depoimentos) ? d.depoimentos.slice(0, 2) : []), publicado: true, logo: null }, { ...siteInicial(nicho), tema: "creme" });
+  cfg.secoes = [...layout.ordem, ...["servicos", "produtos", "sobre", "equipe", "galeria", "depoimentos", "contato"].filter((id) => !layout.ordem.includes(id))].map((id) => ({ id, ativa: layout.ordem.includes(id) }));
   const servicos = (Array.isArray(d.servicos) ? d.servicos : []).map((x) => ({ nome: linha(x?.nome, 50), descricao: linha(x?.descricao, 120), preco_centavos: centavos(x?.preco) })).filter((x) => x.nome);
   if (servicos.length > lim.servicos) erros.push(`No plano grátis são até ${lim.servicos} serviços. Assine a Vênus para ter até ${LIMITES.pago.servicos}.`);
   const fotos = [];
@@ -79,7 +87,7 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
       return new Response(bin, { headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=86400", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'none'" } });
     }
     if (caminho === "/sitev/modelos" && req.method === "GET") {
-      return json({ limites: LIMITES, nichos: Object.entries(NICHOS).map(([id, nome]) => ({ id, nome })), temas: Object.entries(TEMAS).map(([id, t]) => ({ id, nome: t.nome, fundo: t.fundo, texto: t.texto, gratis: TEMAS_GRATIS.includes(id) })), logos: listaPublica().filter((x) => x.gratis), textos: Object.fromEntries(Object.keys(NICHOS).map((id) => [id, textosModelo(id, "{nome}")])) });
+      return json({ layouts: LAYOUTS.map(({ id, nome, desc, gratis }) => ({ id, nome, desc, gratis })), limites: LIMITES, nichos: Object.entries(NICHOS).map(([id, nome]) => ({ id, nome })), temas: Object.entries(TEMAS).map(([id, t]) => ({ id, nome: t.nome, fundo: t.fundo, texto: t.texto, gratis: TEMAS_GRATIS.includes(id) })), logos: listaPublica().filter((x) => x.gratis), textos: Object.fromEntries(Object.keys(NICHOS).map((id) => [id, textosModelo(id, "{nome}")])) });
     }
     if (caminho === "/sitev/previa" && req.method === "POST") {
       if (Number(req.headers.get("content-length") || 0) > 1_800_000) return json({ error: "Muitas fotos de uma vez." }, 413);
@@ -103,6 +111,7 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
       const { erros, valor } = normalizarSiteVitrine(corpo, { assinante });
       if (erros.length) return json({ error: erros[0], erros, ...situacao }, 400);
       if (!TEMAS_GRATIS.includes(valor.cfg.tema) && !assinante) return json({ error: "Este tema é só para quem tem assinatura da Vênus.", codigo: "assinatura", ...situacao }, 403);
+      if (!LAYOUTS.find((l) => l.id === valor.cfg.layout)?.gratis && !assinante) return json({ error: "Este formato de página é só para quem tem assinatura da Vênus.", codigo: "assinatura", ...situacao }, 403);
       const mod = valor.logoModelo && modeloPorId(valor.logoModelo);
       if (mod && !mod.gratis && !assinante) return json({ error: "Este logo é só para quem tem assinatura da Vênus.", codigo: "assinatura", ...situacao }, 403);
       const agora = Date.now();

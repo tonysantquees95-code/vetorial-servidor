@@ -68,7 +68,7 @@ export default {
       if (!/Pronto/.test(await p.locator("#espera-msg").innerText())) throw new Error("o aviso de sucesso não apareceu");
       if (!enviado || enviado.email !== "pessoa@exemplo.com" || enviado.site !== "") throw new Error("o pedido saiu errado");
     }],
-    ["ferramentas-qr", "vitrine/", async (p) => {
+    ["ferramentas-qr", "vitrine/#ferramentas", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")));
       let pedido = "";
       await p.route("**/ferramentas/qr**", async (r) => {
@@ -84,7 +84,7 @@ export default {
       await p.click('label.fr-op:has(input[value="whats"])'); await p.fill("#fr-q-fone", "(51) 99999-8888"); await p.waitForTimeout(900);
       if (!decodeURIComponent(pedido).includes("https://wa.me/5551999998888")) throw new Error("o QR do WhatsApp saiu errado: " + pedido);
     }],
-    ["ferramentas-pede-id", "vitrine/", async (p) => {
+    ["ferramentas-pede-id", "vitrine/#ferramentas", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
       await p.fill("#fr-destino", "minhaloja.com.br/promocao"); await p.click("#fr-encurtar"); await ESPERA(p);
       if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu");
@@ -92,7 +92,7 @@ export default {
       await p.keyboard.press("Escape"); await ESPERA(p);
       if (await p.locator("#fr-janela").isVisible()) throw new Error("Esc não fechou a janela");
     }],
-    ["panfleto-pede-id", "vitrine/", async (p) => {
+    ["panfleto-pede-id", "vitrine/#ferramentas", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
       await p.click("#aba-panfleto");
       if (!(await p.locator("#painel-panfleto").isVisible())) throw new Error("a aba do panfleto não abriu");
@@ -103,7 +103,7 @@ export default {
       if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao gerar");
       if (!/panfleto/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para o panfleto");
     }],
-    ...["promo", "lanc", "simples"].flatMap((modelo) => ["a4", "quadrado"].map((formato) => [`panfleto-${modelo}-${formato}`, "vitrine/", async (p) => {
+    ...["promo", "lanc", "simples"].flatMap((modelo) => ["a4", "quadrado"].map((formato) => [`panfleto-${modelo}-${formato}`, "vitrine/#ferramentas", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       let uso = 0;
       await p.route("**/panfleto/uso", async (r) => {
@@ -129,7 +129,7 @@ export default {
       if (uso !== 1) throw new Error("baixar de novo não deveria gastar outro panfleto");
       await p.locator("#painel-panfleto").scrollIntoViewIfNeeded();
     }])),
-    ...[["logo-vitrine", false], ["logo-bloqueado", true], ["logo-criar", false]].map(([nome, bloqueado]) => [nome, "vitrine/", async (p) => {
+    ...[["logo-vitrine", false], ["logo-bloqueado", true], ["logo-criar", false]].map(([nome, bloqueado]) => [nome, "vitrine/#ferramentas", async (p) => {
       const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
       const cats = ["moderno", "elegante", "classico", "divertido", "forte", "natural", "luxo", "minimalista"].map((id) => ({ id, nome: id[0].toUpperCase() + id.slice(1) }));
       const modelos = cats.flatMap((c) => [1, 2, 3, 4, 5, 6].map((n) => ({ id: `${c.id}-${n}`, nome: `${c.nome} ${n}`, categoria: c.id, gratis: n === 1 || (c.id === "elegante" && n === 2) })));
@@ -180,7 +180,7 @@ export default {
         await p.locator("#fr-lg-grade").scrollIntoViewIfNeeded();
       }
     }]),
-    ...[["catalogo-login", false], ["catalogo-publicar", true]].map(([nome, logado]) => [nome, "vitrine/", async (p) => {
+    ...[["catalogo-login", false], ["catalogo-publicar", true]].map(([nome, logado]) => [nome, "vitrine/#ferramentas", async (p) => {
       const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
       const cores = ["#c2185b", "#1d4ed8", "#15803d", "#c2410c", "#6d4aff", "#0e9f8e"];
       const temas = [["claro", "Claro", true], ["escuro", "Escuro", true], ["boutique", "Boutique", false], ["gourmet", "Gourmet", false], ["tech", "Tech", false], ["natural", "Natural", false]].map(([id, nome, gratis]) => ({ id, nome, gratis }));
@@ -223,39 +223,65 @@ export default {
     ...[["site-login", false], ["site-publicar", true]].map(([nome, logado]) => [nome, "vitrine/", async (p) => {
       const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
       const temas = [["creme", "Creme", true], ["claro", "Claro", true], ["rosa", "Rosa suave", false], ["escuro", "Escuro", false], ["noite", "Azul noite", false]].map(([id, nome, gratis]) => ({ id, nome, gratis, fundo: "#fff", texto: "#000" }));
+      const layouts = [["banner", "Banner no topo", true], ["servicos", "Serviços em lista", true], ["loja", "Vitrine de produtos", false], ["cartao", "Cartão de visita", false], ["galeria", "Galeria de fotos", false]].map(([id, nome, gratis]) => ({ id, nome, gratis, desc: "Descrição do formato " + nome }));
       const textos = Object.fromEntries(["salao", "barbearia", "manicure", "estetica", "loja", "outro"].map((id) => [id, { slogan: "Beleza e cuidado do seu jeito", sobre: "{nome} é um espaço pensado para você." }]));
       let postado = null;
       await p.route(/\/sitev(\/|$)/, async (r) => {
         const u = new URL(r.request().url()), m = r.request().method();
         if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
         const j = (status, corpo) => r.fulfill({ status, contentType: "application/json", headers: cab, body: JSON.stringify(corpo) });
-        if (u.pathname.endsWith("/modelos")) return j(200, { limites: { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } }, nichos: [{ id: "salao", nome: "Salão de beleza" }, { id: "loja", nome: "Loja" }, { id: "outro", nome: "Outro negócio" }].concat([]), temas, logos: [{ id: "mod-1", nome: "Moderno 1", gratis: true }], textos });
+        if (u.pathname.endsWith("/modelos")) return j(200, { layouts, limites: { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } }, nichos: [{ id: "salao", nome: "Salão de beleza" }, { id: "loja", nome: "Loja" }, { id: "outro", nome: "Outro negócio" }], temas, logos: [{ id: "mod-1", nome: "Moderno 1", gratis: true }, { id: "mod-3", nome: "Moderno 3", gratis: true }], textos });
         if (u.pathname.endsWith("/previa")) return j(200, { html: '<body style="font-family:system-ui;margin:0;padding:24px"><h1>Studio da Ana</h1><p>Prévia do site</p></body>', erros: [] });
         if (m === "GET") return j(200, { site: null, assinante: false, limites: { fotos: 6, servicos: 8 } });
         postado = JSON.parse(r.request().postData() || "{}");
-        return j(200, { ok: true, assinante: false, site: { slug: "studio-da-ana", link: "https://v.test/w/studio-da-ana", nome: postado.nome, whats: "5551999998888", nicho: "salao", cfg: { tema: postado.tema, cor: postado.cor, slogan: "", sobre: "" }, servicos: [], fotos: [], logoModelo: "", visitas: 0 } });
+        return j(200, { ok: true, assinante: false, site: { slug: "studio-da-ana", link: "https://v.test/w/studio-da-ana", nome: postado.nome, whats: "5551999998888", nicho: "salao", cidade: "", cfg: { tema: postado.tema, cor: postado.cor, layout: postado.layout, fonte: postado.fonte, slogan: "", sobre: "" }, servicos: [], fotos: [], logoModelo: postado.logoModelo || "", visitas: 0 } });
       });
-      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
+      await p.route(/\/ferramentas\/logo\/previa/, (r) => r.fulfill({ status: 200, contentType: "image/svg+xml", headers: cab, body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#c2185b"/></svg>' }));
+      await p.evaluate(() => { try { localStorage.clear(); } catch {} });
       if (logado) await p.evaluate(() => localStorage.setItem("ferramentas.token", "token-de-teste"));
-      await p.click("#aba-site");
-      await p.waitForSelector("#fr-st-temas button");
-      if ((await p.locator("#fr-st-temas button").count()) !== 5) throw new Error("deveriam aparecer os 5 temas (grátis e bloqueados)");
+      await p.reload(); // o assistente já carrega as opções ao abrir a página: precisa abrir com os mocks de pé
+      await p.waitForSelector("#fr-st-nicho option", { state: "attached" });
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); });
+      if (!(await p.locator('.fr-passo[data-passo="1"]').isVisible())) throw new Error("o assistente deveria abrir no passo 1");
+      // passo 1 não avança sem nome e WhatsApp
+      await p.click("#fr-st-segue"); await ESPERA(p);
+      if (!(await p.locator("#fr-st-aviso").isVisible())) throw new Error("deveria avisar que falta o nome");
       await p.fill("#fr-st-nome", "Studio da Ana"); await p.fill("#fr-st-whats", "(51) 99999-8888");
       if (!/Studio da Ana/.test(await p.inputValue("#fr-st-sobre"))) throw new Error("o texto pronto não usou o nome do negócio");
+      await p.click("#fr-st-segue");
+      if (!(await p.locator('.fr-passo[data-passo="2"]').isVisible())) throw new Error("não foi para o passo 2 (logo)");
+      if ((await p.locator("#fr-st-logos button").count()) !== 3) throw new Error("deveriam aparecer 'sem logo' e os 2 modelos");
+      await p.click('#fr-st-logos button[aria-label="Moderno 1"]');
+      await p.click("#fr-st-segue");
+      if ((await p.locator("#fr-st-layouts button").count()) !== 5) throw new Error("deveriam aparecer os 5 formatos");
+      if ((await p.locator("#fr-st-fontes button").count()) !== 6) throw new Error("deveriam aparecer as 6 fontes");
+      await p.click('#fr-st-layouts button:has-text("Vitrine de produtos")'); await ESPERA(p);
+      if (!logado && !(await p.locator("#fr-st-convite").isVisible())) throw new Error("o convite do formato bloqueado não apareceu");
+      await p.click('#fr-st-layouts button:has-text("Serviços em lista")');
+      if (await p.locator("#fr-st-convite").isVisible()) throw new Error("o convite deveria sumir no formato grátis");
+      await p.click('#fr-st-temas button:has-text("Azul noite")'); await ESPERA(p);
+      if (!(await p.locator("#fr-st-convite").isVisible())) throw new Error("o convite do tema bloqueado não apareceu");
+      await p.click('#fr-st-temas button:has-text("Creme")'); await p.click('#fr-st-fontes button:has-text("Cursiva")');
+      await p.click("#fr-st-segue");
       await p.click("#fr-st-add-serv");
       await p.fill('#fr-st-servicos input[aria-label="Nome do serviço"]', "Corte"); await p.fill('#fr-st-servicos input[aria-label="Preço (R$)"]', "60,00");
-      await p.click('#fr-st-temas button:has-text("Azul noite")'); await ESPERA(p);
-      if (!logado && !(await p.locator("#fr-st-convite").isVisible())) throw new Error("o convite do tema bloqueado não apareceu");
-      await p.click('#fr-st-temas button:has-text("Creme")');
+      await p.click("#fr-st-segue");
+      if (!(await p.locator('.fr-passo[data-passo="5"]').isVisible())) throw new Error("não chegou no passo de publicar");
+      if ((await p.locator("#fr-st-revisao li").count()) < 5) throw new Error("a revisão não apareceu");
       await p.click("#fr-st-publicar"); await ESPERA(p);
       if (!logado) {
         if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao publicar o site");
         if (!/site/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para o site");
         await p.keyboard.press("Escape");
+        if (await p.locator('.fr-passo[data-passo="6"]').isVisible()) throw new Error("o kit não deveria abrir antes de publicar");
       } else {
-        if (!postado || postado.nome !== "Studio da Ana" || postado.servicos[0].preco !== 6000) throw new Error("o pedido de publicar saiu errado");
-        if (!(await p.locator("#fr-st-pronto").isVisible())) throw new Error("o site publicado não apareceu");
-        await p.locator("#fr-st-pronto").scrollIntoViewIfNeeded();
+        if (!postado || postado.nome !== "Studio da Ana" || postado.servicos[0].preco !== 6000 || postado.layout !== "servicos" || postado.fonte !== "cursiva" || postado.logoModelo !== "mod-1") throw new Error("o pedido de publicar saiu errado: " + JSON.stringify(postado));
+        if (!(await p.locator("#fr-st-pronto").isVisible())) throw new Error("o site publicado e o kit não apareceram");
+        if ((await p.locator(".fr-kit-c[data-kit]").count()) !== 4) throw new Error("o kit deveria ter 4 ferramentas");
+        await p.click('.fr-kit-c[data-kit="panfleto"]'); await ESPERA(p);
+        if (!(await p.locator("#painel-panfleto").isVisible())) throw new Error("o kit não abriu o panfleto");
+        if ((await p.inputValue("#fr-pf-loja")) !== "Studio da Ana") throw new Error("o panfleto não veio com o nome do negócio");
+        await p.click("#modo-criar"); await p.locator("#fr-st-pronto").scrollIntoViewIfNeeded();
       }
     }]),
     ["menu-topo", "", async (p) => {
@@ -270,7 +296,7 @@ export default {
       if ((await p.locator(".topo details.mn[open]").count()) !== 1) throw new Error("só um menu deveria ficar aberto");
       if (!(await p.locator('.topo details.mn[open] a[href="vitrine/"]').isVisible())) throw new Error("a Vitrine não está na lista Grátis");
     }],
-    ["ferramentas-link-ok", "vitrine/", async (p) => {
+    ["ferramentas-link-ok", "vitrine/#ferramentas", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
       const meu = { codigo: "abc234", curto: "https://v.test/l/abc234", destino: "https://minhaloja.com.br/promocao-do-mes-com-um-endereco-bem-comprido-para-testar", criado: 1, cliques: 7, ultimoClique: null, ativo: true };
       let corpo = null;

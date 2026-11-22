@@ -11,7 +11,7 @@
 <meta property="og:image" content="/icone-vitrine.png?v=2">
 <link rel="icon" href="../icone-vitrine.png?v=2">
 <link rel="stylesheet" href="../estilo.css?v=10">
-<link rel="stylesheet" href="ferramentas.css?v=10">
+<link rel="stylesheet" href="ferramentas.css?v=11">
 </head>
 <body>
 <header class="vv-topo"><div class="wrap">
@@ -22,18 +22,126 @@
 <main>
 <section class="hero fr-hero"><div class="wrap fr-um">
   <span class="etiqueta">Vênus Vitrine · grátis · sem compromisso</span>
-  <h1>Seu negócio pronto para vender, <em>sem programa e sem designer</em>.</h1>
-  <p class="sub">A <b>Vênus Vitrine</b> reúne ferramentas grátis para quem vende pelo WhatsApp e pelo Instagram: link curto, QR code, panfleto e logo. Teste à vontade e só entre com o Vetorial ID na hora de gerar.</p>
+  <h1>Crie seu site, seu logo e seu catálogo <em>em 6 passos</em>.</h1>
+  <p class="sub">A <b>Vênus Vitrine</b> leva você do zero ao site publicado: dados do negócio, logo, formato da página, textos e fotos. No fim, panfleto, QR code e link curto já saem prontos. Grátis, e só pede o Vetorial ID na hora de publicar.</p>
 </div></section>
 
-<section class="fr-ferr"><div class="wrap">
+<section class="fr-criar fr-modos"><div class="wrap">
+  <div class="fr-modo" role="tablist" aria-label="O que você quer fazer">
+    <button type="button" role="tab" id="modo-criar" aria-selected="true" class="fr-modo-b">Criar meu site</button>
+    <button type="button" role="tab" id="modo-soltas" aria-selected="false" class="fr-modo-b">Só uma ferramenta</button>
+  </div>
+</div></section>
+
+<section id="fr-criar" class="fr-criar"><div class="wrap">
+  <div id="painel-site" class="cartao fr-painel fr-wiz">
+    <ol class="fr-passos" id="fr-st-passos" aria-label="Passos para criar o site">
+      <li><button type="button" data-ir="1" aria-current="step"><b>1</b><span>Negócio</span></button></li>
+      <li><button type="button" data-ir="2"><b>2</b><span>Logo</span></button></li>
+      <li><button type="button" data-ir="3"><b>3</b><span>Formato</span></button></li>
+      <li><button type="button" data-ir="4"><b>4</b><span>Conteúdo</span></button></li>
+      <li><button type="button" data-ir="5"><b>5</b><span>Publicar</span></button></li>
+      <li><button type="button" data-ir="6"><b>6</b><span>Kit</span></button></li>
+    </ol>
+    <div class="fr-ct-grade">
+      <div class="fr-ct-form">
+        <section class="fr-passo" data-passo="1">
+          <h2>1. Conte sobre o seu negócio</h2>
+          <p class="fr-ajuda">É a base de tudo: o ramo já escolhe banner, textos e cores para você.</p>
+          <label class="fr-rotulo" for="fr-st-nicho">Ramo do negócio</label>
+          <select id="fr-st-nicho" class="fr-campo"></select>
+          <label class="fr-rotulo" for="fr-st-nome">Nome do negócio</label>
+          <input id="fr-st-nome" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Studio da Ana">
+          <label class="fr-rotulo" for="fr-st-whats">WhatsApp com DDD</label>
+          <input id="fr-st-whats" class="fr-campo" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="(51) 99999-8888">
+          <label class="fr-rotulo" for="fr-st-cidade">Cidade (opcional)</label>
+          <input id="fr-st-cidade" class="fr-campo" type="text" maxlength="60" autocomplete="off" placeholder="Porto Alegre">
+          <label class="fr-rotulo" for="fr-st-insta">Instagram (opcional)</label>
+          <input id="fr-st-insta" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="@seuperfil">
+        </section>
+        <section class="fr-passo" data-passo="2" hidden>
+          <h2>2. Escolha o logo</h2>
+          <p class="fr-ajuda">Modelos grátis com o nome do seu negócio. Dá para pular e voltar depois.</p>
+          <div id="fr-st-logos" class="fr-st-logos"></div>
+        </section>
+        <section class="fr-passo" data-passo="3" hidden>
+          <h2>3. Formato e visual da página</h2>
+          <p class="fr-ajuda">Cada formato muda a organização da página. A prévia ao lado mostra na hora.</p>
+          <fieldset class="fr-tipos"><legend class="fr-rotulo">Formato</legend><div id="fr-st-layouts" class="fr-st-layouts"></div></fieldset>
+          <fieldset class="fr-tipos"><legend class="fr-rotulo">Tema</legend><div id="fr-st-temas" class="fr-ct-temas"></div></fieldset>
+          <fieldset class="fr-tipos"><legend class="fr-rotulo">Fonte dos títulos</legend><div id="fr-st-fontes" class="fr-ct-temas"></div></fieldset>
+          <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend><div id="fr-st-cores" class="fr-ct-cores"></div></fieldset>
+          <div id="fr-st-convite" class="fr-lg-convite" hidden>
+            <h3>Este formato ou tema é para quem assina a Vênus</h3>
+            <p class="fr-ajuda">Você já vê como fica ao lado. Para publicar com ele, assine a Vênus (mais formatos, temas, fotos e sem a marca). Ou escolha um dos grátis.</p>
+            <div class="fr-linha"><a class="btn" href="../#preco">Ver planos</a><button type="button" id="fr-st-ja-assino" class="btn sec">Já assino, entrar</button></div>
+          </div>
+        </section>
+        <section class="fr-passo" data-passo="4" hidden>
+          <h2>4. Textos, serviços e fotos</h2>
+          <p class="fr-ajuda">Os textos já vêm prontos. É só ajustar do seu jeito.</p>
+          <label class="fr-rotulo" for="fr-st-slogan">Frase de destaque</label>
+          <input id="fr-st-slogan" class="fr-campo" type="text" maxlength="90" autocomplete="off">
+          <label class="fr-rotulo" for="fr-st-sobre">Sobre o negócio</label>
+          <textarea id="fr-st-sobre" class="fr-campo" rows="4" maxlength="700"></textarea>
+          <label class="fr-rotulo" for="fr-st-horario">Horário de atendimento (opcional)</label>
+          <input id="fr-st-horario" class="fr-campo" type="text" maxlength="160" autocomplete="off" placeholder="Seg a sáb, 9h às 19h">
+          <label class="fr-rotulo" for="fr-st-endereco">Endereço (opcional)</label>
+          <input id="fr-st-endereco" class="fr-campo" type="text" maxlength="160" autocomplete="off" placeholder="Rua, número, bairro, cidade">
+          <h3 class="fr-ct-h">Serviços ou produtos <small id="fr-st-cont-serv"></small></h3>
+          <ul id="fr-st-servicos" class="fr-ct-produtos"></ul>
+          <div class="fr-linha"><button type="button" id="fr-st-add-serv" class="btn sec">+ Adicionar serviço</button></div>
+          <h3 class="fr-ct-h">Fotos <small id="fr-st-cont-fotos"></small></h3>
+          <div id="fr-st-fotos" class="fr-st-fotos"></div>
+          <p class="fr-ajuda fr-peq">Foto: JPG ou PNG, a gente reduz no seu aparelho.</p>
+        </section>
+        <section class="fr-passo" data-passo="5" hidden>
+          <h2>5. Revise e publique</h2>
+          <p class="fr-ajuda">Confira a prévia. Quando estiver bom, publique: o Vetorial ID só é pedido agora.</p>
+          <ul id="fr-st-revisao" class="fr-revisao"></ul>
+          <div class="fr-linha"><button type="button" id="fr-st-publicar" class="btn">Publicar meu site</button></div>
+        </section>
+        <section class="fr-passo" data-passo="6" hidden>
+          <h2>6. Seu site está pronto</h2>
+          <p id="fr-st-kit-vazio" class="fr-ajuda">Publique o site no passo 5 para liberar o kit do seu negócio.</p>
+          <div id="fr-st-pronto" class="fr-resultado" hidden>
+            <p class="fr-ok">Seu site está no ar!</p>
+            <output id="fr-st-link" class="fr-curto"></output>
+            <div class="fr-linha fr-centro">
+              <a id="fr-st-abrir" class="btn p" target="_blank" rel="noopener">Abrir</a>
+              <button type="button" id="fr-st-copiar" class="btn sec p">Copiar link</button>
+              <a id="fr-st-whats-enviar" class="btn sec p" target="_blank" rel="noopener">Mandar no WhatsApp</a>
+            </div>
+            <h3 class="fr-ct-h">Kit do seu negócio, já com os seus dados</h3>
+            <div class="fr-kit">
+              <button type="button" class="fr-kit-c" data-kit="panfleto"><b>Panfleto</b><small>Com o nome e o WhatsApp prontos</small></button>
+              <button type="button" class="fr-kit-c" data-kit="qr"><b>QR code do site</b><small>Para balcão, vitrine e cartão</small></button>
+              <button type="button" class="fr-kit-c" data-kit="link"><b>Link curto</b><small>Fácil de falar e de colocar na bio</small></button>
+              <button type="button" class="fr-kit-c" data-kit="catalogo"><b>Catálogo no WhatsApp</b><small>Pedidos chegando prontos</small></button>
+              <div class="fr-kit-c fr-kit-breve" aria-disabled="true"><b>Cartão de visita online</b><small>Em breve</small></div>
+            </div>
+            <div class="fr-ct-qr"><img id="fr-st-qr" alt="QR code do seu site" width="160" height="160"><a id="fr-st-qr-baixar" class="btn sec p" download="qr-site.svg">Baixar QR code</a></div>
+            <p class="fr-ajuda fr-peq">Quer agenda online, estoque e vendas no mesmo lugar? A <b>Vênus</b> faz isso por você. <a class="mais" href="../">Conhecer a Vênus</a></p>
+          </div>
+        </section>
+        <p id="fr-st-aviso" class="fr-aviso" role="alert" hidden></p>
+        <div class="fr-nav"><button type="button" id="fr-st-volta" class="btn sec" hidden>Voltar</button><button type="button" id="fr-st-segue" class="btn">Continuar</button></div>
+      </div>
+      <div class="fr-ct-previa">
+        <div class="fr-aparelhos" role="group" aria-label="Ver a prévia em"><button type="button" id="fr-st-ap-cel" aria-pressed="true">Celular</button><button type="button" id="fr-st-ap-pc" aria-pressed="false">Computador</button></div>
+        <div class="fr-ct-moldura" id="fr-st-moldura"><iframe id="fr-st-frame" title="Prévia do site" sandbox loading="lazy"></iframe></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="fr-soltas" class="fr-ferr" hidden><div class="wrap">
   <div class="fr-abas" role="tablist" aria-label="Ferramentas">
     <button type="button" role="tab" id="aba-link" aria-selected="true" aria-controls="painel-link" class="fr-aba">Link curto</button>
     <button type="button" role="tab" id="aba-qr" aria-selected="false" aria-controls="painel-qr" class="fr-aba" tabindex="-1">QR code</button>
     <button type="button" role="tab" id="aba-panfleto" aria-selected="false" aria-controls="painel-panfleto" class="fr-aba" tabindex="-1">Panfleto</button>
     <button type="button" role="tab" id="aba-logo" aria-selected="false" aria-controls="painel-logo" class="fr-aba" tabindex="-1">Logo</button>
     <button type="button" role="tab" id="aba-catalogo" aria-selected="false" aria-controls="painel-catalogo" class="fr-aba" tabindex="-1">Catálogo</button>
-    <button type="button" role="tab" id="aba-site" aria-selected="false" aria-controls="painel-site" class="fr-aba" tabindex="-1">Site</button>
   </div>
 
   <div id="painel-link" role="tabpanel" aria-labelledby="aba-link" class="cartao fr-painel">
@@ -234,61 +342,6 @@
           </div>
           <div class="fr-ct-qr"><img id="fr-ct-qr" alt="QR code do seu catálogo" width="160" height="160"><a id="fr-ct-qr-baixar" class="btn sec p" download="qr-catalogo.svg">Baixar QR code</a></div>
           <p class="fr-ajuda fr-peq">Quer o estoque e os pedidos controlados sozinhos? A <b>Vênus</b> faz isso por você. <a class="mais" href="../">Conhecer a Vênus</a></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="painel-site" role="tabpanel" aria-labelledby="aba-site" class="cartao fr-painel" hidden>
-    <h2>Seu site no ar em 5 minutos</h2>
-    <p class="fr-ajuda">Grátis e sem mensalidade. Escolha o ramo, preencha o básico e veja o site ficando pronto ao lado. Os textos já vêm prontos para você ajustar.</p>
-    <div class="fr-ct-grade">
-      <div class="fr-ct-form">
-        <label class="fr-rotulo" for="fr-st-nicho">Ramo do negócio</label>
-        <select id="fr-st-nicho" class="fr-campo"></select>
-        <label class="fr-rotulo" for="fr-st-nome">Nome do negócio</label>
-        <input id="fr-st-nome" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="Studio da Ana">
-        <label class="fr-rotulo" for="fr-st-whats">WhatsApp com DDD</label>
-        <input id="fr-st-whats" class="fr-campo" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="(51) 99999-8888">
-        <label class="fr-rotulo" for="fr-st-slogan">Frase de destaque</label>
-        <input id="fr-st-slogan" class="fr-campo" type="text" maxlength="90" autocomplete="off">
-        <label class="fr-rotulo" for="fr-st-sobre">Sobre o negócio</label>
-        <textarea id="fr-st-sobre" class="fr-campo" rows="4" maxlength="700"></textarea>
-        <label class="fr-rotulo" for="fr-st-horario">Horário de atendimento (opcional)</label>
-        <input id="fr-st-horario" class="fr-campo" type="text" maxlength="160" autocomplete="off" placeholder="Seg a sáb, 9h às 19h">
-        <label class="fr-rotulo" for="fr-st-endereco">Endereço (opcional)</label>
-        <input id="fr-st-endereco" class="fr-campo" type="text" maxlength="160" autocomplete="off" placeholder="Rua, número, bairro, cidade">
-        <label class="fr-rotulo" for="fr-st-insta">Instagram (opcional)</label>
-        <input id="fr-st-insta" class="fr-campo" type="text" maxlength="40" autocomplete="off" placeholder="@seuperfil">
-        <fieldset class="fr-tipos"><legend class="fr-rotulo">Tema</legend><div id="fr-st-temas" class="fr-ct-temas"></div></fieldset>
-        <fieldset class="fr-tipos"><legend class="fr-rotulo">Cor</legend><div id="fr-st-cores" class="fr-ct-cores"></div></fieldset>
-        <fieldset class="fr-tipos"><legend class="fr-rotulo">Logo (opcional)</legend><div id="fr-st-logos" class="fr-ct-temas"></div></fieldset>
-        <div id="fr-st-convite" class="fr-lg-convite" hidden>
-          <h3>Este tema é para quem assina a Vênus</h3>
-          <p class="fr-ajuda">Você já vê como ele fica ao lado. Para publicar com ele, assine a Vênus (mais temas, mais fotos e sem a marca). Ou escolha um tema grátis.</p>
-          <div class="fr-linha"><a class="btn" href="../#preco">Ver planos</a><button type="button" id="fr-st-ja-assino" class="btn sec">Já assino, entrar</button></div>
-        </div>
-        <h3 class="fr-ct-h">Serviços ou produtos <small id="fr-st-cont-serv"></small></h3>
-        <ul id="fr-st-servicos" class="fr-ct-produtos"></ul>
-        <div class="fr-linha"><button type="button" id="fr-st-add-serv" class="btn sec">+ Adicionar serviço</button></div>
-        <h3 class="fr-ct-h">Fotos <small id="fr-st-cont-fotos"></small></h3>
-        <div id="fr-st-fotos" class="fr-st-fotos"></div>
-        <p class="fr-ajuda fr-peq">Foto: JPG ou PNG, a gente reduz no seu aparelho.</p>
-      </div>
-      <div class="fr-ct-previa">
-        <div class="fr-ct-moldura"><iframe id="fr-st-frame" title="Prévia do site" sandbox loading="lazy"></iframe></div>
-        <div class="fr-linha fr-centro"><button type="button" id="fr-st-publicar" class="btn">Publicar meu site</button></div>
-        <p id="fr-st-aviso" class="fr-aviso" role="alert" hidden></p>
-        <div id="fr-st-pronto" class="fr-resultado" hidden>
-          <p class="fr-ok">Seu site está no ar!</p>
-          <output id="fr-st-link" class="fr-curto"></output>
-          <div class="fr-linha fr-centro">
-            <a id="fr-st-abrir" class="btn p" target="_blank" rel="noopener">Abrir</a>
-            <button type="button" id="fr-st-copiar" class="btn sec p">Copiar link</button>
-            <a id="fr-st-whats-enviar" class="btn sec p" target="_blank" rel="noopener">Mandar no WhatsApp</a>
-          </div>
-          <div class="fr-ct-qr"><img id="fr-st-qr" alt="QR code do seu site" width="160" height="160"><a id="fr-st-qr-baixar" class="btn sec p" download="qr-site.svg">Baixar QR code</a></div>
-          <p class="fr-ajuda fr-peq">Quer agenda online, estoque e vendas no mesmo lugar? A <b>Vênus</b> faz isso por você. <a class="mais" href="../">Conhecer a Vênus</a></p>
         </div>
       </div>
     </div>

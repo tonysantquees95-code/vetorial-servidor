@@ -1,22 +1,26 @@
-// Aba "Site" da Vênus Vitrine: monta o site do negócio com prévia ao vivo e publica (Vetorial ID só ao publicar).
+// "Criar meu site" da Vênus Vitrine: assistente em 6 passos (negócio, logo, formato, conteúdo, publicar, kit).
+// Prévia ao vivo ao lado; o Vetorial ID só é pedido ao publicar. Tudo entra na página como texto (textContent).
 (() => {
   const arrancar = () => {
     const FR = window.FR, { $ } = FR, API = FR.API;
     const CORES = ["#c2185b", "#1d4ed8", "#15803d", "#c2410c", "#6d4aff", "#0e9f8e"];
-    let cfg = { limites: { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } }, nichos: [], temas: [], logos: [], textos: {} };
-    let nicho = "salao", tema = "creme", cor = CORES[0], logo = "", assinante = false, slug = "", carregado = false, tempo = 0;
-    let textoAuto = { slogan: true, sobre: true };
-    const servicos = [], fotos = []; // fotos: { foto(id) | fotoNova(base64), miniatura }
+    const NOMES = { 1: "Negócio", 2: "Logo", 3: "Formato", 4: "Conteúdo", 5: "Publicar", 6: "Kit" };
+    let cfg = { layouts: [], limites: { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } }, nichos: [], temas: [], logos: [], textos: {} };
+    let nicho = "salao", layout = "banner", tema = "creme", fonte = "moderna", cor = CORES[0], logo = "", assinante = false, slug = "", publicado = false, link = "";
+    let passo = 1, carregado = false, tempo = 0, textoAuto = { slogan: true, sobre: true };
+    const servicos = [], fotos = [];
     const frame = $("fr-st-frame"), aviso = $("fr-st-aviso");
+    const FONTES = [["moderna", "Moderna"], ["elegante", "Elegante"], ["classica", "Clássica"], ["arredondada", "Redonda"], ["forte", "Forte"], ["cursiva", "Cursiva"]];
     const lim = () => (assinante ? cfg.limites.pago : cfg.limites.gratis);
     const centavos = (t) => { const n = Number(String(t).replace(/[^\d,.]/g, "").replace(/\./g, "").replace(",", ".")); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
     const emReais = (c) => (c ? (c / 100).toFixed(2).replace(".", ",") : "");
-    const mostrarAviso = (t) => { aviso.textContent = t || ""; aviso.hidden = !t; };
     const v = (id) => $(id).value;
+    const mostrarAviso = (t) => { aviso.textContent = t || ""; aviso.hidden = !t; };
+    const trancado = () => !assinante && (!(cfg.layouts.find((l) => l.id === layout) || { gratis: true }).gratis || !(cfg.temas.find((t) => t.id === tema) || { gratis: true }).gratis);
 
     function dados() {
       return {
-        nicho, nome: v("fr-st-nome"), whats: v("fr-st-whats"), tema, cor, logoModelo: logo, slug,
+        nicho, layout, nome: v("fr-st-nome"), whats: v("fr-st-whats"), cidade: v("fr-st-cidade"), tema, fonte, cor, logoModelo: logo, slug,
         slogan: v("fr-st-slogan"), sobre: v("fr-st-sobre"), horario: v("fr-st-horario"), endereco: v("fr-st-endereco"), instagram: v("fr-st-insta"),
         servicos: servicos.map((s) => ({ nome: s.nome, descricao: s.descricao, preco: centavos(s.preco) })),
         fotos: fotos.map((f) => (f.fotoNova ? { fotoNova: f.fotoNova } : { foto: f.foto })),
@@ -39,20 +43,40 @@
       if (textoAuto.sobre) $("fr-st-sobre").value = t.sobre.replaceAll("{nome}", nome);
     }
 
+    // ------------------------------------------------------------ escolhas visuais
     const chips = (caixa, lista, atual, aoEscolher, rotulo) => {
       caixa.textContent = "";
-      for (const it of lista) {
-        const b = document.createElement("button"); b.type = "button"; b.className = "fr-lg-chip"; b.setAttribute("aria-pressed", String(it.id === atual));
-        b.textContent = rotulo(it); b.addEventListener("click", () => aoEscolher(it)); caixa.append(b);
-      }
+      for (const it of lista) { const b = document.createElement("button"); b.type = "button"; b.className = "fr-lg-chip"; b.setAttribute("aria-pressed", String(it.id === atual)); b.textContent = rotulo(it); b.addEventListener("click", () => aoEscolher(it)); caixa.append(b); }
     };
+    function desenharLayouts() {
+      const caixa = $("fr-st-layouts"); caixa.textContent = "";
+      for (const l of cfg.layouts) {
+        const b = document.createElement("button"); b.type = "button"; b.className = "fr-st-layout"; b.setAttribute("aria-pressed", String(l.id === layout));
+        const t = document.createElement("b"); t.textContent = (l.gratis || assinante ? "" : "🔒 ") + l.nome;
+        const d = document.createElement("small"); d.textContent = l.desc;
+        b.append(t, d); b.addEventListener("click", () => { layout = l.id; desenharEscolhas(); previa(); }); caixa.append(b);
+      }
+    }
+    function desenharLogos() {
+      const caixa = $("fr-st-logos"); caixa.textContent = "";
+      const nome = encodeURIComponent(v("fr-st-nome").trim() || "Seu negócio");
+      for (const l of [{ id: "", nome: "Sem logo" }, ...cfg.logos]) {
+        const b = document.createElement("button"); b.type = "button"; b.className = "fr-st-logo"; b.setAttribute("aria-pressed", String(l.id === logo)); b.setAttribute("aria-label", l.nome);
+        if (l.id) { const im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.width = 120; im.height = 120; im.src = `${API}/ferramentas/logo/previa?modelo=${encodeURIComponent(l.id)}&nome=${nome}`; b.append(im); }
+        else { const s = document.createElement("span"); s.textContent = "Sem logo"; b.append(s); }
+        b.addEventListener("click", () => { logo = l.id; desenharLogos(); previa(); }); caixa.append(b);
+      }
+    }
     function desenharEscolhas() {
-      chips($("fr-st-temas"), cfg.temas, tema, (t) => { tema = t.id; $("fr-st-convite").hidden = t.gratis || assinante; desenharEscolhas(); previa(); }, (t) => (t.gratis || assinante ? "" : "🔒 ") + t.nome + (t.gratis ? " · grátis" : ""));
-      chips($("fr-st-logos"), [{ id: "", nome: "Sem logo" }, ...cfg.logos], logo, (l) => { logo = l.id; desenharEscolhas(); previa(); }, (l) => l.nome);
+      desenharLayouts();
+      chips($("fr-st-temas"), cfg.temas, tema, (t) => { tema = t.id; desenharEscolhas(); previa(); }, (t) => (t.gratis || assinante ? "" : "🔒 ") + t.nome + (t.gratis ? " · grátis" : ""));
+      chips($("fr-st-fontes"), FONTES.map(([id, nome]) => ({ id, nome })), fonte, (f) => { fonte = f.id; desenharEscolhas(); previa(); }, (f) => f.nome);
       const caixa = $("fr-st-cores"); caixa.textContent = "";
       for (const c of CORES) { const b = document.createElement("button"); b.type = "button"; b.className = "fr-ct-cor"; b.style.background = c; b.setAttribute("aria-label", "Cor " + c); b.setAttribute("aria-pressed", String(c === cor)); if (c === cor) b.classList.add("on"); b.addEventListener("click", () => { cor = c; desenharEscolhas(); previa(); }); caixa.append(b); }
+      $("fr-st-convite").hidden = !trancado();
     }
 
+    // ------------------------------------------------------------ serviços e fotos
     function reduzirFoto(arq) {
       return new Promise((ok, erro) => {
         const url = URL.createObjectURL(arq), img = new Image();
@@ -68,7 +92,6 @@
         img.src = url;
       });
     }
-
     function desenharServicos() {
       const lista = $("fr-st-servicos"); lista.textContent = "";
       servicos.forEach((s, i) => {
@@ -109,39 +132,77 @@
       $("fr-st-cont-fotos").textContent = `${fotos.length} de ${lim().fotos}`;
     }
 
+    // ------------------------------------------------------------ passos
+    function revisao() {
+      const lista = $("fr-st-revisao"); lista.textContent = "";
+      const ramo = (cfg.nichos.find((n) => n.id === nicho) || {}).nome || "";
+      const nl = (cfg.layouts.find((l) => l.id === layout) || {}).nome || "";
+      const itens = [[!!v("fr-st-nome").trim(), `Negócio: ${v("fr-st-nome").trim() || "falta o nome"} (${ramo})`], [!!v("fr-st-whats").trim(), `WhatsApp: ${v("fr-st-whats").trim() || "falta o número"}`], [true, `Formato: ${nl}`], [!!logo, logo ? "Logo escolhido" : "Sem logo (dá para voltar e escolher)"], [servicos.some((s) => s.nome.trim()), `${servicos.filter((s) => s.nome.trim()).length} serviço(s)`], [fotos.length > 0, `${fotos.length} foto(s)`]];
+      for (const [ok, t] of itens) { const li = document.createElement("li"); li.className = ok ? "ok" : "falta"; li.textContent = (ok ? "✓ " : "• ") + t; lista.append(li); }
+    }
+    function ir(n, rolar = true) {
+      if (n === 6 && !publicado) n = 5;
+      passo = Math.max(1, Math.min(6, n));
+      for (const s of document.querySelectorAll(".fr-passo")) s.hidden = Number(s.dataset.passo) !== passo;
+      document.querySelectorAll("#fr-st-passos button").forEach((b) => { const k = Number(b.dataset.ir); if (k === passo) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current"); b.classList.toggle("feito", k < passo || (k === 6 && publicado)); });
+      $("fr-st-volta").hidden = passo === 1; $("fr-st-segue").hidden = passo >= 5;
+      $("fr-st-segue").textContent = passo === 4 ? "Revisar" : "Continuar";
+      if (passo === 2) desenharLogos();
+      if (passo === 5) revisao();
+      mostrarAviso("");
+      if (rolar) $("painel-site").scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+    function seguir() {
+      if (passo === 1) {
+        if (!v("fr-st-nome").trim()) return mostrarAviso("Escreva o nome do negócio para continuar."), ($("fr-st-nome").focus());
+        if (v("fr-st-whats").replace(/\D/g, "").length < 10) return mostrarAviso("Coloque o WhatsApp com DDD para continuar."), ($("fr-st-whats").focus());
+      }
+      ir(passo + 1);
+    }
+
     function mostrarPronto(s) {
-      slug = s.slug;
-      $("fr-st-pronto").hidden = false; $("fr-st-link").textContent = s.link; $("fr-st-abrir").href = s.link;
+      slug = s.slug; link = s.link; publicado = true;
+      $("fr-st-kit-vazio").hidden = true; $("fr-st-pronto").hidden = false;
+      $("fr-st-link").textContent = s.link; $("fr-st-abrir").href = s.link;
       $("fr-st-whats-enviar").href = "https://wa.me/?text=" + encodeURIComponent(`Conheça o site da ${s.nome}: ${s.link}`);
       const qr = `${API}/ferramentas/qr?texto=${encodeURIComponent(s.link)}`; $("fr-st-qr").src = qr; $("fr-st-qr-baixar").href = qr;
-      $("fr-st-pronto").scrollIntoView({ block: "nearest" });
     }
     function preencher(s) {
-      nicho = s.nicho || "salao"; tema = s.cfg.tema; cor = s.cfg.cor; logo = s.logoModelo || ""; slug = s.slug; textoAuto = { slogan: false, sobre: false };
-      $("fr-st-nicho").value = nicho; $("fr-st-nome").value = s.nome; $("fr-st-whats").value = s.whats;
+      nicho = s.nicho || "salao"; layout = s.cfg.layout || "banner"; tema = s.cfg.tema; fonte = s.cfg.fonte || "moderna"; cor = s.cfg.cor; logo = s.logoModelo || ""; slug = s.slug; textoAuto = { slogan: false, sobre: false };
+      $("fr-st-nicho").value = nicho; $("fr-st-nome").value = s.nome; $("fr-st-whats").value = s.whats; $("fr-st-cidade").value = s.cidade || "";
       $("fr-st-slogan").value = s.cfg.slogan || ""; $("fr-st-sobre").value = s.cfg.sobre || ""; $("fr-st-horario").value = s.cfg.horario || ""; $("fr-st-endereco").value = s.cfg.endereco || ""; $("fr-st-insta").value = s.cfg.instagram || "";
       servicos.length = 0; for (const x of s.servicos) servicos.push({ nome: x.nome, descricao: x.descricao || "", preco: emReais(x.preco_centavos) });
       fotos.length = 0; for (const id of s.fotos) fotos.push({ foto: id, miniatura: `${API}/w/${s.slug}/foto/${id}` });
-      desenharEscolhas(); desenharServicos(); desenharFotos(); previa(); mostrarPronto(s);
+      desenharEscolhas(); desenharServicos(); desenharFotos(); desenharLogos(); previa(); mostrarPronto(s); ir(6, false);
     }
 
     async function publicar() {
       mostrarAviso("");
-      if (!v("fr-st-nome").trim()) return mostrarAviso("Escreva o nome do negócio.");
-      const t = cfg.temas.find((x) => x.id === tema);
-      if (t && !t.gratis && !assinante && !FR.lerToken()) { $("fr-st-convite").hidden = false; return $("fr-st-convite").scrollIntoView({ block: "nearest" }); }
+      if (!v("fr-st-nome").trim()) return ir(1), mostrarAviso("Escreva o nome do negócio.");
+      if (trancado() && !FR.lerToken()) { ir(3); $("fr-st-convite").hidden = false; return; }
       if (!FR.lerToken()) return FR.pedirEntrada(publicar, "", "Seu site está quase no ar! Entre com o seu Vetorial ID para publicar. É grátis, uma conta só serve para todos os nossos apps.");
       const b = $("fr-st-publicar"); b.disabled = true; b.textContent = "Publicando…";
       try {
         const r = await FR.chamar("POST", "/sitev", dados());
         if (r.status === 401) { FR.guardarToken(""); return FR.pedirEntrada(publicar, "Sua sessão venceu. Entre de novo para publicar."); }
         if (r.corpo && typeof r.corpo.assinante === "boolean") { assinante = r.corpo.assinante; desenharEscolhas(); }
-        if (r.status === 403) { $("fr-st-convite").hidden = false; return mostrarAviso(r.corpo.error); }
+        if (r.status === 403) { ir(3); $("fr-st-convite").hidden = false; return mostrarAviso(r.corpo.error); }
         if (r.status !== 200) return mostrarAviso((r.corpo && r.corpo.error) || "Não deu para publicar agora. Tente de novo.");
         const s = r.corpo.site; fotos.length = 0; for (const id of s.fotos) fotos.push({ foto: id, miniatura: `${API}/w/${s.slug}/foto/${id}` });
-        desenharFotos(); mostrarPronto(s);
+        desenharFotos(); mostrarPronto(s); ir(6);
       } catch { mostrarAviso("Sem conexão com o servidor. Confira a internet e tente de novo."); }
       finally { b.disabled = false; b.textContent = "Publicar meu site"; }
+    }
+
+    // ------------------------------------------------------------ kit: as outras ferramentas já preenchidas
+    function preencherCampo(id, valor) { const e = $(id); if (!e) return; e.value = valor; e.dispatchEvent(new Event("input", { bubbles: true })); }
+    function kit(qual) {
+      const nome = v("fr-st-nome").trim(), whats = v("fr-st-whats");
+      if (qual === "panfleto") { FR.modo(true, "aba-panfleto"); preencherCampo("fr-pf-loja", nome); preencherCampo("fr-pf-whats", whats); if (v("fr-st-insta")) preencherCampo("fr-pf-insta", v("fr-st-insta")); }
+      else if (qual === "qr") { FR.modo(true, "aba-qr"); const r = document.querySelector('input[name="fr-tipo"][value="link"]'); if (r) r.click(); preencherCampo("fr-q-url", link); }
+      else if (qual === "link") { FR.modo(true, "aba-link"); preencherCampo("fr-destino", link); }
+      else if (qual === "catalogo") { FR.modo(true, "aba-catalogo"); setTimeout(() => { preencherCampo("fr-ct-nome", nome); preencherCampo("fr-ct-whats", whats); }, 50); }
+      window.scrollTo({ top: $("fr-soltas").offsetTop - 70, behavior: "smooth" });
     }
 
     async function carregar() {
@@ -149,22 +210,29 @@
       try { const r = await fetch(API + "/sitev/modelos"); if (r.ok) cfg = await r.json(); } catch { /* usa o padrão */ }
       const sel = $("fr-st-nicho"); sel.textContent = "";
       for (const n of cfg.nichos) { const o = document.createElement("option"); o.value = n.id; o.textContent = n.nome; sel.append(o); }
-      sel.value = nicho; textosDoRamo(); desenharEscolhas(); desenharServicos(); desenharFotos(); previa();
+      sel.value = nicho; textosDoRamo(); desenharEscolhas(); desenharServicos(); desenharFotos(); previa(); ir(1, false);
       if (FR.lerToken()) {
         try { const r = await FR.chamar("GET", "/sitev"); if (r.status === 200) { assinante = !!r.corpo.assinante; if (r.corpo.site) preencher(r.corpo.site); else { desenharEscolhas(); desenharServicos(); desenharFotos(); } } else if (r.status === 401) FR.guardarToken(""); } catch { /* sem internet */ }
       }
     }
 
-    $("aba-site").addEventListener("click", carregar);
     $("fr-st-nicho").addEventListener("change", () => { nicho = v("fr-st-nicho"); textosDoRamo(); previa(); });
     $("fr-st-nome").addEventListener("input", () => { textosDoRamo(); previa(); });
+    $("fr-st-nome").addEventListener("change", () => { if (passo === 2) desenharLogos(); });
     $("fr-st-slogan").addEventListener("input", () => { textoAuto.slogan = false; previa(); });
     $("fr-st-sobre").addEventListener("input", () => { textoAuto.sobre = false; previa(); });
-    for (const id of ["fr-st-whats", "fr-st-horario", "fr-st-endereco", "fr-st-insta"]) $(id).addEventListener("input", previa);
+    for (const id of ["fr-st-whats", "fr-st-cidade", "fr-st-horario", "fr-st-endereco", "fr-st-insta"]) $(id).addEventListener("input", previa);
     $("fr-st-add-serv").addEventListener("click", () => { if (servicos.length < lim().servicos) { servicos.push({ nome: "", descricao: "", preco: "" }); desenharServicos(); } });
     $("fr-st-publicar").addEventListener("click", publicar);
+    $("fr-st-segue").addEventListener("click", seguir);
+    $("fr-st-volta").addEventListener("click", () => ir(passo - 1));
+    document.querySelectorAll("#fr-st-passos button").forEach((b) => b.addEventListener("click", () => { const n = Number(b.dataset.ir); if (n > 1 && passo === 1 && (!v("fr-st-nome").trim() || v("fr-st-whats").replace(/\D/g, "").length < 10)) return seguir(); ir(n); }));
+    document.querySelectorAll(".fr-kit-c[data-kit]").forEach((b) => b.addEventListener("click", () => kit(b.dataset.kit)));
+    $("fr-st-ap-cel").addEventListener("click", () => { $("fr-st-moldura").classList.remove("pc"); $("fr-st-ap-cel").setAttribute("aria-pressed", "true"); $("fr-st-ap-pc").setAttribute("aria-pressed", "false"); });
+    $("fr-st-ap-pc").addEventListener("click", () => { $("fr-st-moldura").classList.add("pc"); $("fr-st-ap-pc").setAttribute("aria-pressed", "true"); $("fr-st-ap-cel").setAttribute("aria-pressed", "false"); });
     $("fr-st-copiar").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("fr-st-link").textContent); $("fr-st-copiar").textContent = "Copiado!"; setTimeout(() => { $("fr-st-copiar").textContent = "Copiar link"; }, 1800); } catch { /* sem permissão */ } });
-    $("fr-st-ja-assino").addEventListener("click", () => FR.pedirEntrada(async () => { try { const r = await FR.chamar("GET", "/sitev"); if (r.status === 200) { assinante = !!r.corpo.assinante; if (r.corpo.site && !v("fr-st-nome")) preencher(r.corpo.site); desenharEscolhas(); desenharServicos(); desenharFotos(); $("fr-st-convite").hidden = true; } } catch { /* sem internet */ } }, "", "Entre com o seu Vetorial ID para liberar os temas da sua assinatura."));
+    $("fr-st-ja-assino").addEventListener("click", () => FR.pedirEntrada(async () => { try { const r = await FR.chamar("GET", "/sitev"); if (r.status === 200) { assinante = !!r.corpo.assinante; if (r.corpo.site && !v("fr-st-nome")) preencher(r.corpo.site); desenharEscolhas(); desenharServicos(); desenharFotos(); } } catch { /* sem internet */ } }, "", "Entre com o seu Vetorial ID para liberar os formatos e temas da sua assinatura."));
+    carregar();
   };
   if (window.FR) arrancar(); else document.addEventListener("fr-pronto", arrancar, { once: true });
 })();

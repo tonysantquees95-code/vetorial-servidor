@@ -133,3 +133,37 @@
 .fr-st-foto img{width:100%;height:100%;object-fit:cover}
 .fr-st-foto .fr-ct-x{position:absolute;top:4px;right:4px;width:26px;height:26px;font-size:16px;background:rgba(0,0,0,.6);color:#fff}
 select.fr-campo{appearance:auto}textarea.fr-campo{resize:vertical;font:inherit}
+
+/* Assistente "Criar meu site" */
+.fr-criar{padding:6px 0 0}
+.fr-modo{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.fr-modo-b{font:inherit;font-weight:700;color:var(--suave);background:var(--painel);border:1px solid var(--borda);border-radius:14px;padding:11px 20px;cursor:pointer}
+.fr-modo-b[aria-selected="true"]{color:#fff;border-color:#ec6fd6;background:#ec6fd622}
+.fr-passos{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.fr-passos button{width:100%;font:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:12px;border:1px solid var(--borda);background:transparent;color:var(--suave);cursor:pointer;font-size:12px}
+.fr-passos b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--painel);font-size:13px}
+.fr-passos button[aria-current="step"]{color:#fff;border-color:#ec6fd6;background:#ec6fd622}
+.fr-passos button[aria-current="step"] b{background:linear-gradient(135deg,#ec6fd6,#7aa2ff);color:#0a0a14}
+.fr-passos button.feito b{background:#15803d;color:#fff}
+.fr-passo h2{margin-top:0}
+.fr-nav{display:flex;gap:10px;margin-top:18px}.fr-nav .btn{flex:1}
+.fr-st-layouts{display:grid;gap:8px}
+.fr-st-layout{font:inherit;text-align:left;display:grid;gap:3px;padding:12px 14px;border-radius:14px;border:1px solid var(--borda);background:var(--painel);color:var(--texto);cursor:pointer}
+.fr-st-layout small{color:var(--suave)}
+.fr-st-layout[aria-pressed="true"]{border-color:#ec6fd6;box-shadow:0 0 0 3px #ec6fd655}
+.fr-st-logos{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.fr-st-logo{font:inherit;display:grid;place-items:center;aspect-ratio:1;padding:6px;border-radius:14px;border:1px solid var(--borda);background:var(--painel);color:var(--suave);cursor:pointer}
+.fr-st-logo img{width:100%;height:100%;object-fit:contain;border-radius:10px}
+.fr-st-logo[aria-pressed="true"]{border-color:#ec6fd6;box-shadow:0 0 0 3px #ec6fd655}
+.fr-revisao{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.fr-revisao li{padding:9px 12px;border-radius:10px;background:var(--painel)}.fr-revisao .ok{color:#7ee2a8}.fr-revisao .falta{color:var(--suave)}
+.fr-kit{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:10px 0 16px}
+.fr-kit-c{font:inherit;text-align:left;display:grid;gap:3px;padding:14px;border-radius:16px;border:1px solid var(--borda);background:var(--painel);color:var(--texto);cursor:pointer}
+.fr-kit-c small{color:var(--suave)}.fr-kit-c:hover{border-color:#ec6fd6}
+.fr-kit-breve{opacity:.55;cursor:default}.fr-kit-breve:hover{border-color:var(--borda)}
+.fr-aparelhos{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
+.fr-aparelhos button{font:inherit;font-weight:600;padding:7px 14px;border-radius:12px;border:1px solid var(--borda);background:var(--painel);color:var(--suave);cursor:pointer}
+.fr-aparelhos button[aria-pressed="true"]{color:#fff;border-color:#ec6fd6}
+#fr-st-moldura{max-width:390px;margin-left:auto;margin-right:auto;transition:max-width .2s}
+#fr-st-moldura.pc{max-width:none}
+@media(max-width:600px){.fr-passos span{display:none}.fr-passos button{padding:6px 0}}

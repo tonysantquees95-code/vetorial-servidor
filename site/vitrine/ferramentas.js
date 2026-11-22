@@ -42,7 +42,7 @@
   }
 
   // ------------------------------------------------------------ abas
-  const abas = [["aba-link", "painel-link"], ["aba-qr", "painel-qr"], ["aba-panfleto", "painel-panfleto"], ["aba-logo", "painel-logo"], ["aba-catalogo", "painel-catalogo"], ["aba-site", "painel-site"]];
+  const abas = [["aba-link", "painel-link"], ["aba-qr", "painel-qr"], ["aba-panfleto", "painel-panfleto"], ["aba-logo", "painel-logo"], ["aba-catalogo", "painel-catalogo"]];
   function abrirAba(idAba) {
     for (const [a, p] of abas) {
       const ativa = a === idAba;
@@ -224,8 +224,13 @@
   // Peças que as outras ferramentas (panfleto.js) usam: a mesma conta, a mesma janela "Quase lá!".
   window.FR = {
     API, $, dizer, baixar, lerToken, guardarToken, chamar,
+    /** Mostra "Criar meu site" ou "Só uma ferramenta" e, se pedir, já abre a aba. */
+    modo(soltas, idAba) { $("fr-criar").hidden = soltas; $("fr-soltas").hidden = !soltas; $("modo-criar").setAttribute("aria-selected", String(!soltas)); $("modo-soltas").setAttribute("aria-selected", String(soltas)); if (soltas && idAba) $(idAba).click(); },
     /** Pede o Vetorial ID e, ao entrar, roda `depois`. `texto` troca a explicação da janela. */
     pedirEntrada(depois, erro, texto) { pendente = depois; abrirJanela(erro, texto); },
   };
+  $("modo-criar").addEventListener("click", () => window.FR.modo(false));
+  $("modo-soltas").addEventListener("click", () => window.FR.modo(true));
+  if (location.hash === "#ferramentas") window.FR.modo(true);
   document.dispatchEvent(new Event("fr-pronto"));
 })();
