@@ -8,7 +8,7 @@ export const MAX_LOJAS = 3;
 /** O teste de 7 dias vale só para quem se inscreve até esta data (1 mês depois do lançamento da trava). Dá para mudar sem publicar: env TESTE_GRATIS_ATE (ms). */
 export const TESTE_GRATIS_ATE_PADRAO = Date.parse("2026-12-13T00:00:00-03:00");
 /** Contas com teste por rede (IP): uma casa ou um escritório pode ter mais de uma pessoa. */
-export const MAX_TESTES_POR_IP = 2;
+export const MAX_TESTES_POR_IP = 25; // só barra robô: celular (4G compartilhado), hotel e wi-fi de casa dividem o mesmo IP
 // (o banco de mentira dos testes não tem data de corte, para os testes não quebrarem quando a janela fechar)
 export const testeGratisAte = (env) => Number(env.TESTE_GRATIS_ATE) || (env.DB && env.DB._db ? Infinity : TESTE_GRATIS_ATE_PADRAO);
 
