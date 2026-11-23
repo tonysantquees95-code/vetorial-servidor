@@ -320,6 +320,7 @@ export default {
         if (!postado || postado.nome !== "Studio da Ana" || postado.servicos[0].preco !== 6000 || postado.layout !== "servicos" || postado.fonte !== "cursiva" || postado.logoModelo !== "mod-1") throw new Error("o pedido de publicar saiu errado: " + JSON.stringify(postado));
         if (!(await p.locator("#fr-st-pronto").isVisible())) throw new Error("o site publicado e o kit não apareceram");
         if ((await p.locator(".fr-kit-c[data-kit]").count()) !== 4) throw new Error("o kit deveria ter 4 ferramentas");
+        if (!/\/cartao$/.test((await p.locator("#fr-kit-cartao").getAttribute("href")) || "")) throw new Error("o cartão de visita online deveria apontar para /cartao do site");
         await p.click('.fr-kit-c[data-kit="panfleto"]'); await ESPERA(p);
         if (!(await p.locator("#painel-panfleto").isVisible())) throw new Error("o kit não abriu o panfleto");
         if ((await p.inputValue("#fr-pf-loja")) !== "Studio da Ana") throw new Error("o panfleto não veio com o nome do negócio");

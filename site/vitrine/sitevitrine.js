@@ -174,6 +174,7 @@
       slug = s.slug; link = s.link; publicado = true;
       $("fr-st-kit-vazio").hidden = true; $("fr-st-pronto").hidden = false;
       $("fr-st-link").textContent = s.link; $("fr-st-abrir").href = s.link;
+      $("fr-kit-cartao").href = `${s.link}/cartao`;
       $("fr-st-whats-enviar").href = "https://wa.me/?text=" + encodeURIComponent(`Conheça o site da ${s.nome}: ${s.link}`);
       const qr = `${API}/ferramentas/qr?texto=${encodeURIComponent(s.link)}`; $("fr-st-qr").src = qr; $("fr-st-qr-baixar").href = qr;
     }

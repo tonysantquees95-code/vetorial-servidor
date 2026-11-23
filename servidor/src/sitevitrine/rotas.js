@@ -5,6 +5,7 @@ import { semLimite } from "../pdf/uso.js";
 import { fotoValida, numeroWhats, slugDe, slugValido } from "../catalogo/dados.js";
 import { especDoModelo, listaPublica, modeloPorId } from "../meusite/modelos-logo.js";
 import { logoSvg, NICHOS, normalizarEspec } from "../meusite/logos.js";
+import { cartaoHtml, vcard } from "./cartao.js";
 import { LAYOUTS_SITE, normalizarSite, renderizarSite, siteInicial, TEMAS, textosModelo } from "../meusite/site.js";
 
 export const TEMAS_GRATIS = ["creme", "claro"];
@@ -23,7 +24,7 @@ const CSP = "default-src 'none'; img-src 'self' data: https:; style-src 'unsafe-
 const pagina = (corpo, status = 200, cache = "public, max-age=60") => new Response(corpo, { status, headers: { "content-type": "text/html; charset=utf-8", "content-security-policy": CSP, "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "cache-control": cache } });
 const naoAchei = () => pagina('<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content=noindex><title>Site não encontrado</title><body style="font-family:system-ui,sans-serif;background:#0f1020;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:20px"><div><h1>Site não encontrado</h1><p>O endereço pode estar errado ou o site saiu do ar.</p></div>', 404, "no-store");
 
-export const ehRotaDeSiteVitrine = (c) => /^\/w\/[a-z0-9-]{3,30}(\/logo\.svg|\/foto\/[a-z0-9]{8,24})?$/.test(c) || c === "/sitev" || c === "/sitev/previa" || c === "/sitev/modelos";
+export const ehRotaDeSiteVitrine = (c) => /^\/w\/[a-z0-9-]{3,30}(\/logo\.svg|\/cartao|\/contato\.vcf|\/foto\/[a-z0-9]{8,24})?$/.test(c) || c === "/sitev" || c === "/sitev/previa" || c === "/sitev/modelos";
 
 const aleatorio = (n) => { const b = crypto.getRandomValues(new Uint8Array(n)); let s = ""; for (const x of b) s += "abcdefghjkmnpqrstuvwxyz23456789"[x % 31]; return s; };
 const linha = (v, max) => String(v ?? "").replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
@@ -73,6 +74,14 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
       const s = doBanco(l, url.origin);
       const cat = await env.DB.prepare("SELECT slug FROM catalogos WHERE usuario = ?").bind(l.usuario).first();
       return pagina(renderizarSite(paraRender(s, s.link, url.origin, { marca: l.sem_marca ? false : "vitrine", catalogo: cat ? `${url.origin}/c/${cat.slug}` : null })));
+    }
+    m = /^\/w\/([a-z0-9-]{3,30})\/(cartao|contato\.vcf)$/.exec(caminho);
+    if (m && req.method === "GET") {
+      const l = await env.DB.prepare("SELECT * FROM sites_vitrine WHERE slug = ?").bind(m[1]).first();
+      if (!l) return naoAchei();
+      const s = doBanco(l, url.origin), mod = modeloPorId(s.logoModelo);
+      if (m[2] === "cartao") return pagina(cartaoHtml(s, { logoEspec: s.logoEspec || (mod ? especDoModelo(mod, s.nome) : null), base: s.link, marca: !l.sem_marca }));
+      return new Response(vcard(s, s.link), { headers: { "content-type": "text/vcard; charset=utf-8", "content-disposition": `attachment; filename="${m[1]}.vcf"`, "x-content-type-options": "nosniff", "cache-control": "public, max-age=300" } });
     }
     m = /^\/w\/([a-z0-9-]{3,30})\/logo\.svg$/.exec(caminho);
     if (m && req.method === "GET") {

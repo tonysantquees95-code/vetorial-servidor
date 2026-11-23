@@ -136,3 +136,18 @@ test("logo do editor: vale no site e na rota do logo, valida a espec e barra neo
   const n = await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ logoEspec: { ...espec, neon: { ativo: true } } }) });
   assert.equal(n.status, 403); assert.equal((await n.json()).codigo, "assinatura");
 });
+
+test("cartão de visita online e contato .vcf saem dos dados do site, escapados e sem script", async () => {
+  const env = ENV(), u = await usuario(env);
+  const r = await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ nome: "Studio <b>Ana</b>", instagram: "@studio.ana", logoEspec: { nome: "Studio", simbolo: "pizza" } }) });
+  const s = (await r.json()).site;
+  const res = await chamar(env, "GET", `/w/${s.slug}/cartao`);
+  assert.equal(res.status, 200); assert.match(res.headers.get("content-security-policy"), /default-src 'none'/);
+  const html = await res.text();
+  assert.ok(html.includes("wa.me/5551999998888") && html.includes("instagram.com/studio.ana") && html.includes("contato.vcf") && html.includes("Vênus Vitrine"));
+  assert.ok(!html.includes("<b>Ana") && !/<script/i.test(html));
+  const v = await chamar(env, "GET", `/w/${s.slug}/contato.vcf`);
+  assert.match(v.headers.get("content-type"), /text\/vcard/);
+  const txt = await v.text(); assert.ok(txt.startsWith("BEGIN:VCARD") && txt.includes("TEL;TYPE=CELL,VOICE:+5551999998888") && txt.includes("END:VCARD"));
+  assert.equal((await chamar(env, "GET", "/w/nao-existe-mesmo/cartao")).status, 404);
+});
