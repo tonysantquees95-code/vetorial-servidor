@@ -4,7 +4,7 @@ import { ErroId, validarSessao } from "../id/conta.js";
 import { semLimite } from "../pdf/uso.js";
 import { fotoValida, numeroWhats, slugDe, slugValido } from "../catalogo/dados.js";
 import { especDoModelo, listaPublica, modeloPorId } from "../meusite/modelos-logo.js";
-import { logoSvg, NICHOS } from "../meusite/logos.js";
+import { logoSvg, NICHOS, normalizarEspec } from "../meusite/logos.js";
 import { LAYOUTS_SITE, normalizarSite, renderizarSite, siteInicial, TEMAS, textosModelo } from "../meusite/site.js";
 
 export const TEMAS_GRATIS = ["creme", "claro"];
@@ -49,12 +49,14 @@ export function normalizarSiteVitrine(d = {}, { assinante = false } = {}) {
   }
   if (fotos.length > lim.fotos) erros.push(`No plano grátis são até ${lim.fotos} fotos. Assine a Vênus para ter até ${LIMITES.pago.fotos}.`);
   const logoModelo = modeloPorId(String(d.logoModelo || "")) ? String(d.logoModelo) : "";
-  return { erros, valor: { nome, whats, cidade: linha(d.cidade, 60), cfg, servicos, fotos, logoModelo } };
+  // logo montado no editor: a espec inteira é validada aqui; nunca se aceita SVG de fora
+  const logoEspec = d.logoEspec && typeof d.logoEspec === "object" ? normalizarEspec(d.logoEspec) : null;
+  return { erros, valor: { nome, whats, cidade: linha(d.cidade, 60), cfg, servicos, fotos, logoModelo: logoEspec ? "" : logoModelo, logoEspec } };
 }
 
-const aplicarLogo = (cfg, logoModelo, nome) => { const m = modeloPorId(logoModelo); cfg.logo = m ? especDoModelo(m, nome) : null; return cfg; };
+const aplicarLogo = (cfg, logoModelo, nome, logoEspec = null) => { const m = modeloPorId(logoModelo); cfg.logo = logoEspec ? normalizarEspec(logoEspec) : m ? especDoModelo(m, nome) : null; return cfg; };
 const paraRender = (s, base, origem, { previa = false, fotoUrl = null, marca, catalogo = null } = {}) => ({
-  loja: { titulo: s.nome, nome: s.nome, whatsapp: s.whats }, cfg: aplicarLogo({ ...s.cfg }, s.logoModelo, s.nome),
+  loja: { titulo: s.nome, nome: s.nome, whatsapp: s.whats }, cfg: aplicarLogo({ ...s.cfg }, s.logoModelo, s.nome, s.logoEspec),
   servicos: s.servicos.map((x, i) => ({ id: String(i), nome: x.nome, descricao: x.descricao, preco_centavos: x.preco_centavos, duracao_min: 0 })),
   fotos: s.fotos, base, previa, fotoUrl, marca, catalogo,
 });
@@ -75,9 +77,10 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
     m = /^\/w\/([a-z0-9-]{3,30})\/logo\.svg$/.exec(caminho);
     if (m && req.method === "GET") {
       const l = await env.DB.prepare("SELECT * FROM sites_vitrine WHERE slug = ?").bind(m[1]).first();
-      const mod = l && modeloPorId(JSON.parse(l.dados).logoModelo);
-      if (!mod) return new Response("Sem logo", { status: 404 });
-      return new Response(logoSvg(especDoModelo(mod, l.nome), "w"), { headers: { "content-type": "image/svg+xml; charset=utf-8", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'", "x-content-type-options": "nosniff", "cache-control": "public, max-age=300" } });
+      const dl = l ? JSON.parse(l.dados) : {};
+      const mod = modeloPorId(dl.logoModelo);
+      if (!mod && !dl.logoEspec) return new Response("Sem logo", { status: 404 });
+      return new Response(logoSvg(dl.logoEspec || especDoModelo(mod, l.nome), "w"), { headers: { "content-type": "image/svg+xml; charset=utf-8", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'", "x-content-type-options": "nosniff", "cache-control": "public, max-age=300" } });
     }
     m = /^\/w\/([a-z0-9-]{3,30})\/foto\/([a-z0-9]{8,24})$/.exec(caminho);
     if (m && req.method === "GET") {
@@ -97,7 +100,7 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
       const slug = slugValido(String(corpo.slug || "")) ? corpo.slug : "";
       const novas = valor.fotos.map((f, i) => (f.nova ? `n${i}` : f.id));
       const mapa = Object.fromEntries(valor.fotos.map((f, i) => [f.nova ? `n${i}` : f.id, f.nova ? `data:image/jpeg;base64,${f.nova}` : slug ? `${url.origin}/w/${slug}/foto/${f.id}` : ""]));
-      const s = { ...valor, fotos: novas, logoModelo: valor.logoModelo };
+      const s = { ...valor, fotos: novas };
       return json({ html: renderizarSite(paraRender(s, `${url.origin}/w/${slug || "previa"}`, url.origin, { previa: true, fotoUrl: (n) => mapa[n] || "", marca: "vitrine" })), erros: erros.filter((e) => !/WhatsApp/.test(e)) });
     }
     const ctx = await validarSessao(env, req, {});
@@ -114,6 +117,7 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
       if (!LAYOUTS.find((l) => l.id === valor.cfg.layout)?.gratis && !assinante) return json({ error: "Este formato de página é só para quem tem assinatura da Vênus.", codigo: "assinatura", ...situacao }, 403);
       const mod = valor.logoModelo && modeloPorId(valor.logoModelo);
       if (mod && !mod.gratis && !assinante) return json({ error: "Este logo é só para quem tem assinatura da Vênus.", codigo: "assinatura", ...situacao }, 403);
+      if (valor.logoEspec?.neon?.ativo && !assinante) return json({ error: "O efeito neon no logo é só para quem tem assinatura da Vênus.", codigo: "assinatura", ...situacao }, 403);
       const agora = Date.now();
       let l = await meu(), id = l?.id;
       if (!l) {
@@ -138,7 +142,7 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
         else if (guardadas.has(f.id)) ids.push(f.id);
       }
       for (const antiga of guardadas) if (!ids.includes(antiga)) await env.DB.prepare("DELETE FROM sites_vitrine_fotos WHERE id = ? AND site = ?").bind(antiga, id).run();
-      const dados = { nicho: valor.cfg.nicho, cidade: valor.cidade, cfg: valor.cfg, servicos: valor.servicos, fotos: ids, logoModelo: valor.logoModelo };
+      const dados = { nicho: valor.cfg.nicho, cidade: valor.cidade, cfg: valor.cfg, servicos: valor.servicos, fotos: ids, logoModelo: valor.logoModelo, logoEspec: valor.logoEspec };
       await env.DB.prepare("UPDATE sites_vitrine SET nome = ?, whats = ?, dados = ?, sem_marca = ?, atualizado = ? WHERE id = ?").bind(valor.nome, valor.whats, JSON.stringify(dados), assinante ? 1 : 0, agora, id).run();
       return json({ ok: true, site: doBanco(await meu(), url.origin), ...situacao });
     }

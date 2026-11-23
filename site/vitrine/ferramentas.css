@@ -167,3 +167,20 @@ select.fr-campo{appearance:auto}textarea.fr-campo{resize:vertical;font:inherit}
 #fr-st-moldura{max-width:390px;margin-left:auto;margin-right:auto;transition:max-width .2s}
 #fr-st-moldura.pc{max-width:none}
 @media(max-width:600px){.fr-passos span{display:none}.fr-passos button{padding:6px 0}}
+/* editor de logo */
+.fr-ed-caixa{max-width:560px;max-height:calc(100dvh - 32px);overflow:auto;display:flex;flex-direction:column;gap:12px}
+.fr-ed-topo{display:flex;align-items:center;justify-content:space-between;gap:12px}.fr-ed-topo h3{margin:0}
+.fr-ed-previa{background:#ffffff0d;border:1px solid var(--borda);border-radius:16px;padding:12px;display:grid;place-items:center;position:sticky;top:0;z-index:2;backdrop-filter:blur(8px)}
+.fr-ed-previa img{max-width:100%;max-height:190px;height:auto;display:block}
+.fr-ed-msg{min-height:18px;margin:0;font-size:13.5px;color:#ffb4c8}
+.fr-ed-grupo{margin:0 0 14px}.fr-ed-grupo h4{margin:0 0 8px;font-size:15px;color:var(--suave)}
+.fr-ed-grupo .fr-campo{margin-bottom:8px}
+.fr-ed-lista{display:flex;flex-wrap:wrap;gap:10px}
+.fr-ed-op{font:inherit;font-size:15px;color:var(--texto);background:var(--painel);border:2px solid var(--borda);border-radius:12px;padding:9px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.fr-ed-op[aria-pressed="true"],.fr-ed-ic[aria-pressed="true"]{border-color:var(--neon,#ec6fd6);background:#ec6fd622;box-shadow:0 0 0 2px #ec6fd655}
+.fr-ed-bol{width:18px;height:18px;border-radius:50%;border:1px solid #fff5;display:inline-block}
+.fr-ed-icones{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:10px;max-height:210px;overflow:auto;padding:4px}
+.fr-ed-ic{aspect-ratio:1;display:grid;place-items:center;background:#f4f4f8;border:2px solid transparent;border-radius:12px;cursor:pointer;padding:0;font-weight:800;color:#222}
+.fr-ed-cores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.fr-ed-cor{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;color:var(--suave)}
+.fr-ed-cor input{width:48px;height:36px;border:0;background:none;padding:0;cursor:pointer}

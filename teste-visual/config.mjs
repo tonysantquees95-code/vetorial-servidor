@@ -180,6 +180,48 @@ export default {
         await p.locator("#fr-lg-grade").scrollIntoViewIfNeeded();
       }
     }]),
+    ["logo-editor", "vitrine/#ferramentas", async (p) => {
+      const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
+      const cats = ["moderno", "elegante"].map((id) => ({ id, nome: id[0].toUpperCase() + id.slice(1) }));
+      const modelos = cats.flatMap((c) => [1, 2].map((n) => ({ id: `${c.id}-${n}`, nome: `${c.nome} ${n}`, categoria: c.id, gratis: n === 1 })));
+      const svg = (cor) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 168" width="520" height="168"><rect width="520" height="168" rx="26" fill="${cor}"/><text x="260" y="98" text-anchor="middle" font-size="44" fill="#fff">Loja da Ana</text></svg>`;
+      const traco = (d) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g fill="none" stroke="#222" stroke-width="3.2" stroke-linecap="round">${d}</g></svg>`;
+      const opcoes = { fontes: ["moderna", "elegante", "classica", "maquina", "garamond", "geometrica", "divertida", "condensada"].map((id) => ({ id, nome: id[0].toUpperCase() + id.slice(1), familia: "Arial, sans-serif", peso: 700, estilo: "normal" })), layouts: [["horizontal", "Lado a lado"], ["vertical", "Empilhado"], ["selo", "Selo redondo"], ["tipografico", "Só o nome"]].map(([id, nome]) => ({ id, nome })), paletas: [["rose", "Rosé", "#FFF1F5", "#C2185B"], ["ouro", "Preto e dourado", "#121212", "#D4AF37"], ["salvia", "Verde sálvia", "#F3F7F2", "#3E6B4F"]].map(([id, nome, fundo, principal]) => ({ id, nome, fundo, principal, apoio: principal, texto: "#222222" })), simbolos: [["estrela", "Estrela", "estrela destaque"], ["pizza", "Pizza", "pizza pizzaria comida"], ["tesoura", "Tesoura", "tesoura corte cabelo"], ["casa", "Casa", "casa imóvel"]].map(([id, nome, palavras]) => ({ id, nome, palavras, svg: traco('<circle cx="32" cy="32" r="20"/>') })), limite: 2 };
+      let criou = 0, corpoPost = null, ultimaPrevia = null;
+      await p.route(/\/ferramentas\/logo/, async (r) => {
+        const u = new URL(r.request().url()), m = r.request().method();
+        const j = (status, corpo) => r.fulfill({ status, contentType: "application/json", headers: cab, body: JSON.stringify(corpo) });
+        if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
+        if (u.pathname.endsWith("/modelos")) return j(200, { limite: 2, categorias: cats, modelos });
+        if (u.pathname.endsWith("/editor/opcoes")) return j(200, opcoes);
+        if (u.pathname.endsWith("/editor/modelo")) return j(200, { gratis: true, svg: svg("#c2185b"), espec: { nome: "Loja da Ana", simbolo: "estrela", layout: "horizontal", fonte: "moderna", paleta: "rose", cores: {}, neon: { ativo: false, cor: "#FF2BD6" } } });
+        if (u.pathname.endsWith("/editor/previa")) { ultimaPrevia = JSON.parse(r.request().postData() || "{}").espec; return j(200, { espec: { ...ultimaPrevia, cores: ultimaPrevia.cores || {}, neon: ultimaPrevia.neon || { ativo: false } }, svg: svg(ultimaPrevia.neon?.ativo ? "#7a1fa2" : "#c2185b") }); }
+        if (u.pathname.endsWith("/previa")) return r.fulfill({ status: 200, contentType: "image/svg+xml", headers: cab, body: svg("#c2185b") });
+        if (u.pathname.endsWith("/situacao")) return j(200, { ilimitado: false, assinante: false, limite: 2, usados: criou, restantes: 2 - criou });
+        if (u.pathname.endsWith("/personalizado")) { criou++; corpoPost = JSON.parse(r.request().postData() || "{}"); return j(200, { ok: true, assinante: false, limite: 2, usados: criou, restantes: 2 - criou, svg: svg("#c2185b") }); }
+        return j(404, {});
+      });
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); localStorage.setItem("ferramentas.token", "token-de-teste"); } catch {} });
+      await p.click("#aba-logo");
+      await p.waitForSelector(".fr-lg-modelo");
+      await p.fill("#fr-lg-nome", "Loja da Ana");
+      await p.click("#fr-lg-editar"); await p.waitForSelector(".fr-ed-caixa");
+      if ((await p.locator(".fr-ed-lista .fr-ed-op").count()) < 15) throw new Error("o editor deveria mostrar fontes, formatos, paletas e neon");
+      await p.fill('.fr-ed-caixa input[type="search"]', "pizza"); await ESPERA(p);
+      if ((await p.locator(".fr-ed-ic").count()) !== 1) throw new Error("a busca por 'pizza' deveria achar 1 ícone");
+      await p.click(".fr-ed-ic"); await p.click('.fr-ed-op:has-text("Máquina"), .fr-ed-op:has-text("Maquina")'); await p.waitForTimeout(400);
+      if (!ultimaPrevia || ultimaPrevia.simbolo !== "pizza" || ultimaPrevia.fonte !== "maquina") throw new Error("a prévia não recebeu o ícone e a fonte escolhidos");
+      await p.click('.fr-ed-op:has-text("Com neon")'); await p.waitForTimeout(400);
+      if (!(await p.locator(".fr-ed-msg").innerText()).includes("assinatura")) throw new Error("o aviso do neon (assinatura) não apareceu");
+      await p.click('.fr-ed-op:has-text("Sem neon")');
+      // não pode cortar nem estourar a janela do editor
+      const caixa = await p.locator(".fr-ed-caixa").boundingBox(), vp = p.viewportSize();
+      if (caixa.x < -1 || caixa.x + caixa.width > vp.width + 1) throw new Error("a janela do editor estoura para o lado");
+      await p.click(".fr-ed-caixa .fr-nav .btn:not(.sec)"); await ESPERA(p);
+      if (criou !== 1 || corpoPost.espec.simbolo !== "pizza" || corpoPost.espec.nome !== "Loja da Ana") throw new Error("o logo personalizado não foi criado com a receita certa");
+      if (!(await p.locator("#fr-lg-pronto").isVisible())) throw new Error("o logo pronto não apareceu");
+      await p.locator("#fr-lg-pronto").scrollIntoViewIfNeeded();
+    }],
     ...[["catalogo-login", false], ["catalogo-publicar", true]].map(([nome, logado]) => [nome, "vitrine/#ferramentas", async (p) => {
       const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
       const cores = ["#c2185b", "#1d4ed8", "#15803d", "#c2410c", "#6d4aff", "#0e9f8e"];
@@ -250,7 +292,7 @@ export default {
       if (!/Studio da Ana/.test(await p.inputValue("#fr-st-sobre"))) throw new Error("o texto pronto não usou o nome do negócio");
       await p.click("#fr-st-segue");
       if (!(await p.locator('.fr-passo[data-passo="2"]').isVisible())) throw new Error("não foi para o passo 2 (logo)");
-      if ((await p.locator("#fr-st-logos button").count()) !== 3) throw new Error("deveriam aparecer 'sem logo' e os 2 modelos");
+      if ((await p.locator("#fr-st-logos button").count()) !== 4) throw new Error("deveriam aparecer 'personalizar', 'sem logo' e os 2 modelos");
       await p.click('#fr-st-logos button[aria-label="Moderno 1"]');
       await p.click("#fr-st-segue");
       if ((await p.locator("#fr-st-layouts button").count()) !== 5) throw new Error("deveriam aparecer os 5 formatos");

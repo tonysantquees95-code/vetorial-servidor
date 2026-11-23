@@ -93,6 +93,28 @@
       } catch { aviso("Sem internet para criar o logo. Conecte-se e tente de novo."); } finally { botao.disabled = false; }
     }
     $("fr-lg-criar").addEventListener("click", criar);
+    // editor: fonte, ícone, cores e neon; só cria (e gasta o limite do dia) depois de "Usar este logo"
+    async function personalizar() {
+      aviso("");
+      const d = dados(); if (!d.nome) return aviso("Escreva o nome do seu negócio.");
+      const m = modelos.find((x) => x.id === escolhido);
+      const base = m ? await FR.especDoModelo(m.id, d.nome) : null;
+      FR.editarLogo({ espec: { ...(base || { simbolo: "estrela", layout: "horizontal", fonte: "moderna", paleta: "rose" }), nome: d.nome, subtitulo: d.sub }, assinante, textoBotao: "Criar este logo", aoUsar: (espec) => gerarPersonalizado(espec) });
+    }
+    async function gerarPersonalizado(espec) {
+      if (!FR.lerToken()) return FR.pedirEntrada(() => gerarPersonalizado(espec), "", "Seu logo está quase pronto! Entre com o seu Vetorial ID para criar e baixar. É grátis, uma conta só serve para todos os nossos apps.");
+      try {
+        const r = await FR.chamar("POST", "/ferramentas/logo/personalizado", { espec });
+        if (r.status === 401) { FR.guardarToken(""); return FR.pedirEntrada(() => gerarPersonalizado(espec), "Sua sessão venceu. Entre de novo para continuar."); }
+        if (r.status === 403 && r.corpo.codigo === "assinatura") { $("fr-lg-convite").hidden = false; return aviso(r.corpo.error); }
+        if (r.status === 429) { mostrarLimite(r.corpo); return aviso(r.corpo.error); }
+        if (r.status !== 200) return aviso(r.corpo.error || "Não consegui criar agora. Tente de novo.");
+        assinante = !!r.corpo.assinante; svgFinal = r.corpo.svg; mostrarLimite(r.corpo);
+        $("fr-lg-final").src = URL.createObjectURL(new Blob([svgFinal], { type: "image/svg+xml" }));
+        $("fr-lg-pronto").hidden = false; $("fr-lg-pronto").scrollIntoView({ block: "nearest" });
+      } catch { aviso("Sem internet para criar o logo. Conecte-se e tente de novo."); }
+    }
+    $("fr-lg-editar").addEventListener("click", personalizar);
     $("fr-lg-ja-assino").addEventListener("click", () => FR.pedirEntrada(async () => { await situacao(); if (escolhido) escolher(modelos.find((x) => x.id === escolhido)); }, "", "Entre com o seu Vetorial ID para liberar os modelos da sua assinatura."));
     $("fr-lg-ver-gratis").addEventListener("click", () => { categoria = "gratis"; desenharChips(todasCategorias); desenharGrade(); $("fr-lg-convite").hidden = true; });
 

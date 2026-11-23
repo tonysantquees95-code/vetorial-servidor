@@ -121,3 +121,18 @@ test("fonte nova e layout inválido caem no padrão", async () => {
   const r = await (await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ layout: "inventado", fonte: "cursiva" }) })).json();
   assert.equal(r.site.cfg.layout, "banner"); assert.equal(r.site.cfg.fonte, "cursiva");
 });
+
+test("logo do editor: vale no site e na rota do logo, valida a espec e barra neon no plano grátis", async () => {
+  const env = ENV(), u = await usuario(env);
+  const espec = { nome: "Studio da Ana", simbolo: "pizza", fonte: "maquina", layout: "selo", cores: { principal: "#ff2bd6", fundo: "<x>" } };
+  const r = await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ logoModelo: "mod-1", logoEspec: espec }) });
+  assert.equal(r.status, 200);
+  const s = (await r.json()).site;
+  assert.equal(s.logoModelo, ""); assert.equal(s.logoEspec.simbolo, "pizza");
+  const svg = await (await chamar(env, "GET", `/w/${s.slug}/logo.svg`)).text();
+  assert.ok(svg.includes("#FF2BD6") && svg.includes("Courier") && !svg.includes("<x>"));
+  const html = await (await chamar(env, "GET", `/w/${s.slug}`)).text();
+  assert.ok(html.includes("Courier") || html.includes("data:image/svg+xml") || html.includes("logo.svg"));
+  const n = await chamar(env, "POST", "/sitev", { token: u.token, corpo: base({ logoEspec: { ...espec, neon: { ativo: true } } }) });
+  assert.equal(n.status, 403); assert.equal((await n.json()).codigo, "assinatura");
+});

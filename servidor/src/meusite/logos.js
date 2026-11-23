@@ -1,6 +1,8 @@
 // Logos personalizados em SVG: o nome da pessoa + um símbolo do ramo (tesoura, pente, esmalte…) + paleta + formato.
 // Tudo nasce de uma "espec" pequena (JSON) que o app guarda; o SVG é sempre refeito aqui, então nunca entra SVG de fora.
 
+import { ICONES } from "./icones.js";
+
 export const FONTES = {
   moderna: { nome: "Moderna", familia: "'Helvetica Neue', Arial, 'Segoe UI', Roboto, sans-serif", peso: 800, estilo: "normal", caixa: false, espaco: 0, k: 0.6 },
   elegante: { nome: "Elegante", familia: "Georgia, 'Times New Roman', serif", peso: 700, estilo: "italic", caixa: false, espaco: 0, k: 0.56 },
@@ -9,6 +11,20 @@ export const FONTES = {
   arredondada: { nome: "Redonda", familia: "'Trebuchet MS', 'Segoe UI', Verdana, sans-serif", peso: 700, estilo: "normal", caixa: false, espaco: 0, k: 0.62 },
   cursiva: { nome: "Cursiva", familia: "'Brush Script MT', 'Snell Roundhand', 'Segoe Script', cursive", peso: 400, estilo: "italic", caixa: false, espaco: 0, k: 0.5 },
 };
+
+/** Mais fontes só para o editor de logo (pilhas de fontes comuns nos aparelhos; se faltar uma, cai na seguinte). */
+export const FONTES_EXTRA = {
+  maquina: { nome: "Máquina", familia: "'Courier New', Courier, monospace", peso: 700, estilo: "normal", caixa: true, espaco: 1, k: 0.66 },
+  palatino: { nome: "Palatino", familia: "'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif", peso: 700, estilo: "normal", caixa: false, espaco: 0, k: 0.56 },
+  garamond: { nome: "Garamond", familia: "Garamond, 'Hoefler Text', 'Times New Roman', serif", peso: 600, estilo: "italic", caixa: false, espaco: 0, k: 0.5 },
+  geometrica: { nome: "Geométrica", familia: "'Century Gothic', Futura, 'Avenir Next', 'Trebuchet MS', sans-serif", peso: 700, estilo: "normal", caixa: true, espaco: 2, k: 0.74 },
+  divertida: { nome: "Divertida", familia: "'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', cursive", peso: 700, estilo: "normal", caixa: false, espaco: 0, k: 0.62 },
+  condensada: { nome: "Condensada", familia: "'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', sans-serif", peso: 800, estilo: "normal", caixa: true, espaco: 1, k: 0.5 },
+  robusta: { nome: "Robusta", familia: "Rockwell, 'Courier New', Georgia, serif", peso: 800, estilo: "normal", caixa: false, espaco: 0, k: 0.64 },
+  manuscrita: { nome: "Manuscrita", familia: "'Segoe Script', 'Bradley Hand', 'Brush Script MT', cursive", peso: 600, estilo: "normal", caixa: false, espaco: 0, k: 0.55 },
+  ampla: { nome: "Ampla", familia: "Verdana, Geneva, 'DejaVu Sans', sans-serif", peso: 700, estilo: "normal", caixa: true, espaco: 3, k: 0.82 },
+};
+export const FT = { ...FONTES, ...FONTES_EXTRA };
 
 export const LAYOUTS = { horizontal: "Lado a lado", vertical: "Empilhado", selo: "Selo redondo", tipografico: "Só o nome" };
 
@@ -75,6 +91,10 @@ export const SIMBOLOS = {
   lua: { nome: "Lua", nichos: ["estetica", "outro", "loja"], d: '<path d="M44 8 A24 24 0 1 0 56 40 A19 19 0 0 1 44 8 Z"/>' },
   inicial: { nome: "Inicial do nome", nichos: [], d: "" },
 };
+/** Tudo que o editor aceita como ícone: os símbolos de sempre + a biblioteca. A geração automática continua só com SIMBOLOS. */
+export const TODOS_SIMBOLOS = { ...SIMBOLOS, ...ICONES };
+/** Neon ligado no logo que está sendo desenhado (o SVG é montado de uma vez, sem concorrência). */
+let NEON = "";
 
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const hex = (c, padrao) => (/^#[0-9a-fA-F]{6}$/.test(String(c || "")) ? String(c).toUpperCase() : padrao);
@@ -92,11 +112,12 @@ export function normalizarEspec(e = {}) {
     nome,
     subtitulo: String(e.subtitulo ?? "").trim().replace(/\s+/g, " ").slice(0, 34),
     nicho,
-    simbolo: SIMBOLOS[e.simbolo] ? e.simbolo : (Object.entries(SIMBOLOS).find(([, s]) => s.nichos[0] === nicho) || ["inicial"])[0],
+    simbolo: TODOS_SIMBOLOS[e.simbolo] ? e.simbolo : (Object.entries(SIMBOLOS).find(([, s]) => s.nichos[0] === nicho) || ["inicial"])[0],
     layout: LAYOUTS[e.layout] ? e.layout : "horizontal",
-    fonte: FONTES[e.fonte] ? e.fonte : "moderna",
+    fonte: FT[e.fonte] ? e.fonte : "moderna",
     paleta: paleta.id,
-    cores: { fundo: paleta.fundo, principal: paleta.principal, apoio: paleta.apoio, texto: paleta.texto },
+    cores: { fundo: hex(e.cores?.fundo, paleta.fundo), principal: hex(e.cores?.principal, paleta.principal), apoio: hex(e.cores?.apoio, paleta.apoio), texto: hex(e.cores?.texto, paleta.texto) },
+    neon: { ativo: e.neon?.ativo === true, cor: hex(e.neon?.cor, paleta.principal) },
   };
 }
 
@@ -104,15 +125,15 @@ function simbolo(id, nome, x, y, tam, cor, fonteId) {
   const esc2 = tam / 64;
   if (id === "inicial") {
     const letra = esc(([...String(nome).trim()][0] || "V").toUpperCase());
-    const fo = FONTES[fonteId] || FONTES.moderna;
-    return `<text x="${f(x + tam / 2)}" y="${f(y + tam * 0.74)}" text-anchor="middle" font-family="${esc(fo.familia)}" font-weight="900" font-size="${f(tam * 0.78)}" fill="${cor}">${letra}</text>`;
+    const fo = FT[fonteId] || FONTES.moderna;
+    return `<text x="${f(x + tam / 2)}" y="${f(y + tam * 0.74)}" text-anchor="middle" font-family="${esc(fo.familia)}" font-weight="900" font-size="${f(tam * 0.78)}" fill="${cor}"${NEON}>${letra}</text>`;
   }
-  return `<g transform="translate(${f(x)} ${f(y)}) scale(${f(esc2)})" fill="none" stroke="${cor}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">${SIMBOLOS[id].d}</g>`;
+  return `<g transform="translate(${f(x)} ${f(y)}) scale(${f(esc2)})" fill="none" stroke="${cor}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"${NEON}>${TODOS_SIMBOLOS[id].d}</g>`;
 }
 
 /** Tamanho da letra para o texto caber na largura; se nem no mínimo couber, o SVG aperta as letras (textLength). */
 function ajustar(txt, fonteId, tamMax, larguraMax, minimo = 14) {
-  const fo = FONTES[fonteId];
+  const fo = FT[fonteId];
   const texto = fo.caixa ? txt.toUpperCase() : txt;
   const por = (tam) => texto.length * (tam * fo.k + fo.espaco);
   let tam = tamMax;
@@ -134,8 +155,8 @@ function nomeEmLinhas(nome, fonteId, tamMax, larguraMax, tamDuas) {
 }
 
 function texto(t, { x, y, tam, fonte, cor, ancora = "middle", apertar = 0, extra = "" }) {
-  const fo = FONTES[fonte];
-  return `<text x="${f(x)}" y="${f(y)}" text-anchor="${ancora}" font-family="${esc(fo.familia)}" font-weight="${fo.peso}" font-style="${fo.estilo}" font-size="${tam}" fill="${cor}"${fo.espaco ? ` letter-spacing="${fo.espaco}"` : ""}${apertar ? ` textLength="${apertar}" lengthAdjust="spacingAndGlyphs"` : ""}${extra}>${esc(t)}</text>`;
+  const fo = FT[fonte];
+  return `<text x="${f(x)}" y="${f(y)}" text-anchor="${ancora}" font-family="${esc(fo.familia)}" font-weight="${fo.peso}" font-style="${fo.estilo}" font-size="${tam}" fill="${cor}"${fo.espaco ? ` letter-spacing="${fo.espaco}"` : ""}${apertar ? ` textLength="${apertar}" lengthAdjust="spacingAndGlyphs"` : ""}${extra}${NEON}>${esc(t)}</text>`;
 }
 const legenda = (t, { x, y, tam, cor, ancora = "middle" }) =>
   `<text x="${f(x)}" y="${f(y)}" text-anchor="${ancora}" font-family="${esc(FONTES.moderna.familia)}" font-weight="600" font-size="${tam}" letter-spacing="3" fill="${cor}">${esc(t.toUpperCase())}</text>`;
@@ -143,6 +164,15 @@ const legenda = (t, { x, y, tam, cor, ancora = "middle" }) =>
 /** O SVG do logo (viewBox próprio; vale como <img> ou arquivo .svg). `sufixo` evita choque de ids se vários logos estiverem na mesma página. */
 export function logoSvg(espec, sufixo = "") {
   const e = normalizarEspec(espec);
+  NEON = e.neon.ativo ? ` filter="url(#neon${sufixo})"` : "";
+  try {
+    return montarLogo(e, sufixo);
+  } finally {
+    NEON = "";
+  }
+}
+
+function montarLogo(e, sufixo) {
   const { fundo, principal, apoio, texto: cTexto } = e.cores;
   const cab = (w, h) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(e.nome)}">`;
   const sub = e.subtitulo;
@@ -179,8 +209,8 @@ export function logoSvg(espec, sufixo = "") {
     corpo += `<circle cx="180" cy="180" r="172" fill="${fundo}"/><circle cx="180" cy="180" r="164" fill="none" stroke="${principal}" stroke-width="6"/><circle cx="180" cy="180" r="150" fill="none" stroke="${apoio}" stroke-width="2"/>`;
     corpo += simbolo(e.simbolo, e.nome, 130, 122, 100, principal, e.fonte);
     const a = ajustar(e.nome, e.fonte, 36, 290, 16);
-    const fo = FONTES[e.fonte];
-    corpo += `<text font-family="${esc(fo.familia)}" font-weight="${fo.peso}" font-style="${fo.estilo}" font-size="${a.tam}" fill="${cTexto}"${fo.espaco ? ` letter-spacing="${fo.espaco}"` : ""}><textPath href="#${idTopo}" startOffset="50%" text-anchor="middle"${a.apertar ? ` textLength="${Math.min(a.apertar, 280)}" lengthAdjust="spacingAndGlyphs"` : ""}>${esc(a.texto)}</textPath></text>`;
+    const fo = FT[e.fonte];
+    corpo += `<text font-family="${esc(fo.familia)}" font-weight="${fo.peso}" font-style="${fo.estilo}" font-size="${a.tam}" fill="${cTexto}"${fo.espaco ? ` letter-spacing="${fo.espaco}"` : ""}${NEON}><textPath href="#${idTopo}" startOffset="50%" text-anchor="middle"${a.apertar ? ` textLength="${Math.min(a.apertar, 280)}" lengthAdjust="spacingAndGlyphs"` : ""}>${esc(a.texto)}</textPath></text>`;
     if (sub) corpo += `<text font-family="${esc(FONTES.moderna.familia)}" font-weight="600" font-size="17" letter-spacing="3" fill="${principal}"><textPath href="#${idBase}" startOffset="50%" text-anchor="middle">${esc(sub.toUpperCase())}</textPath></text>`;
     else corpo += `<path d="M 160 262 H 200" stroke="${apoio}" stroke-width="4" stroke-linecap="round"/>`;
   } else {
@@ -191,7 +221,10 @@ export function logoSvg(espec, sufixo = "") {
     corpo += `<path d="M 200 ${sub ? 124 : 134} H 320" stroke="${apoio}" stroke-width="3" stroke-linecap="round"/>`;
     if (sub) corpo += legenda(sub, { x: 260, y: 152, tam: 16, cor: principal });
   }
-  return `${cab(w, h)}${corpo}</svg>`;
+  const filtro = e.neon.ativo
+    ? `<defs><filter id="neon${sufixo}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.2" result="b"/><feFlood flood-color="${e.neon.cor}" result="c"/><feComposite in="c" in2="b" operator="in" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`
+    : "";
+  return `${cab(w, h)}${filtro}${corpo}</svg>`;
 }
 
 // ------------------------------------------------------------------------------------------ várias opções de uma vez

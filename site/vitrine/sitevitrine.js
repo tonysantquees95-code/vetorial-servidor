@@ -6,7 +6,7 @@
     const CORES = ["#c2185b", "#1d4ed8", "#15803d", "#c2410c", "#6d4aff", "#0e9f8e"];
     const NOMES = { 1: "Negócio", 2: "Logo", 3: "Formato", 4: "Conteúdo", 5: "Publicar", 6: "Kit" };
     let cfg = { layouts: [], limites: { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } }, nichos: [], temas: [], logos: [], textos: {} };
-    let nicho = "salao", layout = "banner", tema = "creme", fonte = "moderna", cor = CORES[0], logo = "", assinante = false, slug = "", publicado = false, link = "";
+    let nicho = "salao", layout = "banner", tema = "creme", fonte = "moderna", cor = CORES[0], logo = "", logoEspec = null, logoSvgUrl = "", assinante = false, slug = "", publicado = false, link = "";
     let passo = 1, carregado = false, tempo = 0, textoAuto = { slogan: true, sobre: true };
     const servicos = [], fotos = [];
     const frame = $("fr-st-frame"), aviso = $("fr-st-aviso");
@@ -20,7 +20,7 @@
 
     function dados() {
       return {
-        nicho, layout, nome: v("fr-st-nome"), whats: v("fr-st-whats"), cidade: v("fr-st-cidade"), tema, fonte, cor, logoModelo: logo, slug,
+        nicho, layout, nome: v("fr-st-nome"), whats: v("fr-st-whats"), cidade: v("fr-st-cidade"), tema, fonte, cor, logoModelo: logo, logoEspec, slug,
         slogan: v("fr-st-slogan"), sobre: v("fr-st-sobre"), horario: v("fr-st-horario"), endereco: v("fr-st-endereco"), instagram: v("fr-st-insta"),
         servicos: servicos.map((s) => ({ nome: s.nome, descricao: s.descricao, preco: centavos(s.preco) })),
         fotos: fotos.map((f) => (f.fotoNova ? { fotoNova: f.fotoNova } : { foto: f.foto })),
@@ -57,14 +57,24 @@
         b.append(t, d); b.addEventListener("click", () => { layout = l.id; desenharEscolhas(); previa(); }); caixa.append(b);
       }
     }
+    async function abrirEditor() {
+      const nome = v("fr-st-nome").trim() || "Meu negócio";
+      let base = logoEspec;
+      if (!base && logo) base = await FR.especDoModelo(logo, nome);
+      FR.editarLogo({ espec: base ? { ...base, nome: base.nome || nome } : { nome, simbolo: "estrela", layout: "horizontal", fonte: "moderna", paleta: "rose" }, nome: base ? undefined : nome, assinante, textoBotao: "Usar no meu site", aoUsar: (espec, svg) => { logoEspec = espec; logo = ""; logoSvgUrl = FR.imgDeSvg(svg); desenharLogos(); previa(); } });
+    }
     function desenharLogos() {
       const caixa = $("fr-st-logos"); caixa.textContent = "";
       const nome = encodeURIComponent(v("fr-st-nome").trim() || "Seu negócio");
+      const per = document.createElement("button"); per.type = "button"; per.className = "fr-st-logo fr-st-logo-novo"; per.setAttribute("aria-pressed", String(!!logoEspec)); per.setAttribute("aria-label", "Personalizar meu logo");
+      if (logoEspec && logoSvgUrl) { const im = document.createElement("img"); im.alt = ""; im.width = 120; im.height = 120; im.src = logoSvgUrl; per.append(im); }
+      else { const s = document.createElement("span"); s.textContent = "Personalizar o meu"; per.append(s); }
+      per.addEventListener("click", abrirEditor); caixa.append(per);
       for (const l of [{ id: "", nome: "Sem logo" }, ...cfg.logos]) {
         const b = document.createElement("button"); b.type = "button"; b.className = "fr-st-logo"; b.setAttribute("aria-pressed", String(l.id === logo)); b.setAttribute("aria-label", l.nome);
         if (l.id) { const im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.width = 120; im.height = 120; im.src = `${API}/ferramentas/logo/previa?modelo=${encodeURIComponent(l.id)}&nome=${nome}`; b.append(im); }
         else { const s = document.createElement("span"); s.textContent = "Sem logo"; b.append(s); }
-        b.addEventListener("click", () => { logo = l.id; desenharLogos(); previa(); }); caixa.append(b);
+        b.addEventListener("click", () => { logo = l.id; logoEspec = null; desenharLogos(); previa(); }); caixa.append(b);
       }
     }
     function desenharEscolhas() {
@@ -168,7 +178,7 @@
       const qr = `${API}/ferramentas/qr?texto=${encodeURIComponent(s.link)}`; $("fr-st-qr").src = qr; $("fr-st-qr-baixar").href = qr;
     }
     function preencher(s) {
-      nicho = s.nicho || "salao"; layout = s.cfg.layout || "banner"; tema = s.cfg.tema; fonte = s.cfg.fonte || "moderna"; cor = s.cfg.cor; logo = s.logoModelo || ""; slug = s.slug; textoAuto = { slogan: false, sobre: false };
+      nicho = s.nicho || "salao"; layout = s.cfg.layout || "banner"; tema = s.cfg.tema; fonte = s.cfg.fonte || "moderna"; cor = s.cfg.cor; logo = s.logoModelo || ""; logoEspec = s.logoEspec || null; logoSvgUrl = s.logoEspec && s.slug ? `${API}/w/${s.slug}/logo.svg` : ""; slug = s.slug; textoAuto = { slogan: false, sobre: false };
       $("fr-st-nicho").value = nicho; $("fr-st-nome").value = s.nome; $("fr-st-whats").value = s.whats; $("fr-st-cidade").value = s.cidade || "";
       $("fr-st-slogan").value = s.cfg.slogan || ""; $("fr-st-sobre").value = s.cfg.sobre || ""; $("fr-st-horario").value = s.cfg.horario || ""; $("fr-st-endereco").value = s.cfg.endereco || ""; $("fr-st-insta").value = s.cfg.instagram || "";
       servicos.length = 0; for (const x of s.servicos) servicos.push({ nome: x.nome, descricao: x.descricao || "", preco: emReais(x.preco_centavos) });
