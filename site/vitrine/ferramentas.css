@@ -203,3 +203,5 @@ a.fr-kit-c{text-decoration:none}
   #painel-site .fr-ct-moldura iframe{height:max(640px,calc(100vh - 130px))}
   #fr-st-logos{max-height:none}
 }
+/* aberto dentro da Vênus: sem cabeçalho e rodapé próprios */
+.na-venus .vv-topo,.na-venus .vv-rodape,.na-venus .vv-faixa{display:none!important}

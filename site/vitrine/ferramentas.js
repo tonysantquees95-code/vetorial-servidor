@@ -231,6 +231,10 @@
   };
   $("modo-criar").addEventListener("click", () => window.FR.modo(false));
   $("modo-soltas").addEventListener("click", () => window.FR.modo(true));
-  if (location.hash === "#ferramentas") window.FR.modo(true);
+  // Dentro da Vênus: #t=<token do Vetorial ID>&app=venus&ir=ferramentas&aba=qr (o token fica só no aparelho)
+  const dica = new URLSearchParams(location.hash.replace(/^#/, ""));
+  if (dica.get("t")) guardarToken(dica.get("t"));
+  if (dica.get("app") === "venus") document.documentElement.classList.add("na-venus");
+  if (location.hash === "#ferramentas" || dica.get("ir") === "ferramentas") window.FR.modo(true, /^[a-z]+$/.test(dica.get("aba") || "") ? "aba-" + dica.get("aba") : undefined);
   document.dispatchEvent(new Event("fr-pronto"));
 })();
