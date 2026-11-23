@@ -77,6 +77,34 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           node scripts/montar-demo.mjs vortex demo-src/vortex/app site/demo/vortex
           test -f site/demo/vortex/index.html
+      - name: Buscar o código do voxix (demonstração)
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/voxix
+          path: demo-src/voxix
+          sparse-checkout: app
+      - name: Montar a demonstração do voxix em site/demo/voxix
+        continue-on-error: true
+        run: |
+          cd demo-src/voxix/app
+          npm ci --no-audit --no-fund
+          npm run build
+          cd "$GITHUB_WORKSPACE"
+          node scripts/montar-demo.mjs voxix demo-src/voxix/app site/demo/voxix
+          test -f site/demo/voxix/index.html
+      - name: Buscar o código do velox (demonstração)
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: tonysantquees95-code/velox-gaming-search
+          path: demo-src/velox
+          sparse-checkout: app/src/main/assets
+      - name: Montar a demonstração do velox em site/demo/velox
+        continue-on-error: true
+        run: |
+          node scripts/montar-demo-velox.mjs demo-src/velox/app/src/main/assets site/demo/velox
+          test -f site/demo/velox/index.html
       - name: Buscar o código do vyntem (demonstração)
         continue-on-error: true
         uses: actions/checkout@v4

@@ -7,3 +7,15 @@
 /* app de verdade dentro do celular */
 .sim-real{position:absolute;left:0;right:0;top:30px;bottom:0;overflow:hidden;background:#000;border-radius:0 0 34px 34px}
 .sim-real-f{position:absolute;left:0;top:0;border:0;transform-origin:0 0;background:#000;display:block}
+
+/* Vortex: celular deitado, grande, com a descrição embaixo */
+.sim-paisagem{grid-template-columns:minmax(0,1fr)!important;justify-items:center}
+.sim-paisagem #sim-lado{order:1!important;width:100%;max-width:900px}
+.sim-paisagem #descricao{order:2!important;max-width:760px;text-align:center}
+.sim-paisagem #descricao ul{display:inline-block;text-align:left}
+.sim-paisagem .sim-aparelho{max-width:100%;border-radius:38px;padding:10px 14px}
+.sim-paisagem .sim-tela{height:auto;aspect-ratio:844/390;border-radius:26px}
+.sim-paisagem .sim-conteudo{padding-top:0}
+.sim-paisagem .sim-entalhe{top:50%;left:7px;transform:translateY(-50%);width:16px;height:76px}
+.sim-paisagem .sim-real{top:0;left:22px;border-radius:0 26px 26px 0}
+.sim-paisagem #descricao ul{display:table;margin-left:auto;margin-right:auto}

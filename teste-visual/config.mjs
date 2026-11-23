@@ -1,5 +1,5 @@
 // Telas do site que o teste visual visita: [nome, página, passos].
-const REAIS = ["venus", "vindex", "vortex", "vyntem"];
+const REAIS = ["venus", "vindex", "vortex", "vyntem", "voxix", "velox"];
 const APPS = ["venus", "vindex", "vortex", "velox", "vyntem", "voxix"];
 const ABA = (p, id) => p.locator("#abas button").nth(APPS.indexOf(id));
 const ESPERA = (p) => p.waitForTimeout(350);
@@ -21,6 +21,7 @@ export default {
           await f.getByText("dias úteis").first().waitFor({ timeout: 8000 }).catch(() => { throw new Error("a Vênus da demonstração não respondeu"); });
           return;
         }
+        if (id === "velox") { await f.locator("#q").fill("jogos de corrida").catch(() => {}); await p.locator("#simulador").scrollIntoViewIfNeeded(); return; }
         const abas = await f.locator("nav button:visible").all();
         for (const b of abas.slice(0, 4)) { await b.click({ timeout: 2000 }).catch(() => {}); await p.waitForTimeout(250); }
         await p.locator("#simulador").scrollIntoViewIfNeeded();

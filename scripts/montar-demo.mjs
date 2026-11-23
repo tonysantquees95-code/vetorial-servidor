@@ -5,8 +5,8 @@ import { cpSync, readFileSync, writeFileSync, rmSync, readdirSync, statSync } fr
 import { join } from "node:path";
 
 const [, , app, pasta, saida] = process.argv;
-const termosDe = { vindex: "src/apresentacao.ts", vortex: "src/termos.ts", vyntem: "src/apresentacao.ts", venus: "src/apresentacao/dados.ts" };
-if (!termosDe[app] || !pasta || !saida) { console.error("uso: montar-demo.mjs vindex|vortex|vyntem|venus <pasta> <saida>"); process.exit(1); }
+const termosDe = { vindex: "src/apresentacao.ts", vortex: "src/termos.ts", vyntem: "src/apresentacao.ts", venus: "src/apresentacao/dados.ts", voxix: "src/apresentacao.ts" };
+if (!termosDe[app] || !pasta || !saida) { console.error("uso: montar-demo.mjs vindex|vortex|vyntem|venus|voxix <pasta> <saida>"); process.exit(1); }
 const termos = readFileSync(join(pasta, termosDe[app]), "utf8").match(/VERSAO_DOS_TERMOS\s*=\s*(\d+)/)[1];
 const licenca = { acesso: true, apps: { vindex: true, vortex: true, vyntem: true }, pacote: "admin", emTeste: false };
 const sessao = JSON.stringify({ token: "demo", email: "demo@exemplo.com", nome: "Demonstração", licenca });
@@ -14,6 +14,13 @@ const sementes = {
   vindex: { "vindex.tour": "1", "vindex.termos": termos, "vindex.sessao": sessao, "vindex.permissoes.vistas2": "1", "vindex.novidades.vistas": "9999" },
   vortex: { "vortex.tour": "1", "vortex.termos": termos, "vortex:configurado": "1", "vortex.novidades.vistas": "9999" },
   venus: { "venus.tour": "1", "venus.termos": termos, "venus.novidades.vistas": "9999", "venus:loja-guiada": "1" },
+  voxix: { "voxix.tour": "1", "voxix.termos": termos, "voxix.sessao": JSON.stringify({ token: "demo", email: "demo@exemplo.com", nome: "Você" }), "voxix.novidades.vistas": "9999",
+    "voxix.conversas": JSON.stringify({ conversas: (() => { const agora = Date.now(), m = (id, minha, corpo, min) => ({ id, minha, corpo, criado: agora - min * 60000, estado: "enviada" });
+      return {
+        kaua: { apelido: "kaua", nome: "Kauã", naoLidas: 2, ultima: agora - 4 * 60000, mensagens: [m("a1", false, "bora fechar o time hoje à noite?", 42), m("a2", true, "bora! 21h tá bom?", 40), m("a3", false, "fechou, chama o Rafa também", 39), m("a4", false, "tô no lobby já", 5), m("a5", false, "vem logo 😂", 4)] },
+        lari: { apelido: "lari", nome: "Larissa", naoLidas: 0, ultima: agora - 95 * 60000, mensagens: [m("b1", true, "viu o torneio de sábado?", 130), m("b2", false, "vi! já me inscrevi, falta só a gente fechar a dupla", 120), m("b3", true, "me coloca na dupla então 🎮", 100), m("b4", false, "feito!", 95)] },
+        rafa: { apelido: "rafa", nome: "Rafa", naoLidas: 0, ultima: agora - 1500 * 60000, mensagens: [m("c1", false, "passa o código da sala", 1510), m("c2", true, "VX-4821", 1505), m("c3", false, "valeu!", 1500)] }
+      }; })() }) },
   vyntem: { "vyntem.tour": "1", "vyntem.termos": termos, "vyntem.sessao": sessao, "vyntem.novidades.vistas": "9999" },
 }[app];
 
@@ -70,6 +77,73 @@ if (app === "venus") {
   };`;
 }
 
+// Voxix: o chat de verdade, mas com servidor de mentira (perfil, comunidades, salas ao vivo e respostas prontas).
+let servidorVoxix = "";
+if (app === "voxix") {
+  servidorVoxix = `
+  var EU = { apelido: "voce", nome: "Você", avatar: null };
+  var agora = function () { return Date.now(); };
+  var P = function (apelido, nome) { return { apelido: apelido, nome: nome, avatar: null }; };
+  var AMIGOS = [P("kaua", "Kauã"), P("lari", "Larissa"), P("rafa", "Rafa"), P("duda", "Duda"), P("theo", "Theo")];
+  var COMS = [
+    { id: "c-retro", nome: "Retrô Club", descricao: "Quem ama jogo clássico. Dicas, saves e partidas.", icone: "jogo", publica: true, membros: 128, cargo: "membro", salas: [{ id: "s-geral", nome: "geral" }, { id: "s-dicas", nome: "dicas" }, { id: "s-torneios", nome: "torneios" }] },
+    { id: "c-time", nome: "Time do Sábado", descricao: "Nosso grupo fechado de ranqueada.", icone: "raio", publica: false, membros: 9, cargo: "dono", codigo: "SAB-2026", salas: [{ id: "s-time", nome: "papo-do-time" }, { id: "s-estrategia", nome: "estratégia" }] },
+    { id: "c-pub", nome: "Gamers de Porto Alegre", descricao: "Encontros e campeonatos na cidade.", icone: "escudo", publica: true, membros: 342, salas: [{ id: "s-poa", nome: "geral" }] }
+  ];
+  var FALAS = {
+    "s-geral": [["lari", "Larissa", "alguém joga hoje à noite?", 55], ["kaua", "Kauã", "eu tô dentro 🙌", 52], ["theo", "Theo", "bora, fecho às 21h", 47], ["duda", "Duda", "alguém tem dica pro chefe da fase 3?", 21]],
+    "s-dicas": [["rafa", "Rafa", "dica: salvem antes de cada chefe", 300], ["duda", "Duda", "boa! já me salvou umas 3 vezes", 290]],
+    "s-torneios": [["lari", "Larissa", "inscrições abertas até sexta", 700]],
+    "s-time": [["kaua", "Kauã", "treino hoje 21h, sem atraso 😅", 80], ["rafa", "Rafa", "confirmado", 75]],
+    "s-estrategia": [["theo", "Theo", "vamos testar a nova formação sábado", 900]],
+    "s-poa": [["duda", "Duda", "alguém vai no evento do sábado?", 160]]
+  };
+  var RESP = ["boa! 😄", "bora então", "kkkk verdade", "fechou", "isso aí 👊", "também acho"];
+  var json = function (o, st) { return new Response(JSON.stringify(o), { status: st || 200, headers: { "Content-Type": "application/json" } }); };
+  var pronta = window.fetch;
+  window.fetch = function (u, o) {
+    var alvo; try { alvo = new URL(String(u && u.url ? u.url : u), location.href); } catch (e) { return pronta.apply(null, arguments); }
+    if (alvo.hostname.indexOf("workers.dev") < 0 && alvo.hostname.indexOf("vetorial") < 0) return pronta.apply(null, arguments);
+    var c = alvo.pathname, m = (o && o.method || "GET").toUpperCase(), corpo = {}; try { corpo = JSON.parse(o && o.body || "{}"); } catch (e) {}
+    var q;
+    if (c === "/voxix/perfil") return Promise.resolve(json(EU));
+    if (c === "/voxix/comunidades/publicas") return Promise.resolve(json({ comunidades: COMS.filter(function (x) { return x.publica; }).map(function (x) { return { id: x.id, nome: x.nome, descricao: x.descricao, icone: x.icone, publica: true, membros: x.membros }; }) }));
+    if (c === "/voxix/comunidades" && m === "GET") return Promise.resolve(json({ comunidades: COMS.filter(function (x) { return x.cargo; }).map(function (x) { return { id: x.id, nome: x.nome, descricao: x.descricao, icone: x.icone, publica: x.publica, membros: x.membros, cargo: x.cargo }; }) }));
+    if ((q = /^\\/voxix\\/comunidades\\/([^/]+)\\/membros$/.exec(c))) return Promise.resolve(json({ membros: AMIGOS.map(function (a, i) { return { apelido: a.apelido, nome: a.nome, cargo: i === 0 ? "dono" : "membro" }; }).concat([{ apelido: "voce", nome: "Você", cargo: "membro" }]) }));
+    if ((q = /^\\/voxix\\/comunidades\\/([^/]+)$/.exec(c)) && m === "GET") { var x = COMS.filter(function (k) { return k.id === q[1]; })[0] || COMS[0]; return Promise.resolve(json(x)); }
+    if (c === "/voxix/historico") return Promise.resolve(json({ mensagens: [], mais: false }));
+    if (c === "/voxix/avatares") return Promise.resolve(json({ avatares: {} }));
+    if (c === "/voxix/bloqueios") return Promise.resolve(json({ bloqueios: [] }));
+    if (c === "/voxix/buscar") { var ap = (alvo.searchParams.get("apelido") || "").toLowerCase(); return Promise.resolve(json(P(ap || "amigo", ap ? ap.charAt(0).toUpperCase() + ap.slice(1) : "Amigo"))); }
+    if (c === "/voxix/mensagens" && m === "POST") return Promise.resolve(json({ ok: true, id: "m" + agora(), criado: agora() }));
+    if (c === "/voxix/pontuar") return Promise.resolve(json({ texto: corpo.texto || "", ajustado: false }));
+    if (c === "/voxix/ticket") return Promise.resolve(json({ ticket: "demo" }));
+    return Promise.resolve(json({}));
+  };
+  // chat ao vivo de mentira: as salas já abrem com conversa e quem manda uma mensagem recebe uma resposta
+  function Falso(url) {
+    var self = this, sala = /\\/voxix\\/salas\\/([^/]+)\\/ws/.exec(url); self.readyState = 0; self.OPEN = 1;
+    setTimeout(function () {
+      self.readyState = 1; if (self.onopen) self.onopen({});
+      if (sala && self.onmessage) {
+        var id = sala[1], base = agora();
+        var ms = (FALAS[id] || []).map(function (f, i) { return { id: "f" + id + i, de: f[0], deNome: f[1], corpo: f[2], criado: base - f[3] * 60000 }; });
+        self.onmessage({ data: JSON.stringify({ t: "inicio", mensagens: ms, online: AMIGOS.slice(0, 3).concat([EU]) }) });
+      }
+    }, 120);
+    self.send = function (d) {
+      var p; try { p = JSON.parse(d); } catch (e) { return; }
+      if (p.t !== "msg" || !self.onmessage) return;
+      var t = agora(); self.onmessage({ data: JSON.stringify({ t: "confirmada", idLocal: p.idLocal, mensagem: { id: "e" + t, de: "voce", deNome: "Você", corpo: p.corpo, criado: t } }) });
+      var quem = AMIGOS[Math.floor(Math.random() * AMIGOS.length)];
+      setTimeout(function () { if (self.onmessage) self.onmessage({ data: JSON.stringify({ t: "msg", mensagem: { id: "r" + agora(), de: quem.apelido, deNome: quem.nome, corpo: RESP[Math.floor(Math.random() * RESP.length)], criado: agora() } }) }); }, 1400);
+    };
+    self.close = function () { self.readyState = 3; };
+  }
+  Falso.OPEN = 1; Falso.CONNECTING = 0; Falso.CLOSED = 3; Falso.CLOSING = 2;
+  window.WebSocket = Falso;`;
+}
+
 const shim = `// Demonstração do ${app}: dados de exemplo, nada sai do navegador.
 (function () {
   try { var s = ${JSON.stringify(sementes)}; for (var k in s) if (localStorage.getItem(k) === null) localStorage.setItem(k, s[k]); } catch (e) {}
@@ -85,6 +159,7 @@ const shim = `// Demonstração do ${app}: dados de exemplo, nada sai do navegad
     return Promise.reject(new TypeError("Demonstração: sem internet"));
   };
   ${iaVenus}
+  ${servidorVoxix}
 })();
 `;
 writeFileSync(join(saida, "demo-shim.js"), shim);
