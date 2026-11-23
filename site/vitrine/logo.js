@@ -78,13 +78,13 @@
       const d = dados(), m = modelos.find((x) => x.id === escolhido);
       if (!d.nome) return aviso("Escreva o nome do seu negócio.");
       if (!m) return aviso("Toque em um modelo para escolher.");
-      if (!m.gratis && !FR.lerToken()) { $("fr-lg-convite").hidden = false; return $("fr-lg-convite").scrollIntoView({ block: "nearest" }); }
+      if (!m.gratis && !assinante) return FR.convidarAssinar({ recurso: "Este logo", aoEntrar: async () => { await situacao(); if (escolhido) escolher(modelos.find((x) => x.id === escolhido)); } });
       if (!FR.lerToken()) return FR.pedirEntrada(criar, "", "Seu logo está quase pronto! Entre com o seu Vetorial ID para criar e baixar. É grátis, uma conta só serve para todos os nossos apps e assim a gente melhora as ferramentas.");
       const botao = $("fr-lg-criar"); botao.disabled = true;
       try {
         const r = await FR.chamar("POST", "/ferramentas/logo", { modelo: m.id, nome: d.nome, subtitulo: d.sub });
         if (r.status === 401) { FR.guardarToken(""); return FR.pedirEntrada(criar, "Sua sessão venceu. Entre de novo para continuar."); }
-        if (r.status === 403 && r.corpo.codigo === "assinatura") { $("fr-lg-convite").hidden = false; return aviso(r.corpo.error); }
+        if (r.status === 403 && r.corpo.codigo === "assinatura") return FR.convidarAssinar({ recurso: "Este logo", aoEntrar: situacao });
         if (r.status === 429) { mostrarLimite(r.corpo); return aviso(r.corpo.error); }
         if (r.status !== 200) return aviso(r.corpo.error || "Não consegui criar agora. Tente de novo.");
         assinante = !!r.corpo.assinante; svgFinal = r.corpo.svg; mostrarLimite(r.corpo);
@@ -106,7 +106,7 @@
       try {
         const r = await FR.chamar("POST", "/ferramentas/logo/personalizado", { espec });
         if (r.status === 401) { FR.guardarToken(""); return FR.pedirEntrada(() => gerarPersonalizado(espec), "Sua sessão venceu. Entre de novo para continuar."); }
-        if (r.status === 403 && r.corpo.codigo === "assinatura") { $("fr-lg-convite").hidden = false; return aviso(r.corpo.error); }
+        if (r.status === 403 && r.corpo.codigo === "assinatura") return FR.convidarAssinar({ recurso: "O efeito neon", aoEntrar: situacao });
         if (r.status === 429) { mostrarLimite(r.corpo); return aviso(r.corpo.error); }
         if (r.status !== 200) return aviso(r.corpo.error || "Não consegui criar agora. Tente de novo.");
         assinante = !!r.corpo.assinante; svgFinal = r.corpo.svg; mostrarLimite(r.corpo);

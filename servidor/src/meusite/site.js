@@ -22,7 +22,7 @@ export const SECOES = {
 const ORDEM_PADRAO = ["servicos", "produtos", "sobre", "equipe", "galeria", "depoimentos", "contato"];
 const FONTES_DO_SITE = ["moderna", "elegante", "classica", "arredondada", "forte", "cursiva"];
 /** Formatos de página. "classico" é o do Meu site das lojas; os outros são do site da Vitrine. */
-export const LAYOUTS_SITE = ["classico", "banner", "servicos", "loja", "cartao", "galeria", "destaque"];
+export const LAYOUTS_SITE = ["classico", "banner", "servicos", "loja", "cartao", "galeria", "destaque", "lateral", "revista", "app"];
 export const MAX_FOTOS = 9;
 
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -137,9 +137,18 @@ section{padding:30px 0 6px}h2{font-size:clamp(22px,5vw,28px);margin-bottom:14px}
 @media(min-width:760px){.fixa{display:none}body{padding-bottom:0}}${camadaDoLayout(layout)}`;
 }
 /** O que muda de um formato para o outro (a ordem das seções vem do `cfg.secoes`). */
+const ROTULOS_ABAS = { servicos: "Serviços", produtos: "Produtos", sobre: "Sobre", equipe: "Equipe", galeria: "Fotos", depoimentos: "Opiniões", contato: "Contato" };
+/** Barra de atalhos do formato "app": um link por seção que existe na página (âncoras, sem JavaScript). */
+function abasDoApp(partes) {
+  const ids = partes.map((p) => /^<section id="([a-z]+)"/.exec(p)?.[1]).filter((id) => ROTULOS_ABAS[id]);
+  return ids.length > 1 ? `<nav class="abas" aria-label="Seções">${ids.map((id) => `<a href="#${id}">${ROTULOS_ABAS[id]}</a>`).join("")}</nav>` : "";
+}
 function camadaDoLayout(l) {
   const banner = `.topo.cb{position:relative;padding:0;background:none;text-align:left;overflow:hidden}.cb .banner{display:block;width:100%;height:clamp(170px,38vw,300px);object-fit:cover}.cb .miolo{position:relative;max-width:960px;margin:0 auto;padding:0 18px 26px}.cb .logo{margin-top:-46px;position:relative;background:var(--fundo);padding:8px;border-radius:20px;border:1px solid var(--borda);max-width:150px;max-height:100px}.cb h1{margin-top:12px}.cb .slogan{margin-left:0}.cb .botoes{justify-content:flex-start}`;
   if (l === "banner") return banner;
+  if (l === "lateral") return banner + `@media(min-width:900px){.duas{display:grid;grid-template-columns:minmax(360px,40%) 1fr;min-height:100vh}.lat.topo.cb{position:sticky;top:0;height:100vh;display:flex;align-items:flex-end;color:#fff}.lat .banner{position:absolute;inset:0;height:100%}.lat::after{content:"";position:absolute;inset:0;background:linear-gradient(#00000012,#0000009a)}.lat .miolo{position:relative;z-index:1;padding:0 34px 48px;max-width:none;width:100%}.lat .logo{margin-top:0}.lat h1{color:#fff;text-shadow:0 2px 18px #0007;font-size:clamp(34px,4vw,54px)}.lat .slogan{color:#ffffffe0}.lat .bt.sec{background:#ffffff22;color:#fff;border-color:#ffffff88}.conteudo{padding:46px 0 80px}.conteudo .max{max-width:680px;margin:0;padding:0 44px}.conteudo section{padding:34px 0 10px}.conteudo h2{font-size:clamp(26px,2.6vw,34px)}}`;
+  if (l === "revista") return `body{font-family:Georgia,'Times New Roman',serif;counter-reset:s}.topo{text-align:left;background:none;max-width:960px;margin:0 auto;padding:54px 18px 30px;border-bottom:4px solid var(--texto)}.logo{border-radius:0;margin-bottom:22px;max-height:84px;max-width:min(60vw,240px)}h1{font-size:clamp(40px,12vw,96px);line-height:.96;text-transform:uppercase;letter-spacing:-.025em;overflow-wrap:anywhere}.slogan{margin:16px 0 0;max-width:620px;color:var(--texto);font-style:italic;font-size:clamp(18px,4.6vw,24px)}.botoes{justify-content:flex-start}.bt{border-radius:0;text-transform:uppercase;letter-spacing:.1em;font-size:13px;font-family:system-ui,sans-serif}section{counter-increment:s;padding:30px 0;border-bottom:1px solid var(--borda)}section .max{display:grid;gap:14px}h2{font-size:20px;text-transform:uppercase;letter-spacing:.1em}h2::before{content:"0" counter(s);display:block;font:700 13px system-ui,sans-serif;letter-spacing:.25em;color:var(--cor);margin-bottom:6px}.grade{grid-template-columns:1fr;gap:0}.cartao,.dep,.contato,.pessoa{background:none;border:0;border-radius:0;box-shadow:none}.cartao{border-bottom:1px dashed var(--borda);padding:14px 0}.contato{padding:0}.pessoa{padding:0 18px 0 0;border-right:1px solid var(--borda);border-radius:0}.fotos img{border-radius:0}@media(min-width:760px){section .max{grid-template-columns:200px 1fr;gap:32px}}`;
+  if (l === "app") return `.topo{background:linear-gradient(160deg,var(--cor),color-mix(in srgb,var(--cor) 55%,#000));color:var(--sobre);padding:34px 18px 58px;border-radius:0 0 38px 38px}.logo{background:#fff;padding:8px;border-radius:22px;max-height:96px}.slogan{color:inherit;opacity:.92}.topo .bt{background:#fff;color:#1a1416}.topo .bt.sec{background:#ffffff24;color:inherit;border-color:#ffffff66;box-shadow:none}.abas{position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow-x:auto;padding:10px 14px;background:color-mix(in srgb,var(--fundo) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--borda);margin-top:-22px;border-radius:22px 22px 0 0;scrollbar-width:none}.abas::-webkit-scrollbar{display:none}.abas a{flex:none;padding:9px 17px;border-radius:22px;background:var(--painel);border:1px solid var(--borda);text-decoration:none;font-weight:700;font-size:14px}.abas a:first-child{background:var(--cor);color:var(--sobre);border-color:transparent}section{scroll-margin-top:58px;padding:20px 0 4px}.cartao,.dep,.contato{border-radius:24px;box-shadow:0 8px 24px #0000001a}.fotos img{border-radius:22px}`;
   if (l === "destaque") return banner + `.topo.cb{min-height:clamp(330px,70vw,520px);display:grid;align-items:center;text-align:center;color:#fff}.cb .banner{position:absolute;inset:0;height:100%}.cb::after{content:"";position:absolute;inset:0;background:linear-gradient(#00000040,#00000080)}.cb .miolo{position:relative;z-index:1;padding:44px 18px;width:100%}.cb .logo{margin:0 auto 6px;display:block;background:#ffffffee;border-radius:20px;padding:10px;max-width:190px;max-height:120px}.cb h1{color:#fff;text-shadow:0 2px 18px #0008;font-size:clamp(32px,8vw,56px)}.cb .slogan{color:#ffffffe6;margin:10px auto 0;max-width:560px;font-size:clamp(16px,3.6vw,20px)}.cb .botoes{justify-content:center;margin-top:18px}.cb .bt.sec{background:#ffffff26;color:#fff;border-color:#ffffff88}`;
   if (l === "servicos") return banner + `.cb .banner{height:clamp(110px,24vw,190px)}#servicos .grade{grid-template-columns:1fr}#servicos .cartao{flex-direction:row;flex-wrap:wrap;align-items:baseline;border-radius:14px}#servicos .linha{flex:1;min-width:60%}`;
   if (l === "galeria") return banner + `#galeria{padding-top:6px}.fotos{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.fotos img{aspect-ratio:4/3;border-radius:18px}.fotos img:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;height:100%}`;
@@ -223,9 +232,9 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
     ...(loja.whatsapp ? { telephone: `+${soDigitos(loja.whatsapp).length <= 11 ? "55" : ""}${soDigitos(loja.whatsapp)}` } : {}),
     ...(cfg.endereco ? { address: { "@type": "PostalAddress", streetAddress: cfg.endereco } } : {}),
   };
-  const comBanner = ["banner", "servicos", "galeria", "loja", "destaque"].includes(layout);
+  const comBanner = ["banner", "servicos", "galeria", "loja", "destaque", "lateral"].includes(layout);
   const cabeca = comBanner
-    ? `<header class="topo cb"><img class="banner" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(bannerSvg(cfg.nicho, cor))}" alt=""><div class="miolo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></div></header>`
+    ? `<header class="topo cb${layout === "lateral" ? " lat" : ""}"><img class="banner" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(bannerSvg(cfg.nicho, cor, cfg.logo ? normalizarEspec(cfg.logo) : null))}" alt=""><div class="miolo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></div></header>`
     : `<header class="topo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></header>`;
   const cta = agenda ? `<a class="bt" href="${esc(agenda)}">Agendar horário</a>` : "";
   const cta2 = whats ? `<a class="bt${agenda ? " sec" : ""}" href="${esc(whats)}">WhatsApp</a>` : "";
@@ -233,8 +242,8 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
 <title>${esc(nome)} · ${esc(slogan)}</title><meta name="description" content="${esc(`${slogan}. ${sobre}`.slice(0, 155))}"><meta property="og:title" content="${esc(nome)}"><meta property="og:description" content="${esc(slogan)}"><meta property="og:type" content="website">
 <meta name="theme-color" content="${esc(tema.fundo)}">${previa ? '<meta name="robots" content="noindex">' : ""}<style>${css(tema, cfg.fonte, cor, layout)}</style>
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script></head><body>${layout === "cartao" ? '<div class="pagina">' : ""}
-${cabeca}
-${partes.join("\n")}
+${layout === "lateral" ? `<div class="duas">${cabeca}<div class="conteudo">${partes.join("\n")}</div></div>` : `${cabeca}${layout === "app" ? abasDoApp(partes) : ""}
+${partes.join("\n")}`}
 ${marca === "vitrine" ? '<footer class="rodape">Feito com a <a href="/vitrine/">Vênus Vitrine</a> · <b>VETORIAL TECH</b></footer>' : marca === false ? "" : '<footer class="rodape">Site feito com a Vênus · <b>VETORIAL TECH</b></footer>'}
 ${layout === "cartao" ? "</div>" : ""}${cta || cta2 ? `<div class="fixa">${cta}${cta2}</div>` : ""}</body></html>`;
 }

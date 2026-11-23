@@ -186,3 +186,7 @@ select.fr-campo{appearance:auto}textarea.fr-campo{resize:vertical;font:inherit}
 .fr-ed-cor input{width:48px;height:36px;border:0;background:none;padding:0;cursor:pointer}
 
 a.fr-kit-c{text-decoration:none}
+.fr-assine-lista{margin:0 0 14px;padding-left:20px;color:var(--texto);display:grid;gap:6px}.fr-caixa>.btn.sec:last-child{width:100%;margin-top:10px}
+.fr-st-logo.tranca{position:relative}.fr-st-logo .fr-cad{position:absolute;top:6px;right:6px;background:#000000b0;color:#ffd166;border-radius:10px;font-size:11px;font-weight:800;padding:3px 7px}
+#fr-st-logos{max-height:420px;overflow:auto;padding:4px}
+#fr-assine .fr-caixa{max-height:calc(100dvh - 32px);overflow:auto}

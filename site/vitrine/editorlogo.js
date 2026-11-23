@@ -16,17 +16,40 @@
       return opcoes;
     }
 
+    /** Janelinha "Assine a Vênus" (chamariz): vale para qualquer recurso de assinatura. */
+    function convidarAssinar({ recurso = "Este recurso", aoEntrar } = {}) {
+      if (document.getElementById("fr-assine")) return;
+      const fundo = el("div", "fr-janela"); fundo.id = "fr-assine"; fundo.style.zIndex = "70"; fundo.setAttribute("role", "dialog"); fundo.setAttribute("aria-modal", "true"); fundo.setAttribute("aria-label", "Assine a Vênus");
+      const caixa = el("div", "fr-caixa");
+      caixa.append(el("h3", "", "Assine a Vênus e libere tudo"));
+      caixa.append(el("p", "", `${recurso} é um recurso para assinantes da Vênus.`));
+      const ul = el("ul", "fr-assine-lista");
+      for (const t of ["Todos os logos, formatos de página e temas", "Efeito neon e cores livres no logo", "Mais fotos e serviços no site", "Sem a marca “Feito com a Vênus Vitrine”", "E ainda agenda, estoque, vendas e assistente na Vênus"]) ul.append(el("li", "", t));
+      caixa.append(ul);
+      const linha = el("div", "fr-linha"); const ver = el("a", "btn", "Ver planos"); ver.href = "../#preco";
+      const jaAssino = el("button", "btn sec", "Já assino, entrar"); jaAssino.type = "button";
+      const fecha = el("button", "btn sec", "Agora não, escolher um grátis"); fecha.type = "button";
+      linha.append(ver, jaAssino); caixa.append(linha, fecha); fundo.append(caixa); document.body.append(fundo);
+      const sair = () => { fundo.remove(); document.removeEventListener("keydown", tecla); };
+      const tecla = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); sair(); } };
+      document.addEventListener("keydown", tecla, true);
+      fecha.addEventListener("click", sair); fundo.addEventListener("click", (ev) => { if (ev.target === fundo) sair(); });
+      jaAssino.addEventListener("click", () => { sair(); FR.pedirEntrada(async () => { try { await aoEntrar?.(); } catch {} }, "", "Entre com o seu Vetorial ID para liberar o que a sua assinatura já inclui."); });
+      ver.focus();
+    }
+    FR.convidarAssinar = convidarAssinar;
+
     /**
      * FR.editarLogo({ espec, nome, assinante, textoBotao, aoUsar(espec, svg) })
      * `espec` é a receita do logo (a mesma que o servidor valida); o editor devolve a nova receita.
      */
-    async function editarLogo({ espec, nome, assinante = false, textoBotao = "Usar este logo", aoUsar }) {
+    async function editarLogo({ espec, nome, assinante: ehAssinante = false, textoBotao = "Usar este logo", aoUsar }) {
       let o;
       try { o = await carregarOpcoes(); } catch (e) { FR.dizer?.("fr-st-aviso", e.message); return; }
       let e = { nome: nome || "Meu negócio", subtitulo: "", simbolo: "estrela", layout: "horizontal", fonte: "moderna", paleta: "rose", ...(espec || {}) };
       e.cores = { ...(espec?.cores || {}) }; e.neon = { ativo: false, cor: "#FF2BD6", ...(espec?.neon || {}) };
       if (nome) e.nome = nome;
-      let tempo = 0, busca = "";
+      let tempo = 0, busca = "", assinante = ehAssinante;
 
       const fundo = el("div", "fr-janela fr-ed"); fundo.setAttribute("role", "dialog"); fundo.setAttribute("aria-modal", "true"); fundo.setAttribute("aria-label", "Editor de logo");
       const caixa = el("div", "fr-caixa fr-ed-caixa");
@@ -132,7 +155,7 @@
       fechar.addEventListener("click", sair); cancela.addEventListener("click", sair);
       fundo.addEventListener("click", (ev) => { if (ev.target === fundo) sair(); });
       usar.addEventListener("click", async () => {
-        if (e.neon.ativo && !assinante) { msg.textContent = aviso[403]; return; }
+        if (e.neon.ativo && !assinante) { msg.textContent = aviso[403]; convidarAssinar({ recurso: "O efeito neon", aoEntrar: async () => { const r = await FR.chamar("GET", "/ferramentas/logo/situacao"); if (r.status === 200 && r.corpo.assinante) { assinante = true; pintaNeon(); msg.textContent = ""; } } }); return; }
         if (!String(e.nome).trim()) { msg.textContent = "Escreva o nome do seu negócio."; return; }
         usar.disabled = true;
         try {

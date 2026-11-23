@@ -115,14 +115,14 @@
       mostrarAviso("");
       if (!produtos.some((p) => p.nome.trim())) return mostrarAviso("Coloque pelo menos um produto com nome.");
       const t = cfg.temas.find((x) => x.id === tema);
-      if (t && !t.gratis && !assinante && !FR.lerToken()) { $("fr-ct-convite").hidden = false; return $("fr-ct-convite").scrollIntoView({ block: "nearest" }); }
+      if (t && !t.gratis && !assinante) return FR.convidarAssinar({ recurso: "Este tema", aoEntrar: async () => { const r = await FR.chamar("GET", "/catalogo"); if (r.status === 200) assinante = !!r.corpo.assinante; } });
       if (!FR.lerToken()) return FR.pedirEntrada(publicar, "", "Seu catálogo está quase no ar! Entre com o seu Vetorial ID para publicar. É grátis, uma conta só serve para todos os nossos apps.");
       const b = $("fr-ct-publicar"); b.disabled = true; b.textContent = "Publicando…";
       try {
         const r = await FR.chamar("POST", "/catalogo", dados());
         if (r.status === 401) { FR.guardarToken(""); return FR.pedirEntrada(publicar, "Sua sessão venceu. Entre de novo para publicar."); }
         if (r.corpo && typeof r.corpo.assinante === "boolean") { assinante = r.corpo.assinante; desenharTemas(); }
-        if (r.status === 403) { $("fr-ct-convite").hidden = false; return mostrarAviso(r.corpo.error); }
+        if (r.status === 403) return FR.convidarAssinar({ recurso: "Este tema", aoEntrar: async () => { const r2 = await FR.chamar("GET", "/catalogo"); if (r2.status === 200) assinante = !!r2.corpo.assinante; } });
         if (r.status !== 200) return mostrarAviso((r.corpo && r.corpo.error) || "Não deu para publicar agora. Tente de novo.");
         const c = r.corpo.catalogo;
         // fotos novas viram fotos guardadas

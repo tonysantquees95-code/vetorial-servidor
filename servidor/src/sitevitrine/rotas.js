@@ -16,6 +16,9 @@ export const LAYOUTS = [
   { id: "cartao", nome: "Cartão de visita", desc: "Uma coluna só, com botões grandes. Perfeito para quem vive do Instagram.", gratis: false, ordem: ["servicos", "sobre", "contato"] },
   { id: "galeria", nome: "Galeria de fotos", desc: "As fotos em destaque, para quem vende pelo visual.", gratis: false, ordem: ["galeria", "sobre", "servicos", "depoimentos", "contato"] },
   { id: "classico", nome: "Clássico centralizado", desc: "Sem banner: logo e nome no centro, limpo e direto. Funciona para qualquer ramo.", gratis: true, ordem: ["servicos", "sobre", "galeria", "depoimentos", "contato"] },
+  { id: "app", nome: "Aplicativo com abas", desc: "Topo colorido e atalhos que acompanham a rolagem (Serviços, Fotos, Contato). Parece um app.", gratis: true, ordem: ["servicos", "galeria", "sobre", "depoimentos", "contato"] },
+  { id: "lateral", nome: "Painel lateral", desc: "No computador, o banner e o nome ficam fixos de um lado e o conteúdo rola do outro.", gratis: false, ordem: ["servicos", "sobre", "galeria", "depoimentos", "contato"] },
+  { id: "revista", nome: "Revista (editorial)", desc: "Título gigante, seções numeradas e lista de preços limpa. Visual de marca premium.", gratis: false, ordem: ["sobre", "servicos", "galeria", "depoimentos", "contato"] },
   { id: "destaque", nome: "Destaque em tela cheia", desc: "A arte do seu ramo ocupa o topo inteiro, com o nome grande por cima. Visual de marca.", gratis: false, ordem: ["servicos", "galeria", "sobre", "depoimentos", "contato"] },
 ];
 export const LIMITES = { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } };
@@ -54,12 +57,12 @@ export function normalizarSiteVitrine(d = {}, { assinante = false } = {}) {
   const logoModelo = modeloPorId(String(d.logoModelo || "")) ? String(d.logoModelo) : "";
   // logo montado no editor: a espec inteira é validada aqui; nunca se aceita SVG de fora
   const logoEspec = d.logoEspec && typeof d.logoEspec === "object" ? normalizarEspec(d.logoEspec) : null;
-  return { erros, valor: { nome, whats, cidade: linha(d.cidade, 60), cfg, servicos, fotos, logoModelo: logoEspec ? "" : logoModelo, logoEspec } };
+  return { erros, valor: { nome, whats, cidade: linha(d.cidade, 60), cfg, servicos, fotos, logoModelo: logoEspec ? "" : logoModelo, logoEspec, casarLogo: d.casarLogo !== false } };
 }
 
-const aplicarLogo = (cfg, logoModelo, nome, logoEspec = null) => { const m = modeloPorId(logoModelo); cfg.logo = logoEspec ? normalizarEspec(logoEspec) : m ? especDoModelo(m, nome) : null; return cfg; };
+const aplicarLogo = (cfg, logoModelo, nome, logoEspec = null, casar = true) => { const m = modeloPorId(logoModelo); cfg.logo = logoEspec ? normalizarEspec(logoEspec) : m ? especDoModelo(m, nome) : null; if (cfg.logo && casar) cfg.cor = cfg.logo.cores.principal; return cfg; };
 const paraRender = (s, base, origem, { previa = false, fotoUrl = null, marca, catalogo = null } = {}) => ({
-  loja: { titulo: s.nome, nome: s.nome, whatsapp: s.whats }, cfg: aplicarLogo({ ...s.cfg }, s.logoModelo, s.nome, s.logoEspec),
+  loja: { titulo: s.nome, nome: s.nome, whatsapp: s.whats }, cfg: aplicarLogo({ ...s.cfg }, s.logoModelo, s.nome, s.logoEspec, s.casarLogo !== false),
   servicos: s.servicos.map((x, i) => ({ id: String(i), nome: x.nome, descricao: x.descricao, preco_centavos: x.preco_centavos, duracao_min: 0 })),
   fotos: s.fotos, base, previa, fotoUrl, marca, catalogo,
 });
@@ -101,7 +104,7 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
       return new Response(bin, { headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=86400", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'none'" } });
     }
     if (caminho === "/sitev/modelos" && req.method === "GET") {
-      return json({ layouts: LAYOUTS.map(({ id, nome, desc, gratis }) => ({ id, nome, desc, gratis })), limites: LIMITES, nichos: Object.entries(NICHOS).map(([id, nome]) => ({ id, nome })), temas: Object.entries(TEMAS).map(([id, t]) => ({ id, nome: t.nome, fundo: t.fundo, texto: t.texto, gratis: TEMAS_GRATIS.includes(id) })), logos: listaPublica().filter((x) => x.gratis), textos: Object.fromEntries(Object.keys(NICHOS).map((id) => [id, textosModelo(id, "{nome}")])) });
+      return json({ layouts: LAYOUTS.map(({ id, nome, desc, gratis }) => ({ id, nome, desc, gratis })), limites: LIMITES, nichos: Object.entries(NICHOS).map(([id, nome]) => ({ id, nome })), temas: Object.entries(TEMAS).map(([id, t]) => ({ id, nome: t.nome, fundo: t.fundo, texto: t.texto, gratis: TEMAS_GRATIS.includes(id) })), logos: listaPublica(), textos: Object.fromEntries(Object.keys(NICHOS).map((id) => [id, textosModelo(id, "{nome}")])) });
     }
     if (caminho === "/sitev/previa" && req.method === "POST") {
       if (Number(req.headers.get("content-length") || 0) > 1_800_000) return json({ error: "Muitas fotos de uma vez." }, 413);
@@ -153,7 +156,7 @@ export async function tratarSiteVitrine(req, env, url, caminho) {
         else if (guardadas.has(f.id)) ids.push(f.id);
       }
       for (const antiga of guardadas) if (!ids.includes(antiga)) await env.DB.prepare("DELETE FROM sites_vitrine_fotos WHERE id = ? AND site = ?").bind(antiga, id).run();
-      const dados = { nicho: valor.cfg.nicho, cidade: valor.cidade, cfg: valor.cfg, servicos: valor.servicos, fotos: ids, logoModelo: valor.logoModelo, logoEspec: valor.logoEspec };
+      const dados = { nicho: valor.cfg.nicho, cidade: valor.cidade, cfg: valor.cfg, servicos: valor.servicos, fotos: ids, logoModelo: valor.logoModelo, logoEspec: valor.logoEspec, casarLogo: valor.casarLogo };
       await env.DB.prepare("UPDATE sites_vitrine SET nome = ?, whats = ?, dados = ?, sem_marca = ?, atualizado = ? WHERE id = ?").bind(valor.nome, valor.whats, JSON.stringify(dados), assinante ? 1 : 0, agora, id).run();
       return json({ ok: true, site: doBanco(await meu(), url.origin), ...situacao });
     }

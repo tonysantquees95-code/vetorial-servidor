@@ -32,7 +32,7 @@ test("conferir: nome e WhatsApp obrigatórios, limites do plano", () => {
 test("público: opções e prévia (com HTML escapado)", async () => {
   const env = ENV();
   const m = await (await chamar(env, "GET", "/sitev/modelos")).json();
-  assert.equal(m.temas.filter((t) => t.gratis).length, 2); assert.ok(m.logos.length >= 1 && m.logos.every((l) => l.gratis));
+  assert.equal(m.temas.filter((t) => t.gratis).length, 2); assert.equal(m.logos.length, 48); assert.ok(m.logos.some((l) => l.gratis) && m.logos.some((l) => !l.gratis));
   const p = await (await chamar(env, "POST", "/sitev/previa", { corpo: base({ nome: "<script>alert(1)</script>", servicos: [{ nome: "<b>x</b>" }], fotos: [{ fotoNova: JPEG }] }) })).json();
   assert.ok(!/<script>alert|<b>x<\/b>/.test(p.html)); assert.ok(p.html.includes("data:image/jpeg;base64,")); assert.ok(p.html.includes("Vênus Vitrine"));
   assert.equal((await (await chamar(env, "POST", "/sitev/previa", { corpo: {} })).json()).html, "");
@@ -96,8 +96,8 @@ test("plano pago: tema bloqueado, mais fotos e sem a marca", async () => {
 test("formatos de página: cada um muda a estrutura; os de assinatura ficam bloqueados no grátis", async () => {
   const env = ENV(), u = await usuario(env);
   const m = await (await chamar(env, "GET", "/sitev/modelos")).json();
-  assert.deepEqual(m.layouts.map((l) => l.id), ["banner", "servicos", "loja", "cartao", "galeria", "classico", "destaque"]);
-  assert.deepEqual(m.layouts.filter((l) => l.gratis).map((l) => l.id), ["banner", "servicos", "classico"]);
+  assert.deepEqual(m.layouts.map((l) => l.id), ["banner", "servicos", "loja", "cartao", "galeria", "classico", "app", "lateral", "revista", "destaque"]);
+  assert.deepEqual(m.layouts.filter((l) => l.gratis).map((l) => l.id), ["banner", "servicos", "classico", "app"]);
   const previa = async (layout, extra = {}) => (await (await chamar(env, "POST", "/sitev/previa", { corpo: base({ layout, ...extra }) })).json()).html;
   const banner = await previa("banner"), cartao = await previa("cartao"), loja = await previa("loja");
   assert.ok(banner.includes('class="banner"') && banner.includes("data:image/svg+xml")); assert.ok(!banner.includes('<div class="pagina">'));
@@ -162,4 +162,26 @@ test("novos ramos: cada um tem texto pronto e banner próprio; formato destaque 
   assert.ok(banners.size >= 14, "cada ramo deveria ter banner diferente");
   assert.ok(!(await previa({ layout: "classico" })).includes('class="banner"'));
   assert.ok(Object.keys(m.textos).length >= 14);
+});
+
+test("formatos de verdade diferentes: lateral, revista e app mudam a estrutura da página", async () => {
+  const env = ENV();
+  const previa = async (corpo) => (await (await chamar(env, "POST", "/sitev/previa", { corpo: base(corpo) })).json()).html;
+  const lat = await previa({ layout: "lateral" }), rev = await previa({ layout: "revista" }), app = await previa({ layout: "app", fotos: [{ fotoNova: JPEG }] }), ban = await previa({ layout: "banner" });
+  assert.ok(lat.includes('class="duas"') && lat.includes('class="conteudo"') && lat.includes("position:sticky"));
+  assert.ok(rev.includes("counter-reset:s") && !rev.includes('class="banner"') && !rev.includes("<nav"));
+  assert.ok(app.includes('<nav class="abas"') && app.includes('href="#servicos"') && app.includes('href="#galeria"'));
+  assert.ok(!ban.includes('class="duas"') && !ban.includes('class="abas"'));
+});
+
+test("o banner herda do logo: símbolo, cores, nome e neon", async () => {
+  const env = ENV();
+  const previa = async (corpo) => (await (await chamar(env, "POST", "/sitev/previa", { corpo: base({ layout: "banner", ...corpo }) })).json()).html;
+  const dec = (h) => decodeURIComponent(h.match(/<img class="banner" src="data:image\/svg\+xml;charset=utf-8,([^"]*)"/)[1]);
+  const sem = dec(await previa({}));
+  const com = dec(await previa({ logoEspec: { nome: "Pizzaria Bella", simbolo: "pizza", fonte: "maquina", paleta: "ouro" } }));
+  const neon = dec(await previa({ logoEspec: { nome: "Pizzaria Bella", simbolo: "pizza", fonte: "maquina", paleta: "ouro", neon: { ativo: true, cor: "#00ffcc" } } }));
+  assert.notEqual(sem, com);
+  assert.ok(com.includes("Pizzaria Bella") && com.includes("Courier") && !com.includes("<filter"));
+  assert.ok(neon.includes("<filter") && neon.includes("#00ffcc"));
 });

@@ -16,11 +16,13 @@
     const emReais = (c) => (c ? (c / 100).toFixed(2).replace(".", ",") : "");
     const v = (id) => $(id).value;
     const mostrarAviso = (t) => { aviso.textContent = t || ""; aviso.hidden = !t; };
-    const trancado = () => !assinante && (!(cfg.layouts.find((l) => l.id === layout) || { gratis: true }).gratis || !(cfg.temas.find((t) => t.id === tema) || { gratis: true }).gratis);
+    const logoPago = () => !!logo && !(cfg.logos.find((l) => l.id === logo) || { gratis: true }).gratis;
+    const neonLogo = () => !!(logoEspec && logoEspec.neon && logoEspec.neon.ativo);
+    const trancado = () => !assinante && (logoPago() || neonLogo() || !(cfg.layouts.find((l) => l.id === layout) || { gratis: true }).gratis || !(cfg.temas.find((t) => t.id === tema) || { gratis: true }).gratis);
 
     function dados() {
       return {
-        nicho, layout, nome: v("fr-st-nome"), whats: v("fr-st-whats"), cidade: v("fr-st-cidade"), tema, fonte, cor, logoModelo: logo, logoEspec, slug,
+        nicho, layout, nome: v("fr-st-nome"), whats: v("fr-st-whats"), cidade: v("fr-st-cidade"), tema, fonte, cor, logoModelo: logo, logoEspec, casarLogo: $("fr-st-casar").checked, slug,
         slogan: v("fr-st-slogan"), sobre: v("fr-st-sobre"), horario: v("fr-st-horario"), endereco: v("fr-st-endereco"), instagram: v("fr-st-insta"),
         servicos: servicos.map((s) => ({ nome: s.nome, descricao: s.descricao, preco: centavos(s.preco) })),
         fotos: fotos.map((f) => (f.fotoNova ? { fotoNova: f.fotoNova } : { foto: f.foto })),
@@ -72,6 +74,7 @@
       per.addEventListener("click", abrirEditor); caixa.append(per);
       for (const l of [{ id: "", nome: "Sem logo" }, ...cfg.logos]) {
         const b = document.createElement("button"); b.type = "button"; b.className = "fr-st-logo"; b.setAttribute("aria-pressed", String(l.id === logo)); b.setAttribute("aria-label", l.nome);
+        if (l.id && l.gratis === false) { b.classList.add("tranca"); const cd = document.createElement("span"); cd.className = "fr-cad"; cd.textContent = "Assinatura"; b.append(cd); }
         if (l.id) { const im = document.createElement("img"); im.alt = ""; im.loading = "lazy"; im.width = 120; im.height = 120; im.src = `${API}/ferramentas/logo/previa?modelo=${encodeURIComponent(l.id)}&nome=${nome}`; b.append(im); }
         else { const s = document.createElement("span"); s.textContent = "Sem logo"; b.append(s); }
         b.addEventListener("click", () => { logo = l.id; logoEspec = null; desenharLogos(); previa(); }); caixa.append(b);
@@ -162,7 +165,17 @@
       mostrarAviso("");
       if (rolar) $("painel-site").scrollIntoView({ block: "start", behavior: "smooth" });
     }
+    function recursoTrancado() {
+      if (neonLogo()) return "O efeito neon no logo";
+      if (logoPago()) return "Este logo";
+      if (!(cfg.layouts.find((l) => l.id === layout) || { gratis: true }).gratis) return "Este formato de página";
+      return "Este tema";
+    }
+    function convidar() {
+      FR.convidarAssinar({ recurso: recursoTrancado(), aoEntrar: async () => { const r = await FR.chamar("GET", "/sitev"); if (r.status === 200) { assinante = !!r.corpo.assinante; desenharEscolhas(); desenharLogos(); previa(); if (!trancado()) seguir(); } } });
+    }
     function seguir() {
+      if (trancado()) return convidar();
       if (passo === 1) {
         if (!v("fr-st-nome").trim()) return mostrarAviso("Escreva o nome do negócio para continuar."), ($("fr-st-nome").focus());
         if (v("fr-st-whats").replace(/\D/g, "").length < 10) return mostrarAviso("Coloque o WhatsApp com DDD para continuar."), ($("fr-st-whats").focus());
@@ -179,7 +192,7 @@
       const qr = `${API}/ferramentas/qr?texto=${encodeURIComponent(s.link)}`; $("fr-st-qr").src = qr; $("fr-st-qr-baixar").href = qr;
     }
     function preencher(s) {
-      nicho = s.nicho || "salao"; layout = s.cfg.layout || "banner"; tema = s.cfg.tema; fonte = s.cfg.fonte || "moderna"; cor = s.cfg.cor; logo = s.logoModelo || ""; logoEspec = s.logoEspec || null; logoSvgUrl = s.logoEspec && s.slug ? `${API}/w/${s.slug}/logo.svg` : ""; slug = s.slug; textoAuto = { slogan: false, sobre: false };
+      $("fr-st-casar").checked = s.casarLogo !== false; nicho = s.nicho || "salao"; layout = s.cfg.layout || "banner"; tema = s.cfg.tema; fonte = s.cfg.fonte || "moderna"; cor = s.cfg.cor; logo = s.logoModelo || ""; logoEspec = s.logoEspec || null; logoSvgUrl = s.logoEspec && s.slug ? `${API}/w/${s.slug}/logo.svg` : ""; slug = s.slug; textoAuto = { slogan: false, sobre: false };
       $("fr-st-nicho").value = nicho; $("fr-st-nome").value = s.nome; $("fr-st-whats").value = s.whats; $("fr-st-cidade").value = s.cidade || "";
       $("fr-st-slogan").value = s.cfg.slogan || ""; $("fr-st-sobre").value = s.cfg.sobre || ""; $("fr-st-horario").value = s.cfg.horario || ""; $("fr-st-endereco").value = s.cfg.endereco || ""; $("fr-st-insta").value = s.cfg.instagram || "";
       servicos.length = 0; for (const x of s.servicos) servicos.push({ nome: x.nome, descricao: x.descricao || "", preco: emReais(x.preco_centavos) });
@@ -190,14 +203,14 @@
     async function publicar() {
       mostrarAviso("");
       if (!v("fr-st-nome").trim()) return ir(1), mostrarAviso("Escreva o nome do negócio.");
-      if (trancado() && !FR.lerToken()) { ir(3); $("fr-st-convite").hidden = false; return; }
+      if (trancado()) { convidar(); return; }
       if (!FR.lerToken()) return FR.pedirEntrada(publicar, "", "Seu site está quase no ar! Entre com o seu Vetorial ID para publicar. É grátis, uma conta só serve para todos os nossos apps.");
       const b = $("fr-st-publicar"); b.disabled = true; b.textContent = "Publicando…";
       try {
         const r = await FR.chamar("POST", "/sitev", dados());
         if (r.status === 401) { FR.guardarToken(""); return FR.pedirEntrada(publicar, "Sua sessão venceu. Entre de novo para publicar."); }
         if (r.corpo && typeof r.corpo.assinante === "boolean") { assinante = r.corpo.assinante; desenharEscolhas(); }
-        if (r.status === 403) { ir(3); $("fr-st-convite").hidden = false; return mostrarAviso(r.corpo.error); }
+        if (r.status === 403) { convidar(); return; }
         if (r.status !== 200) return mostrarAviso((r.corpo && r.corpo.error) || "Não deu para publicar agora. Tente de novo.");
         const s = r.corpo.site; fotos.length = 0; for (const id of s.fotos) fotos.push({ foto: id, miniatura: `${API}/w/${s.slug}/foto/${id}` });
         desenharFotos(); mostrarPronto(s); ir(6);
@@ -228,6 +241,7 @@
     }
 
     $("fr-st-nicho").addEventListener("change", () => { nicho = v("fr-st-nicho"); textosDoRamo(); previa(); });
+    $("fr-st-casar").addEventListener("change", previa);
     $("fr-st-nome").addEventListener("input", () => { textosDoRamo(); previa(); });
     $("fr-st-nome").addEventListener("change", () => { if (passo === 2) desenharLogos(); });
     $("fr-st-slogan").addEventListener("input", () => { textoAuto.slogan = false; previa(); });

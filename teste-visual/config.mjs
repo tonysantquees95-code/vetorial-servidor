@@ -213,6 +213,10 @@ export default {
       if (!ultimaPrevia || ultimaPrevia.simbolo !== "pizza" || ultimaPrevia.fonte !== "maquina") throw new Error("a prévia não recebeu o ícone e a fonte escolhidos");
       await p.click('.fr-ed-op:has-text("Com neon")'); await p.waitForTimeout(400);
       if (!(await p.locator(".fr-ed-msg").innerText()).includes("assinatura")) throw new Error("o aviso do neon (assinatura) não apareceu");
+      await p.click(".fr-ed-caixa .fr-nav .btn:not(.sec)"); await ESPERA(p);
+      if (!(await p.locator("#fr-assine").isVisible())) throw new Error("com neon e sem assinatura, deveria abrir a janela 'Assine a Vênus'");
+      if (criou) throw new Error("neon sem assinatura não deveria criar o logo");
+      await p.click('#fr-assine button:has-text("Agora não")');
       await p.click('.fr-ed-op:has-text("Sem neon")');
       // não pode cortar nem estourar a janela do editor
       const caixa = await p.locator(".fr-ed-caixa").boundingBox(), vp = p.viewportSize();
@@ -299,6 +303,10 @@ export default {
       if ((await p.locator("#fr-st-fontes button").count()) !== 6) throw new Error("deveriam aparecer as 6 fontes");
       await p.click('#fr-st-layouts button:has-text("Vitrine de produtos")'); await ESPERA(p);
       if (!logado && !(await p.locator("#fr-st-convite").isVisible())) throw new Error("o convite do formato bloqueado não apareceu");
+      await p.click("#fr-st-segue"); await ESPERA(p);
+      if (!(await p.locator("#fr-assine").isVisible())) throw new Error("ao continuar com formato de assinatura, deveria abrir a janela 'Assine a Vênus'");
+      if (!(await p.locator('.fr-passo[data-passo="3"]').isVisible())) throw new Error("deveria continuar no passo 3 enquanto o formato for de assinatura");
+      await p.click('#fr-assine button:has-text("Agora não")');
       await p.click('#fr-st-layouts button:has-text("Serviços em lista")');
       if (await p.locator("#fr-st-convite").isVisible()) throw new Error("o convite deveria sumir no formato grátis");
       await p.click('#fr-st-temas button:has-text("Azul noite")'); await ESPERA(p);
