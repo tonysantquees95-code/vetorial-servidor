@@ -71,7 +71,7 @@ test("painel: projetos, fases e progresso (Vortex já vem ligado ao repositório
   const env = ENV();
   const a = await admin(env);
   const { d } = await chamar(env, a.token, "/dev/painel");
-  assert.deepEqual(d.projetos.map((p) => p.id), ["venus", "devcenter", "vindex", "vortex", "velox", "drive", "voxix", "vspace", "vetogoshi", "vyntem"]);
+  assert.deepEqual(d.projetos.map((p) => p.id), ["venus", "devcenter", "vindex", "vortex", "velox", "drive", "voxix", "vspace", "vetogoshi", "vyntem", "vynx"]);
   const venus = d.projetos[0];
   assert.ok(venus.fases.length >= 8);
   assert.equal(venus.conectado, false); // sem GITHUB_TOKEN no teste

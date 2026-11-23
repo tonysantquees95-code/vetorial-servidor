@@ -1,7 +1,7 @@
 // Feedback, relato de erro e pesquisa rápida. Só guarda o que a pessoa escreveu + app, versão e plataforma (nada de conversa, chave ou senha).
 import { ErroLoja } from "../loja/lojas.js";
 
-export const APPS = { venus: "Vênus", vindex: "Vindex", vortex: "Vortex", voxix: "Voxix", drive: "Vetorial Drive", vyntem: "Vyntem", vspace: "V-Space", velox: "Velox", vetogoshi: "Vetogoshi", painel: "Painel Dev", site: "Site" };
+export const APPS = { venus: "Vênus", vindex: "Vindex", vortex: "Vortex", voxix: "Voxix", drive: "Vetorial Drive", vyntem: "Vyntem", vynx: "Vynx OS", vspace: "V-Space", velox: "Velox", vetogoshi: "Vetogoshi", painel: "Painel Dev", site: "Site" };
 export const PLATAFORMAS = new Set(["android", "windows", "web", "ios", "mac", "outro"]);
 export const TIPOS = new Set(["problema", "ideia", "elogio", "pesquisa"]);
 export const COMO_CONHECEU = { instagram: "Instagram", amigo: "Indicação de amigo ou familiar", toni: "Direto com o Toni", google: "Pesquisa no Google", video: "Vídeo ou post nas redes", outro: "Outro" };

@@ -7,6 +7,7 @@ export const REPO_VELOX = "tonysantquees95-code/velox-gaming-search";
 export const REPO_DRIVE = "tonysantquees95-code/vetorial-drive";
 export const REPO_VOXIX = "tonysantquees95-code/voxix";
 export const REPO_VYNTEM = "tonysantquees95-code/Vyntem";
+export const REPO_VYNX = "tonysantquees95-code/vynx";
 export const REPO_VSPACE = "tonysantquees95-code/v-space";
 export const REPO_VETOGOSHI = "tonysantquees95-code/vetogoshi";
 export const REPO_DEV_CENTER = "tonysantquees95-code/vetorial-dev-center";
@@ -58,6 +59,9 @@ export const PROJETOS = [
   { id: "vyntem", nome: "Vyntem · Finanças com IA", repo: REPO_VYNTEM, descricao: "Controle de gastos com inteligência artificial: lança por frase ou foto da nota, contas, cartões, calendário e gráficos (Android e Windows).", apks: [
       { app: "vyntem-android", rotulo: "Vyntem (Android)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^Vyntem\.apk$/i.test(n) },
       { app: "vyntem-windows", rotulo: "Vyntem (Windows)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VyntemSetup\.exe$/i.test(n) },
+    ] },
+  { id: "vynx", nome: "Vynx OS · Espaço para devs", repo: REPO_VYNX, descricao: "Laboratórios Linux descartáveis (WSL2) e Painel Dev com GitHub para desenvolvedores (Windows).", apks: [
+      { app: "vynx-windows", rotulo: "Vynx OS (Windows)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VynxSetup\.exe$/i.test(n) },
     ] },
 ];
 

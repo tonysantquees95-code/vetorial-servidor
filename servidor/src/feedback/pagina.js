@@ -4,7 +4,7 @@ import { corSobre } from "../meusite/site.js";
 import { AJUDA, APPS, CHAMOU, COMO_CONHECEU, INDICARIA, PLATAFORMAS } from "./dados.js";
 
 const dadosJs = (o) => JSON.stringify(o).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
-const CORES = { venus: "#E36BD0", vindex: "#36D6FF", vortex: "#8E6CEF", voxix: "#6D7CFF", drive: "#36D6FF", vyntem: "#2ECC8F", vspace: "#8E6CEF", velox: "#F5B93A", vetogoshi: "#F28B50", painel: "#36D6FF", site: "#E36BD0" };
+const CORES = { venus: "#E36BD0", vindex: "#36D6FF", vortex: "#8E6CEF", voxix: "#6D7CFF", drive: "#36D6FF", vyntem: "#2ECC8F", vynx: "#2dd4bf", vspace: "#8E6CEF", velox: "#F5B93A", vetogoshi: "#F28B50", painel: "#36D6FF", site: "#E36BD0" };
 
 const CSS = `.tela{padding-bottom:40px}.topo{margin:6px 0 16px}.topo h1{font-size:24px}.beta{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:20px;border:1px solid var(--cor);color:var(--cor);font-size:12px;font-weight:700;letter-spacing:.06em}
 .abas{display:flex;gap:8px;margin:0 0 20px;flex-wrap:wrap}.aba{flex:1 1 0;min-width:max-content;min-height:48px;padding:8px 12px;border-radius:24px;border:2px solid var(--borda);background:var(--painel);cursor:pointer;font-weight:700;font-size:14px}
