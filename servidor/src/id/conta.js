@@ -9,7 +9,7 @@ export const MAX_ATIVAS = 2;
 export const TTL_ATIVA_MS = 5 * 60_000; // sem ping por 5 minutos = sessão inativa
 /** Cada aplicativo tem os seus próprios limites. O Velox é gratuito e público: não entra na conta de limites. */
 export const APPS_COM_LIMITE = new Set(["venus", "vindex", "vortex", "vyntem"]);
-const APPS_DE_LOGIN = new Set([...APPS_COM_LIMITE, "velox", "drive", "voxix", "vspace"]);
+const APPS_DE_LOGIN = new Set([...APPS_COM_LIMITE, "velox", "drive", "voxix", "vspace", "vynx"]);
 export function appDeLogin(app, dispositivoId = "") {
   // versões antigas do Vindex não diziam o app: o identificador do aparelho começa com "vindex-"
   const a = String(app || (String(dispositivoId).startsWith("vindex-") ? "vindex" : "venus")).trim().toLowerCase();

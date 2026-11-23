@@ -95,6 +95,11 @@ export async function tratarId(req, env, url, caminho) {
     if (caminho === "/id/telefone" && req.method === "PUT") return json(await salvarTelefone(env, ctx, (await corpo(req)).telefone));
     if (caminho === "/id/perfil" && req.method === "PUT") return json({ usuario: await salvarPerfil(env, ctx, await corpo(req)) });
     if (caminho === "/id/app-token" && req.method === "POST") return json(await tokenDeApp(env, ctx, String((await corpo(req)).app || "")));
+    if (caminho === "/id/github" && req.method === "GET") { // Vynx OS: o administrador recebe o token de LEITURA do GitHub que já está no servidor
+      if (!ehAdmin(env, ctx.usuario.email)) throw new ErroId(403, "nao_admin", "Só o administrador usa o GitHub do servidor.");
+      if (!env.GITHUB_TOKEN) throw new ErroId(503, "sem_github", "O servidor ainda não tem o token do GitHub.");
+      return json({ token: String(env.GITHUB_TOKEN) });
+    }
     if (caminho === "/id/eu" && req.method === "GET") return json({ id: ctx.usuario.id, email: ctx.usuario.email, nome: ctx.usuario.nome, loja: ctx.usuario.loja });
     if (caminho === "/id/renovar" && req.method === "POST") return json({ ...(await renovarToken(env, ctx)), licenca: await licenca(env, ctx.usuario, origem, false, undefined, undefined, ctx.dispositivo) });
     if (caminho === "/id/sair" && req.method === "POST") { await encerrarSessao(env, ctx.usuario.id, ctx.sessao, "saiu"); return json({ ok: true }); }

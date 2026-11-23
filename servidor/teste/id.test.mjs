@@ -459,3 +459,19 @@ test("Vetorial ID: o V-Space (vspace) cria conta e entra, sem limite de aparelho
   assert.equal((await post(env, "/id/entrar", { email: base.email, senha: base.senha, dispositivo: disp(4), app: "vspace" })).status, 200);
   assert.equal((await post(env, "/id/entrar", { email: base.email, senha: base.senha, dispositivo: disp(5), app: "vspace" })).status, 200);
 });
+
+test("/id/github: só o administrador recebe o token de leitura do GitHub (Vynx OS)", async () => {
+  const env = { ...ENV(), GITHUB_TOKEN: "github_pat_de_teste_0123456789", ADMIN_EMAIL: "dono@vetorial.test" };
+  const get = (t) => tratarId(req(t, "https://v.test/id/github", { method: "GET" }), env, new URL("https://v.test/id/github"), "/id/github");
+  const comum = await cadastrar(env, { email: "gente@exemplo.com", senha: "senha-forte-1", nome: "Gente", dispositivo: disp(1, "windows"), app: "vynx" });
+  const negado = await get(comum.token);
+  assert.equal(negado.status, 403);
+  assert.ok(!JSON.stringify(await negado.json()).includes("github_pat"));
+  const dono = await cadastrar(env, { email: "dono@vetorial.test", senha: "senha-forte-1", nome: "Dono", dispositivo: disp(2, "windows"), app: "vynx" });
+  const ok = await get(dono.token);
+  assert.equal(ok.status, 200);
+  assert.equal((await ok.json()).token, "github_pat_de_teste_0123456789");
+  assert.equal(ok.headers.get("cache-control"), "no-store");
+  const semToken = await tratarId(req(dono.token, "https://v.test/id/github", { method: "GET" }), { ...env, GITHUB_TOKEN: "" }, new URL("https://v.test/id/github"), "/id/github");
+  assert.equal(semToken.status, 503);
+});
