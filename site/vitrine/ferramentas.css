@@ -190,3 +190,16 @@ a.fr-kit-c{text-decoration:none}
 .fr-st-logo.tranca{position:relative}.fr-st-logo .fr-cad{position:absolute;top:6px;right:6px;background:#000000b0;color:#ffd166;border-radius:10px;font-size:11px;font-weight:800;padding:3px 7px}
 #fr-st-logos{max-height:420px;overflow:auto;padding:4px}
 #fr-assine .fr-caixa{max-height:calc(100dvh - 32px);overflow:auto}
+/* computador: passos e escolhas à esquerda, prévia grande à direita */
+@media(min-width:1000px){
+  #fr-criar .wrap{max-width:1560px}
+  #painel-site.fr-wiz{display:grid;grid-template-columns:400px minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:28px;align-items:start}
+  #painel-site .fr-passos{grid-column:1;grid-row:1;grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 14px}
+  #painel-site .fr-ct-grade{display:contents}
+  #painel-site .fr-ct-form{grid-column:1;grid-row:2;min-width:0}
+  #painel-site .fr-ct-previa{grid-column:2;grid-row:1 / span 2;position:sticky;top:12px;align-self:start}
+  #fr-st-moldura{max-width:none;margin-left:0;margin-right:0}
+  #fr-st-moldura:not(.pc){max-width:430px;margin-left:auto;margin-right:auto}
+  #painel-site .fr-ct-moldura iframe{height:max(640px,calc(100vh - 130px))}
+  #fr-st-logos{max-height:none}
+}

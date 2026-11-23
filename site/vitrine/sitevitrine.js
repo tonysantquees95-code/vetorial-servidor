@@ -255,6 +255,7 @@
     document.querySelectorAll(".fr-kit-c[data-kit]").forEach((b) => b.addEventListener("click", () => kit(b.dataset.kit)));
     $("fr-st-ap-cel").addEventListener("click", () => { $("fr-st-moldura").classList.remove("pc"); $("fr-st-ap-cel").setAttribute("aria-pressed", "true"); $("fr-st-ap-pc").setAttribute("aria-pressed", "false"); });
     $("fr-st-ap-pc").addEventListener("click", () => { $("fr-st-moldura").classList.add("pc"); $("fr-st-ap-pc").setAttribute("aria-pressed", "true"); $("fr-st-ap-cel").setAttribute("aria-pressed", "false"); });
+    if (window.matchMedia && matchMedia("(min-width:1000px)").matches) $("fr-st-ap-pc").click(); // no computador a prévia já abre grande
     $("fr-st-copiar").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("fr-st-link").textContent); $("fr-st-copiar").textContent = "Copiado!"; setTimeout(() => { $("fr-st-copiar").textContent = "Copiar link"; }, 1800); } catch { /* sem permissão */ } });
     $("fr-st-ja-assino").addEventListener("click", () => FR.pedirEntrada(async () => { try { const r = await FR.chamar("GET", "/sitev"); if (r.status === 200) { assinante = !!r.corpo.assinante; if (r.corpo.site && !v("fr-st-nome")) preencher(r.corpo.site); desenharEscolhas(); desenharServicos(); desenharFotos(); } } catch { /* sem internet */ } }, "", "Entre com o seu Vetorial ID para liberar os formatos e temas da sua assinatura."));
     carregar();
