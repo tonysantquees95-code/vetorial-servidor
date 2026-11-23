@@ -22,7 +22,7 @@ export const SECOES = {
 const ORDEM_PADRAO = ["servicos", "produtos", "sobre", "equipe", "galeria", "depoimentos", "contato"];
 const FONTES_DO_SITE = ["moderna", "elegante", "classica", "arredondada", "forte", "cursiva"];
 /** Formatos de página. "classico" é o do Meu site das lojas; os outros são do site da Vitrine. */
-export const LAYOUTS_SITE = ["classico", "banner", "servicos", "loja", "cartao", "galeria"];
+export const LAYOUTS_SITE = ["classico", "banner", "servicos", "loja", "cartao", "galeria", "destaque"];
 export const MAX_FOTOS = 9;
 
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -93,6 +93,14 @@ export function textosModelo(nicho, nome, cidade = "") {
     manicure: ["Unhas lindas, do seu jeito", `A ${nome} cuida das suas mãos e pés com carinho, higiene e muito capricho. Escolha o serviço, marque o horário e pronto.${onde}`],
     estetica: ["Cuidado e bem-estar para o seu dia a dia", `${nome} oferece tratamentos pensados para a sua pele e para o seu bem-estar, com atendimento personalizado e horário marcado.${onde}`],
     loja: ["Peças escolhidas com carinho", `${nome} reúne produtos selecionados com atendimento próximo e entrega cuidadosa. Veja a vitrine e fale com a gente pelo WhatsApp.${onde}`],
+    restaurante: ["Comida boa, feita com capricho", `${nome} serve pratos feitos na hora, com ingredientes frescos e preço justo. Veja o cardápio e faça o seu pedido pelo WhatsApp.${onde}`],
+    pet: ["Cuidado de verdade para o seu bichinho", `${nome} cuida do seu pet com carinho, banho, tosa, consulta e tudo que ele precisa. Marque o horário pelo WhatsApp.${onde}`],
+    oficina: ["Serviço bem feito, com garantia", `${nome} faz o conserto com peças de qualidade, orçamento claro e prazo combinado. Fale com a gente e peça o seu orçamento.${onde}`],
+    fitness: ["Treino que cabe na sua rotina", `${nome} tem acompanhamento de perto, ambiente acolhedor e planos para cada objetivo. Venha conhecer e fazer uma aula experimental.${onde}`],
+    saude: ["Atendimento com cuidado e atenção", `${nome} oferece atendimento humanizado, com horário marcado e uma equipe preparada para cuidar de você e da sua família.${onde}`],
+    fotografia: ["Momentos que ficam para sempre", `${nome} registra os seus melhores momentos com olhar cuidadoso, entrega no prazo e atendimento próximo. Veja os pacotes e peça o seu orçamento.${onde}`],
+    reformas: ["Reforma sem dor de cabeça", `${nome} cuida da sua obra do início ao fim, com orçamento detalhado, prazo combinado e acabamento caprichado.${onde}`],
+    educacao: ["Aprender com quem entende", `${nome} oferece aulas e cursos com acompanhamento de perto e material de qualidade. Veja as turmas e tire suas dúvidas pelo WhatsApp.${onde}`],
     outro: ["Atendimento de confiança", `${nome} atende com qualidade, cuidado e respeito ao seu tempo. Veja os serviços e fale com a gente.${onde}`],
   };
   const [slogan, sobre] = mapa[mapa[nicho] ? nicho : "outro"];
@@ -132,6 +140,7 @@ section{padding:30px 0 6px}h2{font-size:clamp(22px,5vw,28px);margin-bottom:14px}
 function camadaDoLayout(l) {
   const banner = `.topo.cb{position:relative;padding:0;background:none;text-align:left;overflow:hidden}.cb .banner{display:block;width:100%;height:clamp(170px,38vw,300px);object-fit:cover}.cb .miolo{position:relative;max-width:960px;margin:0 auto;padding:0 18px 26px}.cb .logo{margin-top:-46px;position:relative;background:var(--fundo);padding:8px;border-radius:20px;border:1px solid var(--borda);max-width:150px;max-height:100px}.cb h1{margin-top:12px}.cb .slogan{margin-left:0}.cb .botoes{justify-content:flex-start}`;
   if (l === "banner") return banner;
+  if (l === "destaque") return banner + `.topo.cb{min-height:clamp(330px,70vw,520px);display:grid;align-items:center;text-align:center;color:#fff}.cb .banner{position:absolute;inset:0;height:100%}.cb::after{content:"";position:absolute;inset:0;background:linear-gradient(#00000040,#00000080)}.cb .miolo{position:relative;z-index:1;padding:44px 18px;width:100%}.cb .logo{margin:0 auto 6px;display:block;background:#ffffffee;border-radius:20px;padding:10px;max-width:190px;max-height:120px}.cb h1{color:#fff;text-shadow:0 2px 18px #0008;font-size:clamp(32px,8vw,56px)}.cb .slogan{color:#ffffffe6;margin:10px auto 0;max-width:560px;font-size:clamp(16px,3.6vw,20px)}.cb .botoes{justify-content:center;margin-top:18px}.cb .bt.sec{background:#ffffff26;color:#fff;border-color:#ffffff88}`;
   if (l === "servicos") return banner + `.cb .banner{height:clamp(110px,24vw,190px)}#servicos .grade{grid-template-columns:1fr}#servicos .cartao{flex-direction:row;flex-wrap:wrap;align-items:baseline;border-radius:14px}#servicos .linha{flex:1;min-width:60%}`;
   if (l === "galeria") return banner + `#galeria{padding-top:6px}.fotos{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.fotos img{aspect-ratio:4/3;border-radius:18px}.fotos img:first-child{grid-column:span 2;grid-row:span 2;aspect-ratio:auto;height:100%}`;
   if (l === "loja") return banner + `.grade{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}#servicos .cartao{text-align:center;align-items:center;padding:22px 14px;border-radius:22px}#servicos .linha{flex-direction:column;align-items:center;gap:6px}.pedido{margin-top:8px;display:inline-block;padding:9px 16px;border-radius:30px;background:var(--cor);color:var(--sobre);font-weight:700;font-size:14px;text-decoration:none}.fotos{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}`;
@@ -214,7 +223,7 @@ export function renderizarSite({ loja, cfg, servicos = [], equipe = [], produtos
     ...(loja.whatsapp ? { telephone: `+${soDigitos(loja.whatsapp).length <= 11 ? "55" : ""}${soDigitos(loja.whatsapp)}` } : {}),
     ...(cfg.endereco ? { address: { "@type": "PostalAddress", streetAddress: cfg.endereco } } : {}),
   };
-  const comBanner = ["banner", "servicos", "galeria", "loja"].includes(layout);
+  const comBanner = ["banner", "servicos", "galeria", "loja", "destaque"].includes(layout);
   const cabeca = comBanner
     ? `<header class="topo cb"><img class="banner" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(bannerSvg(cfg.nicho, cor))}" alt=""><div class="miolo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></div></header>`
     : `<header class="topo">${logo}<h1>${esc(nome)}</h1><p class="slogan">${esc(slogan)}</p><div class="botoes">${botoes}</div></header>`;

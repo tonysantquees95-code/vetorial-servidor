@@ -15,6 +15,8 @@ export const LAYOUTS = [
   { id: "loja", nome: "Vitrine de produtos", desc: "Cartões de produto com botão de pedir no WhatsApp, como uma loja.", gratis: false, ordem: ["galeria", "servicos", "sobre", "depoimentos", "contato"] },
   { id: "cartao", nome: "Cartão de visita", desc: "Uma coluna só, com botões grandes. Perfeito para quem vive do Instagram.", gratis: false, ordem: ["servicos", "sobre", "contato"] },
   { id: "galeria", nome: "Galeria de fotos", desc: "As fotos em destaque, para quem vende pelo visual.", gratis: false, ordem: ["galeria", "sobre", "servicos", "depoimentos", "contato"] },
+  { id: "classico", nome: "Clássico centralizado", desc: "Sem banner: logo e nome no centro, limpo e direto. Funciona para qualquer ramo.", gratis: true, ordem: ["servicos", "sobre", "galeria", "depoimentos", "contato"] },
+  { id: "destaque", nome: "Destaque em tela cheia", desc: "A arte do seu ramo ocupa o topo inteiro, com o nome grande por cima. Visual de marca.", gratis: false, ordem: ["servicos", "galeria", "sobre", "depoimentos", "contato"] },
 ];
 export const LIMITES = { gratis: { fotos: 6, servicos: 8 }, pago: { fotos: 9, servicos: 20 } };
 const RESERVADOS = new Set(["admin", "api", "app", "www", "vitrine", "painel", "dev", "login", "suporte", "vetorial", "venus", "loja", "site", "teste"]);

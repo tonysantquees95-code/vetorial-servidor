@@ -1,6 +1,6 @@
 // Banner do site: arte em SVG feita aqui (sem foto, sem direito autoral), com os símbolos do ramo da pessoa e a cor escolhida.
 // O SVG sai sempre do servidor, só com cores validadas e símbolos da nossa lista fechada.
-import { SIMBOLOS } from "./logos.js";
+import { TODOS_SIMBOLOS as SIMBOLOS } from "./logos.js";
 
 const DO_RAMO = {
   salao: ["tesoura", "pente", "secador", "espelho", "batom", "flor"],
@@ -8,6 +8,14 @@ const DO_RAMO = {
   manicure: ["esmalte", "brilho", "flor", "estrela", "diamante"],
   estetica: ["folha", "flor", "lua", "coracao", "brilho", "xicara"],
   loja: ["sacola", "coroa", "brilho", "estrela", "coracao", "raio"],
+  restaurante: ["pizza", "talheres", "hamburguer", "taca", "fogo", "bolo"],
+  pet: ["gato", "pata", "coracao", "estrela", "folha"],
+  oficina: ["engrenagem", "carro", "martelo", "chave", "raio"],
+  fitness: ["haltere", "bola", "trofeu", "fogo", "coracao"],
+  saude: ["dente", "coracao", "escudo", "folha", "brilho"],
+  fotografia: ["camera", "brilho", "estrela", "sol", "lua"],
+  reformas: ["martelo", "casa", "engrenagem", "lampada", "chave"],
+  educacao: ["livro", "lapis", "lampada", "estrela", "trofeu"],
   outro: ["brilho", "estrela", "folha", "coroa", "raio", "coracao"],
 };
 const hex = (c) => (/^#[0-9a-fA-F]{6}$/.test(String(c || "")) ? String(c).toLowerCase() : "#c2185b");

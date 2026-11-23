@@ -34,6 +34,14 @@ export const NICHOS = {
   manicure: "Manicure e unhas",
   estetica: "Estética e bem-estar",
   loja: "Loja",
+  restaurante: "Restaurante e lanchonete",
+  pet: "Pet shop e veterinário",
+  oficina: "Oficina e serviços técnicos",
+  fitness: "Academia e esportes",
+  saude: "Clínica e saúde",
+  fotografia: "Fotografia e eventos",
+  reformas: "Reformas e construção",
+  educacao: "Cursos e educação",
   outro: "Outro negócio",
 };
 

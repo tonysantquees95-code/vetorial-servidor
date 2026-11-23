@@ -96,8 +96,8 @@ test("plano pago: tema bloqueado, mais fotos e sem a marca", async () => {
 test("formatos de página: cada um muda a estrutura; os de assinatura ficam bloqueados no grátis", async () => {
   const env = ENV(), u = await usuario(env);
   const m = await (await chamar(env, "GET", "/sitev/modelos")).json();
-  assert.deepEqual(m.layouts.map((l) => l.id), ["banner", "servicos", "loja", "cartao", "galeria"]);
-  assert.deepEqual(m.layouts.filter((l) => l.gratis).map((l) => l.id), ["banner", "servicos"]);
+  assert.deepEqual(m.layouts.map((l) => l.id), ["banner", "servicos", "loja", "cartao", "galeria", "classico", "destaque"]);
+  assert.deepEqual(m.layouts.filter((l) => l.gratis).map((l) => l.id), ["banner", "servicos", "classico"]);
   const previa = async (layout, extra = {}) => (await (await chamar(env, "POST", "/sitev/previa", { corpo: base({ layout, ...extra }) })).json()).html;
   const banner = await previa("banner"), cartao = await previa("cartao"), loja = await previa("loja");
   assert.ok(banner.includes('class="banner"') && banner.includes("data:image/svg+xml")); assert.ok(!banner.includes('<div class="pagina">'));
@@ -150,4 +150,16 @@ test("cartão de visita online e contato .vcf saem dos dados do site, escapados 
   assert.match(v.headers.get("content-type"), /text\/vcard/);
   const txt = await v.text(); assert.ok(txt.startsWith("BEGIN:VCARD") && txt.includes("TEL;TYPE=CELL,VOICE:+5551999998888") && txt.includes("END:VCARD"));
   assert.equal((await chamar(env, "GET", "/w/nao-existe-mesmo/cartao")).status, 404);
+});
+
+test("novos ramos: cada um tem texto pronto e banner próprio; formato destaque cobre o topo", async () => {
+  const env = ENV();
+  const m = await (await chamar(env, "GET", "/sitev/modelos")).json();
+  assert.ok(m.nichos.length >= 14);
+  const previa = async (corpo) => (await (await chamar(env, "POST", "/sitev/previa", { corpo: base(corpo) })).json()).html;
+  const banners = new Set();
+  for (const n of m.nichos) { const h = await previa({ nicho: n.id, layout: "destaque" }); banners.add(h.match(/data:image\/svg\+xml[^"]*/)[0]); assert.ok(h.includes("<h1>")); }
+  assert.ok(banners.size >= 14, "cada ramo deveria ter banner diferente");
+  assert.ok(!(await previa({ layout: "classico" })).includes('class="banner"'));
+  assert.ok(Object.keys(m.textos).length >= 14);
 });
