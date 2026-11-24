@@ -1,0 +1,16 @@
+/* Aprender a usar a Vênus */
+.ap-hero{padding-bottom:10px}
+.ap-hero .wrap{grid-template-columns:1fr}
+.ap-videos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;justify-items:center}
+.ap-video{margin:0;width:100%;max-width:300px;min-width:0}
+.ap-video video{width:100%;aspect-ratio:9/16;border-radius:22px;border:1px solid var(--borda);background:#0c1030;display:block;box-shadow:0 24px 60px #0007}
+.ap-video figcaption{margin-top:12px;display:flex;flex-direction:column;gap:2px;overflow-wrap:anywhere}
+.ap-video figcaption b{font-size:17px}.ap-video figcaption span{color:var(--suave);font-size:14px}
+.ap-nota{text-align:center;color:var(--suave);font-size:14px;margin:26px auto 0;max-width:640px}
+.ap-trilha{list-style:none;padding:0;margin:0 auto;display:grid;gap:14px;max-width:760px}
+.ap-trilha li{display:flex;gap:16px;align-items:flex-start}
+.ap-trilha li:hover{transform:none}
+.ap-n{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,#ec6fd633,#7aa2ff33);border:1px solid var(--borda)}
+.ap-trilha h3{margin:0 0 6px;font-size:18px}.ap-trilha p{margin:0;color:var(--suave);font-size:15px}.ap-trilha p b{color:var(--texto)}
+.ap-fim{text-align:center;margin-top:30px}
+body.na-app .topo,body.na-app .faixa-ig,body.na-app .abas-m,body.na-app footer{display:none}

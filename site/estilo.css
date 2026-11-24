@@ -247,3 +247,4 @@ details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:non
 .prova-lista li{background:var(--painel);border:1px solid var(--borda);border-radius:18px;padding:16px 18px;min-width:0;overflow-wrap:anywhere}
 .prova-lista b{display:block;font-size:17px}
 .prova-lista small{display:block;color:var(--suave);font-size:13px;margin-top:4px}
+.ap-faixa{padding:0 0 6px}.ap-faixa .vv-faixa{margin:0 auto}

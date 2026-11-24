@@ -9,6 +9,12 @@ export default {
   porta: 4191,
   cenarios: [
     ["home", "", async () => {}],
+    ["aprender-videos", "aprender.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
+      if ((await p.locator(".ap-video video").count()) !== 3) throw new Error("a página Aprender deveria ter 3 vídeos");
+      if ((await p.locator(".ap-trilha li").count()) !== 6) throw new Error("a trilha deveria ter 6 passos");
+      await p.locator("#videos").scrollIntoViewIfNeeded();
+    }],
     ["home-prova", "", async (p) => {
       const l = p.locator(".prova-lista li");
       if ((await l.count()) !== 4) throw new Error("a faixa de provas da home deveria ter 4 itens");
@@ -394,15 +400,19 @@ export default {
       if (!/7 cliques/.test(await p.locator("#fr-lista").innerText())) throw new Error("a contagem de cliques não apareceu");
       await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
     }],
-    ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "gratis", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
+    ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "gratis", "quem-somos", "seguranca", "conta", "proposta", "aprender"].map((n) => pagina(n, `${n}.html`)),
     ["vitrine", "vitrine/", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
       if (await p.locator("nav.abas-m, header.topo, .faixa-ig").count()) throw new Error("a Vênus Vitrine ainda mostra o menu do site da Vetorial Tech");
       if (!(await p.locator(".vv-topo").isVisible()) || !(await p.locator(".vv-rodape").isVisible())) throw new Error("falta o cabeçalho ou o rodapé próprios da Vitrine");
     }],
     pagina("ferramentas-redireciona", "ferramentas.html"),
+    ["home-faixa-aprender", "", async (p) => {
+      const f = p.locator('a.vv-faixa[href="aprender.html"]'); await f.scrollIntoViewIfNeeded();
+      if (!(await f.isVisible())) throw new Error("a faixa Aprender a usar a Vênus não aparece na home");
+    }],
     ["home-faixa-vitrine", "", async (p) => {
-      const f = p.locator("a.vv-faixa"); await f.scrollIntoViewIfNeeded();
+      const f = p.locator('a.vv-faixa[href$="vitrine/"]'); await f.scrollIntoViewIfNeeded();
       if (!(await f.isVisible())) throw new Error("a faixa da Vênus Vitrine não aparece na home");
       if (!/vitrine\/$/.test(await f.getAttribute("href"))) throw new Error("a faixa da Vitrine aponta para o lugar errado");
     }],
