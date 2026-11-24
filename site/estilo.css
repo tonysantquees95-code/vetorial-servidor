@@ -232,3 +232,9 @@ details.combos{background:none;border:0;padding:0;margin-top:auto;box-shadow:non
 @media(min-width:1001px) and (max-width:1380px){.topo nav{gap:14px}.topo nav a,.topo nav summary{font-size:13px}}
 .topo details.mn{border:0;background:none;box-shadow:none;padding:0;margin:0;border-radius:0}
 .topo details.mn summary{border:0;background:none;box-shadow:none;padding:6px 2px;margin:0;font-weight:400;border-radius:0}
+.cartao .etq{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:99px;background:#8ff0b41a;border:1px solid #8ff0b455;color:var(--verde);font-size:11px;font-weight:700;vertical-align:middle}
+/* Vetorial Gaming: mesmo site, com um toque neon para separar da área de negócios */
+.pg-gaming .etiqueta{background:#22d3ee1a;border-color:#22d3ee66;color:#22d3ee}
+.pg-gaming .cartao:hover{border-color:#22d3ee88}
+.pg-gaming .cartao .ic{background:linear-gradient(135deg,#22d3ee33,#a78bfa33)}
+.pg-gaming .cartao a.mais{color:#22d3ee}

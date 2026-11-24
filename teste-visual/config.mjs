@@ -341,12 +341,30 @@ export default {
       if (largura <= 1000) return; // no celular quem manda são as abas de baixo
       const itens = await p.locator(".topo nav > a:visible, .topo nav > details:visible").count();
       if (itens > 6) throw new Error("o menu do topo está com itens demais na mesma linha: " + itens);
+      const nomes = await p.locator(".topo nav > details:visible > summary").allInnerTexts();
+      if (nomes.join("|") !== "Enterprises|Gaming|Grátis") throw new Error("os menus do topo deveriam ser Enterprises, Gaming e Grátis, mas são: " + nomes.join("|"));
       await p.click(".topo details.mn:nth-of-type(1) summary");
-      if (!(await p.locator(".topo details.mn[open] .mn-lista").isVisible())) throw new Error("a lista de Apps não abriu");
-      if ((await p.locator(".topo details.mn[open] .mn-lista a").count()) < 5) throw new Error("a lista de Apps está incompleta");
+      if (!(await p.locator(".topo details.mn[open] .mn-lista").isVisible())) throw new Error("a lista de Enterprises não abriu");
+      for (const h of ["enterprises.html", "vyntem.html", "vindex.html", "velox.html#pro"]) if (!(await p.locator(`.topo details.mn[open] a[href="${h}"]`).isVisible())) throw new Error("falta na lista de Enterprises: " + h);
       await p.click(".topo details.mn:nth-of-type(2) summary");
       if ((await p.locator(".topo details.mn[open]").count()) !== 1) throw new Error("só um menu deveria ficar aberto");
+      for (const h of ["gaming.html", "vortex.html", "voxix.html", "velox.html#gaming"]) if (!(await p.locator(`.topo details.mn[open] a[href="${h}"]`).isVisible())) throw new Error("falta na lista de Gaming: " + h);
+      await p.click(".topo details.mn:nth-of-type(3) summary");
       if (!(await p.locator('.topo details.mn[open] a[href="vitrine/"]').isVisible())) throw new Error("a Vitrine não está na lista Grátis");
+    }],
+    ["areas-da-suite", "enterprises.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("v")));
+      for (const h of ["./", "vyntem.html", "vindex.html", "velox.html#pro", "vitrine/", "pdf/"]) if ((await p.locator(`main a[href="${h}"]`).count()) < 1) throw new Error("a página Enterprises não leva a " + h);
+      if ((await p.locator('main a[href="vortex.html"]').count()) !== 0) throw new Error("produto gamer apareceu na área Enterprises");
+    }],
+    ["areas-gaming", "gaming.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("v")));
+      for (const h of ["vortex.html", "voxix.html", "velox.html#gaming"]) if ((await p.locator(`main a[href="${h}"]`).count()) < 1) throw new Error("a página Gaming não leva a " + h);
+      if ((await p.locator('main a[href="vyntem.html"]').count()) !== 0) throw new Error("produto de negócio apareceu na área Gaming");
+    }],
+    ["velox-edicoes", "velox.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("v")));
+      if (!(await p.locator("#edicoes #gaming").isVisible()) || !(await p.locator("#edicoes #pro").isVisible())) throw new Error("as duas edições do Velox não aparecem");
     }],
     ["ferramentas-link-ok", "vitrine/#ferramentas", async (p) => {
       await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); localStorage.setItem("ferramentas.token", "token-de-teste"); });
@@ -366,7 +384,7 @@ export default {
       if (!/7 cliques/.test(await p.locator("#fr-lista").innerText())) throw new Error("a contagem de cliques não apareceu");
       await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
     }],
-    ...["vindex", "vortex", "velox", "vyntem", "voxix", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
+    ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
     ["vitrine", "vitrine/", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
       if (await p.locator("nav.abas-m, header.topo, .faixa-ig").count()) throw new Error("a Vênus Vitrine ainda mostra o menu do site da Vetorial Tech");
