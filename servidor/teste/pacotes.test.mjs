@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { bancoDeTeste } from "./d1.mjs";
 import { registrarLoja } from "../src/loja/lojas.js";
-import { PACOTES, PROMO, appsLiberados, estadoDaAssinatura, iniciarCobranca, confirmarPagamento, pacoteDe, precoDoPacote } from "../src/loja/assinatura.js";
+import { ANUAL, PACOTES, PROMO, appsLiberados, estadoDaAssinatura, iniciarCobranca, confirmarPagamento, pacoteDe, precoDoPacote } from "../src/loja/assinatura.js";
 
 process.removeAllListeners("warning");
 const DIA = 86_400_000;
@@ -51,6 +51,38 @@ test("cobrança recorrente usa o valor do pacote e guarda o pacote no pagamento"
   const e = await estadoDaAssinatura(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first());
   assert.equal(e.pacotes.length, 7);
   assert.deepEqual(e.apps, { vindex: true, vortex: true, vyntem: true });
+});
+
+test("plano anual: R$ 499 por 365 dias, só para a Vênus, sem renovar sozinho", async () => {
+  const env = mk();
+  const l = await registrarLoja(env, { nome: "Loja anual" });
+  const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first();
+  const antes = globalThis.fetch;
+  const corpos = [];
+  globalThis.fetch = async (url, op) => { corpos.push({ url, corpo: JSON.parse(op.body) }); return new Response(JSON.stringify({ init_point: "https://mp.exemplo/pagar" }), { status: 201 }); };
+  try {
+    assert.equal(ANUAL.centavos, 49900);
+    await assert.rejects(() => iniciarCobranca(env, loja, "mercadopago", "https://v.test", Date.now(), "completo", "", "anual"), /só para a Vênus/);
+    const c = await iniciarCobranca(env, loja, "mercadopago", "https://v.test", Date.now(), "venus", "", "anual");
+    assert.ok(c.id.startsWith("anu_"));
+    assert.equal(c.valorCentavos, 49900);
+    // pagamento único (preferência), sem cartão de crédito e sem recorrência
+    assert.equal(corpos[0].url, "https://api.mercadopago.com/checkout/preferences");
+    assert.equal(corpos[0].corpo.items[0].unit_price, 499);
+    assert.match(corpos[0].corpo.items[0].title, /365 dias/);
+    assert.ok(corpos[0].corpo.payment_methods.excluded_payment_types.some((t) => t.id === "credit_card"));
+    // menos do que R$ 499 não vale
+    assert.equal(await confirmarPagamento(env, c.id, 4990, "a1"), false);
+    // quem já teve o acesso liberado antes (2FA feito) ganha 365 dias na hora, somados ao que restava
+    const agora = Date.now();
+    await env.DB.prepare("UPDATE lojas SET ativo_ate = ? WHERE id = ?").bind(agora + 10 * DIA, l.id).run();
+    assert.equal(await confirmarPagamento(env, c.id, 49900, "a2", agora), true);
+    const depois = await env.DB.prepare("SELECT ativo_ate FROM lojas WHERE id = ?").bind(l.id).first();
+    assert.equal(depois.ativo_ate, agora + 375 * DIA);
+    const e = await estadoDaAssinatura(env, await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(l.id).first());
+    assert.equal(e.anual.precoCentavos, 49900);
+    assert.equal(e.anual.economiaCentavos, 9980);
+  } finally { globalThis.fetch = antes; }
 });
 
 import { escolherVersao } from "../src/atualizacao.js";

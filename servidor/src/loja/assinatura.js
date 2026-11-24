@@ -7,6 +7,9 @@ import { conferirTotp, novoSegredo, uriOtp } from "./totp.js";
 
 export const PRECO_CENTAVOS = 4990;
 export const DIAS_DO_PLANO = 30;
+/** Plano anual da Vênus: R$ 499 de uma vez (2 meses grátis), Pix ou débito, 365 dias, sem renovar sozinho. */
+export const ANUAL = { pacote: "venus", centavos: 49900, dias: 365 };
+const diasDoPagamento = (id) => (String(id).startsWith("anu_") ? ANUAL.dias : DIAS_DO_PLANO);
 const DIA = 86_400_000;
 const titulo = "Vênus — Plano Fundadores (mensal)";
 
@@ -77,14 +80,18 @@ export const tokenMercadoPago = (env) => lerSegredo(env, "MERCADOPAGO_ACCESS_TOK
 /**
  * forma "recorrente": assinatura mensal no cartão de crédito (renova sozinha).
  * forma "avulso": paga 30 dias por Pix ou cartão de débito, sem renovação automática: vencendo, a pessoa paga mais 30 dias quando puder.
+ * forma "anual": só para a Vênus; paga 365 dias de uma vez (R$ 499) por Pix ou débito, também sem renovar sozinho.
  */
 export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.now(), pacoteEscolhido = "venus", emailPagador = "", forma = "recorrente") {
+  const anual = forma === "anual";
   const pacote = pacoteDe(pacoteEscolhido);
-  const { centavos: preco, promo } = await precoDoPacote(env, loja, pacote, agora);
-  const titulo = tituloDo(pacote);
+  if (anual && pacote !== ANUAL.pacote) throw new ErroLoja(400, "anual_so_venus", "O plano anual vale só para a Vênus.");
+  const { centavos: precoMensal, promo } = await precoDoPacote(env, loja, pacote, agora);
+  const preco = anual ? ANUAL.centavos : precoMensal;
+  const titulo = anual ? "Vênus — Plano anual (365 dias)" : tituloDo(pacote);
   if (!["infinitepay", "mercadopago"].includes(gateway)) throw new ErroLoja(400, "gateway_invalido", "Use infinitepay ou mercadopago.");
-  const avulso = forma === "avulso";
-  const id = `${avulso ? "avu" : "ass"}_${loja.id}_${aleatorio(4)}`;
+  const avulso = forma === "avulso" || anual;
+  const id = `${anual ? "anu" : avulso ? "avu" : "ass"}_${loja.id}_${aleatorio(4)}`;
   let url;
   if (gateway === "infinitepay") {
     if (!env.INFINITEPAY_HANDLE) throw new ErroLoja(503, "gateway_desligado", "A InfinitePay ainda não foi configurada neste servidor.");
@@ -101,7 +108,7 @@ export async function iniciarCobranca(env, loja, gateway, origem, agora = Date.n
       const pref = await http("https://api.mercadopago.com/checkout/preferences", {
         method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${tokenMP}` },
         body: JSON.stringify({
-          items: [{ id: pacote, title: `${tituloDo(pacote)} · 30 dias`, quantity: 1, currency_id: "BRL", unit_price: preco / 100 }],
+          items: [{ id: pacote, title: `${anual ? "Vênus — Plano anual" : tituloDo(pacote)} · ${anual ? ANUAL.dias : DIAS_DO_PLANO} dias`, quantity: 1, currency_id: "BRL", unit_price: preco / 100 }],
           external_reference: id, notification_url: `${origem}/assinatura/webhook/mercadopago`,
           back_urls: { success: origem, failure: origem, pending: origem }, auto_return: "approved",
           payment_methods: { excluded_payment_types: [{ id: "credit_card" }, { id: "ticket" }, { id: "atm" }] },
@@ -141,15 +148,15 @@ export async function confirmarPagamento(env, id, valorCentavos, refGateway, ago
   // mensalidade seguinte de uma assinatura já liberada: soma mais 30 dias sozinha (o 2FA foi feito na primeira)
   if (p.status === "liberado") {
     const loja = await env.DB.prepare("SELECT ativo_ate FROM lojas WHERE id = ?").bind(p.loja).first();
-    const ate = Math.max(agora, (loja && loja.ativo_ate) || 0) + DIAS_DO_PLANO * DIA;
+    const ate = Math.max(agora, (loja && loja.ativo_ate) || 0) + diasDoPagamento(p.id) * DIA;
     await env.DB.prepare("UPDATE lojas SET ativo_ate = ?, plano = 'fundadores', pacote = ? WHERE id = ?").bind(ate, pacoteDe(p.pacote), p.loja).run();
     return true;
   }
   // Pix/débito avulso de quem já teve o acesso liberado uma vez (2FA feito): soma mais 30 dias na hora, sem pedir o código de novo
-  if (String(p.id).startsWith("avu_") && p.status === "aguardando") {
+  if ((String(p.id).startsWith("avu_") || String(p.id).startsWith("anu_")) && p.status === "aguardando") {
     const loja = await env.DB.prepare("SELECT ativo_ate FROM lojas WHERE id = ?").bind(p.loja).first();
     if (loja && (loja.ativo_ate || 0) > 0) {
-      const ate = Math.max(agora, loja.ativo_ate) + DIAS_DO_PLANO * DIA;
+      const ate = Math.max(agora, loja.ativo_ate) + diasDoPagamento(p.id) * DIA;
       await env.DB.batch([
         env.DB.prepare("UPDATE lojas SET ativo_ate = ?, plano = 'fundadores', pacote = ? WHERE id = ?").bind(ate, pacoteDe(p.pacote), p.loja),
         env.DB.prepare("UPDATE pagamentos SET status = 'liberado', ref_gateway = ?, atualizado = ? WHERE id = ?").bind(String(refGateway || ""), agora, p.id),
@@ -233,7 +240,7 @@ export async function liberarAcesso(env, loja, codigo, agora = Date.now()) {
   if (!loja.totp_ativo) throw new ErroLoja(409, "sem_2fa", "Ative a verificação em duas etapas para liberar o acesso.");
   await conferirCodigo(env, loja, codigo, agora);
   const base = Math.max(agora, loja.ativo_ate || 0);
-  const ate = base + DIAS_DO_PLANO * DIA;
+  const ate = base + diasDoPagamento(pago.id) * DIA;
   await env.DB.batch([
     env.DB.prepare("UPDATE pagamentos SET status = 'liberado', atualizado = ? WHERE id = ? AND status = 'pago'").bind(agora, pago.id),
     env.DB.prepare("UPDATE lojas SET ativo_ate = ?, plano = 'fundadores', pacote = ? WHERE id = ?").bind(ate, pacoteDe(pago.pacote), loja.id),
@@ -249,6 +256,7 @@ export async function estadoDaAssinatura(env, loja, agora = Date.now()) {
     plano: loja.plano, precoCentavos: PRECO_CENTAVOS, diasDeTeste: 7,
     pacote: pacoteDe(loja.pacote), apps: appsLiberados(loja, agora),
     pacotes: await Promise.all(Object.entries(PACOTES).map(async ([chave, p]) => { const pr = await precoDoPacote(env, loja, chave, agora); return { chave, nome: p.nome, precoCentavos: pr.centavos, precoCheioCentavos: p.centavos, promocao: pr.promo }; })),
+    anual: { pacote: ANUAL.pacote, precoCentavos: ANUAL.centavos, dias: ANUAL.dias, economiaCentavos: 12 * PACOTES.venus.centavos - ANUAL.centavos },
     promocao: agora <= promocaoFim(env) ? { fim: promocaoFim(env), meses: PROMO.meses, pacote: PROMO.pacote, precoCentavos: PROMO.centavos } : null,
     emTeste: agora < loja.trial_fim && agora >= (loja.ativo_ate || 0), diasDeTesteRestantes: trialRestante, diasPagosRestantes: pagoRestante,
     fimDoAcesso: Math.max(loja.trial_fim || 0, loja.ativo_ate || 0),

@@ -32,7 +32,7 @@ async function licenca(env, usuario, origem, gerar, gateway, pacote, dispositivo
   const e = await estadoDaAssinatura(env, loja);
   const vencendo = !e.emTeste && e.diasPagosRestantes <= 3 || e.emTeste && e.diasDeTesteRestantes <= 2;
   const r = { ...e, renovar: vencendo, selo: await emitirSelo(env, usuario, e, Date.now(), dispositivo) };
-  if (gerar) r.cobranca = await iniciarCobranca(env, loja, gateway || "mercadopago", origem, Date.now(), pacote, usuario.email, forma === "avulso" ? "avulso" : "recorrente");
+  if (gerar) r.cobranca = await iniciarCobranca(env, loja, gateway || "mercadopago", origem, Date.now(), pacote, usuario.email, forma === "avulso" || forma === "anual" ? forma : "recorrente");
   return r;
 }
 
