@@ -1,6 +1,6 @@
 // Telas do site que o teste visual visita: [nome, página, passos].
 const REAIS = ["venus", "vindex", "vortex", "vyntem", "voxix", "velox"];
-const APPS = ["venus", "vindex", "vortex", "velox", "vyntem", "voxix"];
+const APPS = ["venus", "vindex", "vyntem"]; // a home só mostra apps de negócio
 const ABA = (p, id) => p.locator("#abas button").nth(APPS.indexOf(id));
 const ESPERA = (p) => p.waitForTimeout(350);
 const pagina = (nome, arq) => [nome, arq, async (p) => { await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel"))); }];
@@ -357,6 +357,11 @@ export default {
       for (const h of ["./", "vyntem.html", "vindex.html", "velox.html#pro", "vitrine/", "pdf/"]) if ((await p.locator(`main a[href="${h}"]`).count()) < 1) throw new Error("a página Enterprises não leva a " + h);
       if ((await p.locator('main a[href="vortex.html"]').count()) !== 0) throw new Error("produto gamer apareceu na área Enterprises");
     }],
+    ["gratis-escolha", "gratis.html", async (p) => {
+      await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("v")));
+      for (const h of ["vitrine/", "pdf/"]) if (!(await p.locator(`main a[href="${h}"]`).first().isVisible())) throw new Error("a página Grátis não oferece " + h);
+      if ((await p.locator('.abas-m a[href="gratis.html"]').count()) !== 1) throw new Error("a aba Grátis do celular deveria levar à página gratis.html");
+    }],
     ["areas-gaming", "gaming.html", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("v")));
       for (const h of ["vortex.html", "voxix.html", "velox.html#gaming"]) if ((await p.locator(`main a[href="${h}"]`).count()) < 1) throw new Error("a página Gaming não leva a " + h);
@@ -384,7 +389,7 @@ export default {
       if (!/7 cliques/.test(await p.locator("#fr-lista").innerText())) throw new Error("a contagem de cliques não apareceu");
       await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
     }],
-    ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
+    ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "gratis", "quem-somos", "seguranca", "conta", "proposta"].map((n) => pagina(n, `${n}.html`)),
     ["vitrine", "vitrine/", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
       if (await p.locator("nav.abas-m, header.topo, .faixa-ig").count()) throw new Error("a Vênus Vitrine ainda mostra o menu do site da Vetorial Tech");

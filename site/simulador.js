@@ -27,7 +27,8 @@ var APPS = {
   vyntem: { nome: "Vyntem", icone: "vyntem", titulo: "Anotar um gasto leva 5 segundos", texto: "Escreva do seu jeito, como “mercado 45,90 ontem”, e o Vyntem entende valor, categoria e data. Grátis.", pontos: ["Escreva ou fotografe a nota", "Contas e cartões", "Converse com a IA sobre o dinheiro"], cta: ["Baixar grátis", "#baixar"] },
   voxix: { nome: "Voxix", icone: "voxix", titulo: "O chat de quem joga", texto: "Salas de texto, comunidades e amigos online. Esta é uma prévia: o download ainda não foi liberado.", pontos: ["Comunidades e salas", "Convide por link ou código", "Teclado próprio"], cta: ["Ver a suíte", "#suite"] }
 };
-var ORDEM = ["venus", "vindex", "vortex", "velox", "vyntem", "voxix"], atual = null;
+/* a home mostra só os apps de negócio; Vortex, Voxix e Velox ficam na página da Vetorial Gaming */
+var ORDEM = ["venus", "vindex", "vyntem"], atual = null;
 
 function montarAbas() {
   var box = $("#abas");
@@ -35,7 +36,7 @@ function montarAbas() {
     var a = APPS[id];
     var b = el('<button type="button" role="tab" id="aba-' + id + '" aria-selected="false" aria-controls="tela" class="sim-chip !min-h-12 flex items-center gap-2 !px-4">' + iconeApp(id) + '<span>' + a.nome + '</span></button>');
     b.addEventListener("click", function () { abrirApp(id); });
-    b.addEventListener("keydown", function (e) { var i = ORDEM.indexOf(id); if (e.key === "ArrowRight") abrirApp(ORDEM[(i + 1) % 6], true); if (e.key === "ArrowLeft") abrirApp(ORDEM[(i + 5) % 6], true); });
+    b.addEventListener("keydown", function (e) { var i = ORDEM.indexOf(id); if (e.key === "ArrowRight") abrirApp(ORDEM[(i + 1) % ORDEM.length], true); if (e.key === "ArrowLeft") abrirApp(ORDEM[(i + ORDEM.length - 1) % ORDEM.length], true); });
     box.appendChild(b);
   });
 }
