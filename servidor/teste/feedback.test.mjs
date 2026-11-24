@@ -68,3 +68,20 @@ test("feedback: página escapa os parâmetros e usa a cor do app", async () => {
   assert.ok(paginaDeFeedback({ app: "nada", cor: "ZZZZZZ" }).includes("Vênus"));
 });
 const env0 = () => mk();
+
+test("feedback: pesquisa de assinatura guarda decisão e motivo e entra no resumo", async () => {
+  assert.throws(() => normalizarRelato({ app: "venus", tipo: "assinatura", respostas: { decisao: "xis" } }), /opções/);
+  const env = mk();
+  assert.equal((await enviar(env, { app: "venus", tipo: "assinatura", plataforma: "android", texto: "Atende meus clientes sozinha", respostas: { decisao: "vai", plano: "teste", dias_de_uso: 3 } })).status, 201);
+  assert.equal((await enviar(env, { app: "venus", tipo: "assinatura", respostas: { decisao: "nao", motivo: "preco", dias_de_uso: 6 } })).status, 201);
+  assert.equal((await enviar(env, { app: "venus", tipo: "assinatura", respostas: { decisao: "talvez", motivo: "zzz", dias_de_uso: -4 } })).status, 201);
+  const l = await listarRelatos(env, { tipo: "assinatura" });
+  assert.equal(l.relatos.length, 3);
+  assert.equal(l.resumo.assinaturas, 3);
+  assert.deepEqual(l.resumo.decisoes.map((x) => x.id).sort(), ["nao", "talvez", "vai"]);
+  assert.equal(l.resumo.motivosNao[0].id, "preco");
+  const vai = l.relatos.find((x) => x.respostas.decisao === "vai");
+  assert.equal(vai.texto, "Atende meus clientes sozinha");
+  assert.equal(vai.respostas.dias_de_uso, 3);
+  assert.equal(l.relatos.find((x) => x.respostas.decisao === "talvez").respostas.dias_de_uso, null);
+});

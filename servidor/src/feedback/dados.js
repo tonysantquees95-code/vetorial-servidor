@@ -3,10 +3,12 @@ import { ErroLoja } from "../loja/lojas.js";
 
 export const APPS = { venus: "Vênus", vindex: "Vindex", vortex: "Vortex", voxix: "Voxix", drive: "Vetorial Drive", vyntem: "Vyntem", vynx: "Vynx OS", vspace: "V-Space", velox: "Velox", vetogoshi: "Vetogoshi", painel: "Painel Dev", site: "Site" };
 export const PLATAFORMAS = new Set(["android", "windows", "web", "ios", "mac", "outro"]);
-export const TIPOS = new Set(["problema", "ideia", "elogio", "pesquisa"]);
+export const TIPOS = new Set(["problema", "ideia", "elogio", "pesquisa", "assinatura"]);
 export const COMO_CONHECEU = { instagram: "Instagram", amigo: "Indicação de amigo ou familiar", toni: "Direto com o Toni", google: "Pesquisa no Google", video: "Vídeo ou post nas redes", outro: "Outro" };
 export const AJUDA = { muito: "Ajuda muito", pouco: "Ajuda um pouco", ainda: "Ainda não ajudou" };
 export const CHAMOU = { assistente: "Assistente com IA e voz", loja: "Cuidar da loja e das vendas", agenda: "Agenda de serviços", site: "Site e logo", visual: "Visual bonito", gratis: "Ser grátis para testar", simples: "Ser simples de usar", pdf: "Ferramentas de PDF", outro: "Outra coisa" };
+export const DECISAO = { vai: "Vou assinar", talvez: "Ainda não sei", nao: "Não vou assinar" };
+export const MOTIVO = { preco: "Preço", falta: "Falta alguma função", nao_uso: "Não uso o bastante", testar_mais: "Preciso testar mais", outro: "Outro motivo" };
 export const INDICARIA = { sim: "Sim", talvez: "Talvez", nao: "Não" };
 
 const limpar = (v, n) => String(v ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").replace(/\r/g, "").trim().slice(0, n);
@@ -33,6 +35,13 @@ export function normalizarRelato(d, aparelho = "") {
       falta: limpar(r.falta, 600), por_que: limpar(r.por_que, 600),
     };
     if (nota === null && !respostas.como_conheceu && !respostas.ajuda && !respostas.indicaria && !respostas.chamou.length && !respostas.falta && !texto) throw new ErroLoja(400, "vazio", "Responda pelo menos uma pergunta.");
+  } else if (tipo === "assinatura") {
+    // pesquisa "vai assinar?": decisão + motivo (categoria e/ou texto livre) + em que ponto do teste a pessoa está
+    const decisao = dentro(String(d.respostas?.decisao ?? ""), DECISAO);
+    if (!decisao) throw new ErroLoja(400, "decisao_invalida", "Escolha uma das opções.");
+    const r = d.respostas && typeof d.respostas === "object" ? d.respostas : {};
+    const dias = Number(r.dias_de_uso);
+    respostas = { decisao, motivo: dentro(r.motivo, MOTIVO), plano: limpar(r.plano, 20).replace(/[^\w\-]/g, ""), dias_de_uso: Number.isInteger(dias) && dias >= 0 && dias <= 3650 ? dias : null };
   } else if (texto.length < 5) {
     throw new ErroLoja(400, "texto_curto", tipo === "problema" ? "Conte o que aconteceu, em poucas palavras." : "Escreva um pouquinho mais.");
   }
@@ -62,13 +71,16 @@ export async function listarRelatos(env, { status = "", app = "", tipo = "", lim
   const contar = (f) => todos.filter(f).length;
   const pesquisas = todos.filter((x) => x.tipo === "pesquisa").map((x) => ({ nota: x.nota, ...(() => { try { return JSON.parse(x.respostas); } catch { return {}; } })() }));
   const freq = (campo, mapa) => Object.entries(mapa).map(([id, nome]) => ({ id, nome, n: pesquisas.filter((p) => (Array.isArray(p[campo]) ? p[campo].includes(id) : p[campo] === id)).length })).filter((x) => x.n).sort((a, b) => b.n - a.n);
+  const assin = todos.filter((x) => x.tipo === "assinatura").map((x) => { try { return JSON.parse(x.respostas); } catch { return {}; } });
+  const contaA = (campo, mapa) => Object.entries(mapa).map(([id, nome]) => ({ id, nome, n: assin.filter((p) => p[campo] === id).length })).filter((x) => x.n).sort((a, b) => b.n - a.n);
   const notas = pesquisas.map((p) => p.nota).filter(Boolean);
   return {
-    relatos: results.map(linha), apps: APPS, rotulos: { ajuda: AJUDA, indicaria: INDICARIA, chamou: CHAMOU, como_conheceu: COMO_CONHECEU },
+    relatos: results.map(linha), apps: APPS, rotulos: { decisao: DECISAO, motivo: MOTIVO, ajuda: AJUDA, indicaria: INDICARIA, chamou: CHAMOU, como_conheceu: COMO_CONHECEU },
     resumo: {
       total: todos.length, novos: contar((x) => x.status === "novo"), problemas: contar((x) => x.tipo === "problema" && x.status !== "resolvido"), ideias: contar((x) => x.tipo === "ideia"), elogios: contar((x) => x.tipo === "elogio"),
       pesquisas: pesquisas.length, notaMedia: notas.length ? Math.round((10 * notas.reduce((s, n) => s + n, 0)) / notas.length) / 10 : null,
       comoConheceu: freq("como_conheceu", COMO_CONHECEU), ajuda: freq("ajuda", AJUDA), chamou: freq("chamou", CHAMOU), indicaria: freq("indicaria", INDICARIA),
+      assinaturas: assin.length, decisoes: contaA("decisao", DECISAO), motivosNao: contaA("motivo", MOTIVO).filter((m) => assin.some((p) => p.motivo === m.id && p.decisao !== "vai")),
     },
   };
 }
