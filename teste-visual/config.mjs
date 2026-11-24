@@ -9,6 +9,11 @@ export default {
   porta: 4191,
   cenarios: [
     ["home", "", async () => {}],
+    ["home-prova", "", async (p) => {
+      const l = p.locator(".prova-lista li");
+      if ((await l.count()) !== 4) throw new Error("a faixa de provas da home deveria ter 4 itens");
+      await p.locator(".prova").scrollIntoViewIfNeeded();
+    }],
     ...APPS.map((id) => [`home-simulador-${id}`, "", async (p) => {
       await p.locator("#simulador").scrollIntoViewIfNeeded();
       await ABA(p, id).click(); await ESPERA(p);
