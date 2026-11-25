@@ -375,7 +375,7 @@ test("limite de uso simultâneo vale por aplicativo", async () => {
 
 test("sync aceita as chaves do Velox com hífen (tema e senhas)", async () => {
   const { CHAVES_SYNC } = await import("../src/id/conta.js");
-  assert.ok(CHAVES_SYNC.has("velox-tema") && CHAVES_SYNC.has("velox-senhas"));
+  assert.ok(CHAVES_SYNC.has("velox-tema") && CHAVES_SYNC.has("velox-senhas") && CHAVES_SYNC.has("velox-abas"));
   assert.match("/id/sync/velox-senhas", /^\/id\/sync\/([a-z-]{3,20})$/);
 });
 
