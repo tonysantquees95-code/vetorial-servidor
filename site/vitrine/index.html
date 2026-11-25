@@ -11,7 +11,7 @@
 <meta property="og:image" content="/icone-vitrine.png?v=2">
 <link rel="icon" href="../icone-vitrine.png?v=2">
 <link rel="stylesheet" href="../estilo.css?v=10">
-<link rel="stylesheet" href="ferramentas.css?v=17">
+<link rel="stylesheet" href="ferramentas.css?v=19">
 </head>
 <body>
 <header class="vv-topo"><div class="wrap">
@@ -31,6 +31,7 @@
     <button type="button" role="tab" id="modo-criar" aria-selected="true" class="fr-modo-b">Criar meu site</button>
     <button type="button" role="tab" id="modo-soltas" aria-selected="false" class="fr-modo-b">Só uma ferramenta</button>
   </div>
+  <button type="button" id="fr-cd-cta" class="fr-cd-cta"><span aria-hidden="true">✨</span><span><b>Tem cardápio em foto ou PDF?</b><small>A Vênus lê e monta sua loja para pedidos no WhatsApp</small></span></button>
 </div></section>
 
 <section id="fr-criar" class="fr-criar"><div class="wrap">
@@ -142,6 +143,7 @@
     <button type="button" role="tab" id="aba-qr" aria-selected="false" aria-controls="painel-qr" class="fr-aba" tabindex="-1">QR code</button>
     <button type="button" role="tab" id="aba-panfleto" aria-selected="false" aria-controls="painel-panfleto" class="fr-aba" tabindex="-1">Panfleto</button>
     <button type="button" role="tab" id="aba-logo" aria-selected="false" aria-controls="painel-logo" class="fr-aba" tabindex="-1">Logo</button>
+    <button type="button" role="tab" id="aba-cardapio" aria-selected="false" aria-controls="painel-cardapio" class="fr-aba" tabindex="-1">Cardápio <span class="fr-novo">novo</span></button>
     <button type="button" role="tab" id="aba-catalogo" aria-selected="false" aria-controls="painel-catalogo" class="fr-aba" tabindex="-1">Catálogo</button>
   </div>
 
@@ -306,9 +308,40 @@
     </div>
   </div>
 
+  <div id="painel-cardapio" role="tabpanel" aria-labelledby="aba-cardapio" class="cartao fr-painel" hidden>
+    <span class="etiqueta">Novo · com inteligência artificial</span>
+    <h2>Mande seu cardápio. A gente monta sua loja.</h2>
+    <p class="fr-ajuda">Foto ou PDF: a Vênus lê, você só confere. Sua loja fica pronta para receber pedidos no WhatsApp, sem comissão por pedido.</p>
+    <ol class="fr-cd-passos" aria-label="Como funciona">
+      <li><b>1</b><span>Envie o cardápio</span></li>
+      <li><b>2</b><span>Confira os itens</span></li>
+      <li><b>3</b><span>Publique</span></li>
+    </ol>
+    <div id="fr-cd-envio">
+      <label class="fr-cd-soltar" for="fr-cd-arquivo"><b>Toque para escolher o cardápio</b><small>Até 4 fotos (JPG ou PNG) ou 1 PDF</small></label>
+      <input id="fr-cd-arquivo" type="file" accept="image/jpeg,image/png,application/pdf" multiple hidden>
+      <ul id="fr-cd-arquivos" class="fr-cd-arquivos" aria-label="Arquivos escolhidos"></ul>
+      <div class="fr-linha"><button type="button" id="fr-cd-ler" class="btn" disabled>Ler meu cardápio</button></div>
+      <p id="fr-cd-uso" class="fr-ajuda fr-peq" hidden></p>
+    </div>
+    <div id="fr-cd-lendo" class="fr-cd-lendo" hidden role="status" aria-live="polite">
+      <span class="fr-cd-roda" aria-hidden="true"></span>
+      <p id="fr-cd-frase">Lendo seu cardápio…</p>
+      <small id="fr-cd-tempo"></small>
+      <button type="button" id="fr-cd-cancelar" class="btn sec p">Cancelar</button>
+    </div>
+    <p id="fr-cd-aviso" class="fr-aviso" role="alert" hidden></p>
+    <p class="fr-ajuda fr-peq">A inteligência artificial ajuda, mas pode errar nomes e preços: você confere tudo antes de publicar. O arquivo não fica guardado.</p>
+  </div>
+
   <div id="painel-catalogo" role="tabpanel" aria-labelledby="aba-catalogo" class="cartao fr-painel" hidden>
     <h2>Seu catálogo no WhatsApp em 5 minutos</h2>
     <p class="fr-ajuda">Sem site e sem mensalidade. Coloque seus produtos, veja ficando pronto ao lado e publique: seus clientes montam o pedido e ele chega pronto no seu WhatsApp.</p>
+    <div id="fr-ct-revisar" class="fr-cd-revisar" role="status" hidden>
+      <b id="fr-ct-revisar-t"></b>
+      <p id="fr-ct-revisar-p" class="fr-ajuda"></p>
+      <button type="button" id="fr-ct-revisar-ok" class="btn sec p">Entendi</button>
+    </div>
     <div class="fr-ct-grade">
       <div class="fr-ct-form">
         <label class="fr-rotulo" for="fr-ct-nome">Nome da sua loja</label>
@@ -380,6 +413,7 @@
 <script src="logo.js" defer></script>
 <script src="editorlogo.js" defer></script>
 <script src="catalogo.js" defer></script>
+<script src="cardapio.js" defer></script>
 <script src="sitevitrine.js" defer></script>
 <script>
   document.getElementById("ano").textContent = new Date().getFullYear();

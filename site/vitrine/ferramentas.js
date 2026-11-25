@@ -42,7 +42,7 @@
   }
 
   // ------------------------------------------------------------ abas
-  const abas = [["aba-link", "painel-link"], ["aba-qr", "painel-qr"], ["aba-panfleto", "painel-panfleto"], ["aba-logo", "painel-logo"], ["aba-catalogo", "painel-catalogo"]];
+  const abas = [["aba-link", "painel-link"], ["aba-qr", "painel-qr"], ["aba-panfleto", "painel-panfleto"], ["aba-logo", "painel-logo"], ["aba-cardapio", "painel-cardapio"], ["aba-catalogo", "painel-catalogo"]];
   function abrirAba(idAba) {
     for (const [a, p] of abas) {
       const ativa = a === idAba;

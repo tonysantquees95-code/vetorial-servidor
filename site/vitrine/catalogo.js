@@ -143,6 +143,27 @@
       }
     }
 
+    /** Itens lidos do cardápio pela IA: entram no editor (linhas vazias primeiro, depois o resto até o limite) e a pessoa confere antes de publicar. */
+    async function aplicarCardapio({ itens, nome, cortados }) {
+      await carregar();
+      const livres = produtos.filter((p) => p.nome.trim());
+      produtos.length = 0; produtos.push(...livres);
+      let entrou = 0;
+      for (const it of itens) {
+        if (produtos.length >= limite()) break;
+        produtos.push({ nome: it.nome, preco: emReais(it.preco), desc: it.desc || it.categoria || "", foto: "", fotoNova: "", miniatura: "" });
+        entrou++;
+      }
+      if (nome && !$("fr-ct-nome").value.trim()) $("fr-ct-nome").value = nome;
+      desenharProdutos(); previa();
+      const fora = Math.max(0, itens.length - entrou) + (cortados || 0);
+      $("fr-ct-revisar-t").textContent = `Encontrei ${entrou} ${entrou === 1 ? "item" : "itens"} no seu cardápio.`;
+      $("fr-ct-revisar-p").textContent = "Confira cada nome e preço: a inteligência artificial pode errar. Corrija aqui mesmo, ponha fotos se quiser e publique." + (fora ? ` ${fora} ${fora === 1 ? "item ficou" : "itens ficaram"} de fora porque o seu plano mostra até ${limite()} produtos.` : "") + (nome ? "" : " Falta só o nome da loja e o WhatsApp.");
+      $("fr-ct-revisar").hidden = false;
+      $("fr-ct-revisar").scrollIntoView({ block: "start" });
+    }
+    FR.aplicarCardapio = aplicarCardapio;
+    $("fr-ct-revisar-ok").addEventListener("click", () => { $("fr-ct-revisar").hidden = true; });
     $("aba-catalogo").addEventListener("click", carregar);
     for (const id of ["fr-ct-nome", "fr-ct-whats", "fr-ct-desc"]) $(id).addEventListener("input", previa);
     $("fr-ct-add").addEventListener("click", () => { if (produtos.length < limite()) { produtos.push({ nome: "", preco: "", desc: "", foto: "", fotoNova: "", miniatura: "" }); desenharProdutos(); } });

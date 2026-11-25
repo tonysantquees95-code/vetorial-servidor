@@ -29,6 +29,7 @@ import { ehRotaDeLinks, tratarLinks } from "./ferramentas/links.js";
 import { ehRotaDePanfleto, tratarPanfleto } from "./panfleto/uso.js";
 import { ehRotaDeLogo, tratarLogo } from "./ferramentas/logo.js";
 import { ehRotaDeCatalogo, tratarCatalogo } from "./catalogo/rotas.js";
+import { ehRotaDeCardapio, tratarCardapio } from "./catalogo/cardapio.js";
 import { ehRotaDeSiteVitrine, tratarSiteVitrine } from "./sitevitrine/rotas.js";
 import { ehRotaVoxix, tratarVoxix } from "./voxix/rotas.js";
 import { ehRotaCofre, tratarCofre } from "./vindex/cofre.js";
@@ -86,7 +87,7 @@ export default {
       if (caminho === "/cobranca/status" && req.method === "GET") return await cobrancaStatus(url, env);
       const ehChat = caminho === "/chat" && (req.method === "POST" || req.method === "OPTIONS");
       // as chaves de IA vêm do cofre do Vindex (guardadas 5 min); sem cofre, valem as variáveis do Worker
-      const envIA = ehRotaDaIA(caminho) || caminho.startsWith("/v1/") || ehChat || ehRotaFinancas(caminho) || ehRotaOrganizar(caminho) ? await comChavesDoCofre(env) : env;
+      const envIA = ehRotaDaIA(caminho) || caminho.startsWith("/v1/") || ehChat || ehRotaFinancas(caminho) || ehRotaOrganizar(caminho) || ehRotaDeCardapio(caminho) ? await comChavesDoCofre(env) : env;
       if (ehRotaDaIA(caminho)) {
         // o app do Windows/navegador também usa a IA da conta: precisa do CORS (o celular fala direto e não precisa)
         const origem = req.headers.get("origin");
@@ -102,6 +103,7 @@ export default {
       if (ehRotaVortex(caminho)) return await tratarVortex(req, env, url, caminho);
       if (ehRotaDrive(caminho)) return await tratarDrive(req, env, url, caminho);
       if (ehRotaPdf(caminho)) return await tratarPdf(req, env, url, caminho);
+      if (ehRotaDeCardapio(caminho)) return await tratarCardapio(req, envIA, url, caminho);
       if (ehRotaDeCatalogo(caminho)) return await tratarCatalogo(req, env, url, caminho);
       if (ehRotaDeSiteVitrine(caminho)) return await tratarSiteVitrine(req, env, url, caminho);
       if (ehRotaDeLogo(caminho)) return await tratarLogo(req, env, url, caminho);

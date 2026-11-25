@@ -278,6 +278,57 @@ export default {
         await p.locator("#fr-ct-pronto").scrollIntoViewIfNeeded();
       }
     }]),
+    ...[["cardapio-login", false], ["cardapio-ler", true]].map(([nome, logado]) => [nome, "vitrine/#ferramentas", async (p) => {
+      const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
+      const cores = ["#c2185b", "#1d4ed8", "#15803d", "#c2410c", "#6d4aff", "#0e9f8e"];
+      const temas = [["claro", "Claro", true], ["escuro", "Escuro", true]].map(([id, nome, gratis]) => ({ id, nome, gratis }));
+      let lido = null;
+      await p.route(/\/catalogo(\/|$)/, async (r) => {
+        const u = new URL(r.request().url()), m = r.request().method();
+        if (m === "OPTIONS") return r.fulfill({ status: 204, headers: cab });
+        const j = (status, corpo) => r.fulfill({ status, contentType: "application/json", headers: cab, body: JSON.stringify(corpo) });
+        if (u.pathname.endsWith("/modelos")) return j(200, { limiteGratis: 12, limitePago: 60, cores, temas });
+        if (u.pathname.endsWith("/previa")) return j(200, { html: '<body style="font-family:system-ui;margin:0;padding:24px"><h1>Prévia</h1></body>', erros: [] });
+        if (u.pathname.endsWith("/cardapio/ler")) {
+          lido = JSON.parse(r.request().postData() || "{}");
+          await new Promise((x) => setTimeout(x, 900));
+          return j(200, { ok: true, nome: "Cantinho do Sabor", itens: [{ nome: "X-Burger", preco: 1850, desc: "Pão, carne e queijo", categoria: "Lanches" }, { nome: "Suco de laranja", preco: 700, desc: "", categoria: "Bebidas" }], total: 14, cortados: 12, assinante: false, limite: 2, usados: 1, restantes: 1, limiteProdutos: 12 });
+        }
+        if (u.pathname.endsWith("/cardapio")) return j(200, { assinante: false, limite: 2, usados: 0, restantes: 2, limiteProdutos: 12 });
+        return j(200, { catalogo: null, assinante: false, limiteProdutos: 12 });
+      });
+      await p.evaluate(() => { document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel", "v")); try { localStorage.clear(); } catch {} });
+      if (logado) await p.evaluate(() => localStorage.setItem("ferramentas.token", "token-de-teste"));
+      await p.click("#aba-cardapio");
+      if (!(await p.locator("#painel-cardapio").isVisible())) throw new Error("a aba Cardápio não abriu");
+      if (!(await p.locator("#fr-cd-ler").isDisabled())) throw new Error("sem arquivo, o botão de ler deveria estar desligado");
+      if (await p.locator("#fr-cd-lendo").isVisible()) throw new Error("o aviso de leitura não deveria aparecer antes de ler");
+      const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+      await p.setInputFiles("#fr-cd-arquivo", [{ name: "cardapio.png", mimeType: "image/png", buffer: png }]);
+      await p.waitForSelector("#fr-cd-arquivos li");
+      if (await p.locator("#fr-cd-ler").isDisabled()) throw new Error("com arquivo, o botão de ler deveria ligar");
+      await p.setInputFiles("#fr-cd-arquivo", [{ name: "carta.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n") }]);
+      await ESPERA(p);
+      if (!/sozinho/.test(await p.locator("#fr-cd-aviso").innerText())) throw new Error("misturar foto e PDF deveria avisar");
+      await p.click("#fr-cd-ler"); await ESPERA(p);
+      if (!logado) {
+        if (!(await p.locator("#fr-janela").isVisible())) throw new Error("sem login, a janela do Vetorial ID não apareceu ao ler");
+        if (!/cardápio/i.test(await p.locator("#fr-j-texto").innerText())) throw new Error("a janela não explica que é para ler o cardápio");
+        if (lido) throw new Error("sem login não pode enviar o cardápio");
+        await p.keyboard.press("Escape");
+        return;
+      }
+      if (!(await p.locator("#fr-cd-lendo").isVisible())) throw new Error("o aviso de leitura não apareceu");
+      if (!/Lendo/.test(await p.locator("#fr-cd-frase").innerText())) throw new Error("a frase de andamento não apareceu");
+      await p.waitForSelector("#fr-ct-revisar:not([hidden])", { timeout: 8000 });
+      if (!lido || lido.arquivos.length !== 1 || lido.arquivos[0].mime !== "image/jpeg") throw new Error("a foto deveria seguir como JPEG");
+      if (!(await p.locator("#painel-catalogo").isVisible())) throw new Error("depois de ler, deveria abrir o editor do catálogo");
+      if ((await p.locator("#fr-ct-produtos li").count()) !== 2) throw new Error("os 2 itens lidos deveriam estar no editor");
+      if ((await p.inputValue('#fr-ct-produtos input[aria-label="Preço (R$)"]')) !== "18,50") throw new Error("o preço deveria aparecer em reais");
+      if ((await p.inputValue("#fr-ct-nome")) !== "Cantinho do Sabor") throw new Error("o nome do negócio deveria ser preenchido");
+      if (!/12 itens ficaram de fora/.test(await p.locator("#fr-ct-revisar-p").innerText())) throw new Error("deveria avisar os itens que ficaram de fora do plano");
+      await p.locator("#fr-ct-revisar").scrollIntoViewIfNeeded();
+    }]),
     ...[["site-login", false], ["site-publicar", true]].map(([nome, logado]) => [nome, "vitrine/", async (p) => {
       const cab = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,OPTIONS" };
       const temas = [["creme", "Creme", true], ["claro", "Claro", true], ["rosa", "Rosa suave", false], ["escuro", "Escuro", false], ["noite", "Azul noite", false]].map(([id, nome, gratis]) => ({ id, nome, gratis, fundo: "#fff", texto: "#000" }));

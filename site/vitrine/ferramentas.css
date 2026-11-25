@@ -205,3 +205,25 @@ a.fr-kit-c{text-decoration:none}
 }
 /* aberto dentro da Vênus: sem cabeçalho e rodapé próprios */
 .na-venus .vv-topo,.na-venus .vv-rodape,.na-venus .vv-faixa{display:none!important}
+
+/* Cardápio → loja */
+.fr-novo{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;background:#ec6fd6;color:#1a0b17;border-radius:999px;padding:2px 7px;margin-left:4px;vertical-align:middle}
+.fr-cd-cta{display:flex;align-items:center;gap:12px;width:100%;max-width:560px;margin-top:2px;text-align:left;font:inherit;color:var(--texto);background:linear-gradient(135deg,#ec6fd622,#7c5cff22);border:1.5px solid #ec6fd6;border-radius:16px;padding:12px 16px;cursor:pointer;min-height:48px}
+.fr-cd-cta>span:first-child{font-size:24px}.fr-cd-cta b{display:block;font-size:15.5px}.fr-cd-cta small{display:block;color:var(--suave);font-size:13px;margin-top:2px}
+.fr-cd-passos{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0 16px;padding:0}
+.fr-cd-passos li{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:13.5px;color:var(--suave);padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.05)}
+.fr-cd-passos b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#ec6fd633;color:#fff}
+.fr-cd-soltar{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:26px 16px;border:2px dashed #ec6fd699;border-radius:18px;background:#ec6fd60f;cursor:pointer;min-height:96px;justify-content:center}
+.fr-cd-soltar small{color:var(--suave)}
+.fr-cd-arquivos{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.fr-cd-arquivos li{display:grid;grid-template-columns:52px minmax(0,1fr) 32px;gap:10px;align-items:center;padding:8px;border-radius:14px;background:rgba(255,255,255,.05)}
+.fr-cd-arquivos img,.fr-cd-pdf{width:52px;height:52px;border-radius:10px;object-fit:cover;display:grid;place-items:center;background:#ec6fd633;font-weight:800;font-size:13px}
+.fr-cd-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.fr-cd-lendo{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:28px 12px}
+.fr-cd-lendo[hidden]{display:none}
+.fr-cd-lendo p{margin:0;font-weight:700;font-size:17px}.fr-cd-lendo small{color:var(--suave)}
+.fr-cd-roda{width:44px;height:44px;border-radius:50%;border:4px solid #ec6fd633;border-top-color:#ec6fd6;animation:fr-cd-gira 1s linear infinite}
+@keyframes fr-cd-gira{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.fr-cd-roda{animation-duration:3s}}
+.fr-cd-revisar{margin:0 0 16px;padding:14px 16px;border-radius:16px;border:1.5px solid #ec6fd6;background:#ec6fd61a}
+.fr-cd-revisar b{font-size:16px}.fr-cd-revisar p{margin:6px 0 10px}
