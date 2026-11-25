@@ -20,3 +20,15 @@ window.VENUS.instagram = "https://www.instagram.com/vetorial_tech/";
   document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.matches("details.mn") && e.target.open) for (const m of menus()) if (m !== e.target) m.open = false; }, true);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") for (const m of menus()) m.open = false; });
 })();
+
+// Conta quantas pessoas entraram no site (uma vez por página e por visita). Não guarda IP nem cookie: o servidor só conta visitantes do dia.
+(() => {
+  try {
+    const p = location.pathname.replace(/^\/+/, "").replace(/\/index\.html$/, "/") || "inicio";
+    const marca = `vt.visita.${p}`;
+    if (sessionStorage.getItem(marca)) return;
+    sessionStorage.setItem(marca, "1");
+    const alvo = `${window.VENUS.api}/site/visita?p=${encodeURIComponent(p)}`;
+    if (navigator.sendBeacon) navigator.sendBeacon(alvo, ""); else fetch(alvo, { method: "POST", keepalive: true, mode: "no-cors" });
+  } catch { /* sem contador: o site funciona igual */ }
+})();

@@ -1,6 +1,7 @@
 // Avisos do Painel Dev: build quebrado, relato de erro novo e erro em alta. Roda no cron de 10 em 10 minutos.
 import { PROJETOS, buildsDoRepo } from "./github.js";
 import { APPS } from "../feedback/dados.js";
+import { verificarCadastros, verificarDownloads, limparVisitas } from "./visitas.js";
 
 export const LIMITE_ERRO_EM_ALTA = 3; // relatos de problema do mesmo app na última hora
 const HORA = 3600000;
@@ -65,6 +66,9 @@ export async function verificarAlertas(env, agora = Date.now()) {
   let n = 0;
   try { if (env.GITHUB_TOKEN) n += await verificarBuilds(env, agora); } catch (e) { console.error("alertas builds", e); }
   try { n += await verificarRelatos(env, agora); } catch (e) { console.error("alertas relatos", e); }
+  try { n += await verificarCadastros(env, agora); } catch (e) { console.error("alertas cadastros", e); }
+  try { n += await verificarDownloads(env, agora); } catch (e) { console.error("alertas downloads", e); }
+  try { await limparVisitas(env, agora); } catch (e) { console.error("limpar visitas", e); }
   await env.DB.prepare("DELETE FROM dev_alertas WHERE criado < ?").bind(agora - 30 * 86400000).run();
   return n;
 }

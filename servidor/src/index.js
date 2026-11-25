@@ -22,6 +22,7 @@
  * GROQ_API_KEY, TAVILY_API_KEY e GEMINI_API_KEY (conversa); DEEPSEEK_API_KEY e APP_TOKEN (opcional) para o roteador /v1.
  */
 import { verificarAlertas } from "./dev/alertas.js";
+import { registrarVisita, registrarDownload } from "./dev/visitas.js";
 import { ehAtalho, responderAtalho } from "./atalhos.js";
 import { ehRotaVindex, tratarVindex } from "./vindex/rotas.js";
 import { ehRotaPdf, tratarPdf } from "./pdf/uso.js";
@@ -79,7 +80,14 @@ export default {
     try {
       if (caminho === "/" || caminho === "/saude") return json({ ok: true, servico: "venus", versao: 1 });
       if (ehAtalho(caminho) && req.method === "GET") return responderAtalho(url, caminho);
-      if (caminho === "/atualizacao" && req.method === "GET") return await atualizacao(url, env, ctx);
+      if (caminho === "/site/visita" && (req.method === "POST" || req.method === "OPTIONS")) {
+        if (req.method === "POST" && env.DB) ctx.waitUntil(registrarVisita(env, req, url.searchParams.get("p")).catch(() => {}));
+        return new Response(null, { status: 204, headers: { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS" } });
+      }
+      if (caminho === "/atualizacao" && req.method === "GET") {
+        if (env.DB && url.searchParams.get("baixar") === "1") ctx.waitUntil(registrarDownload(env, req, url.searchParams.get("app") || "venus").catch(() => {}));
+        return await atualizacao(url, env, ctx);
+      }
       const canal = caminho.match(/^\/aviso\/([A-Za-z0-9_-]{16,64})$/);
       if (canal && req.method === "POST") return await avisoNovo(canal[1], req, env);
       if (canal && req.method === "GET") return await avisosDesde(canal[1], url, env);
