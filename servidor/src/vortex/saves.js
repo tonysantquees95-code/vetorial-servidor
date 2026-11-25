@@ -22,9 +22,9 @@ const NOME = /^[A-Za-z0-9][A-Za-z0-9._ -]{0,79}$/;
 const JOGO = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 
 async function liberado(env, usuario, agora) {
-  if (!usuario.loja) return false;
+  if (!usuario.loja) return true; // o Vortex é grátis para qualquer conta do Vetorial ID
   const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(usuario.loja).first();
-  return !!loja && !!appsLiberados(loja, agora).vortex;
+  return !loja || !!appsLiberados(loja, agora).vortex;
 }
 
 async function total(env, prefixo) {

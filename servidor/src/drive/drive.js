@@ -37,7 +37,7 @@ async function liberado(env, usuario, agora) {
   const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(usuario.loja).first();
   if (!loja) return false;
   if (env.DRIVE_PUBLICO !== "1" && loja.plano !== "dono" && loja.plano !== "testador") return false;
-  const a = appsLiberados(loja, agora);
+  const a = appsLiberados(loja, agora, { gratis: false });
   return !!(a.vortex || a.vindex);
 }
 

@@ -56,12 +56,11 @@ test("nomes perigosos, tamanho e sem sessão são recusados", async () => {
   assert.notEqual((await chamar(env, "token-falso", "GET", "/vortex/saves")).status, 200);
 });
 
-test("sem liberação do Vortex (teste vencido) devolve 402", async () => {
+test("o Vortex é grátis: com o teste vencido e sem plano a conta continua liberada", async () => {
   const { env, token } = await mundo();
   await env.DB.prepare("UPDATE lojas SET trial_fim = 1, ativo_ate = 0, plano = 'fundadores'").run();
-  const r = await chamar(env, token, "GET", "/vortex/saves");
-  assert.equal(r.status, 402);
-  assert.equal((await (await chamar(env, token, "GET", "/vortex/licenca")).json()).vortex, false);
+  assert.equal((await chamar(env, token, "GET", "/vortex/saves")).status, 200);
+  assert.equal((await (await chamar(env, token, "GET", "/vortex/licenca")).json()).vortex, true);
 });
 
 test("saves de uma conta não aparecem para outra", async () => {

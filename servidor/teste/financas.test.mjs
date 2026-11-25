@@ -78,7 +78,8 @@ test("licença: o Vyntem entra no teste grátis, no dono e no pacote completo, e
   assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "completo" }, agora).vyntem, true);
   assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora).vyntem, true); // grátis para qualquer conta
   assert.equal(appsLiberados({ trial_fim: 0, ativo_ate: 0 }, agora).vyntem, true);
-  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora).vortex, false);
+  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora).vortex, true); // o Vortex é grátis para todos
+  assert.equal(appsLiberados({ ativo_ate: agora + DIA, pacote: "venus_vindex" }, agora, { gratis: false }).vortex, false);
 });
 
 test("data da nota: dia/mês/ano, nunca o formato americano", () => {
