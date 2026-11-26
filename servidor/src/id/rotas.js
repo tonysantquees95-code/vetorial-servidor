@@ -68,14 +68,14 @@ export async function tratarId(req, env, url, caminho) {
       else if (String(d.app || "venus") !== "venus") throw new ErroId(400, "recuperacao_obrigatoria", "Crie a senha de recuperação (6 números) e a pergunta secreta para terminar o cadastro.");
       return json(await comLicenca(env, await cadastrar(env, { ...d, lojaExistente, exigirTelefone: false, ip: req.headers.get("cf-connecting-ip") || "", recuperacao: d.recuperacao || null }), origem), 201);
     }
-    if (caminho === "/id/entrar" && req.method === "POST") return json(await comLicenca(env, await entrar(env, await corpo(req)), origem));
+    if (caminho === "/id/entrar" && req.method === "POST") return json(await comLicenca(env, await entrar(env, { ...(await corpo(req)), ip: req.headers.get("cf-connecting-ip") || "" }), origem));
     if (caminho === "/id/chave-publica" && req.method === "GET") return json({ alg: "Ed25519", x: await chavePublicaDoSelo(env) });
     if (caminho === "/id/recuperar/canais" && req.method === "GET") return json({ canais: canaisDisponiveis(env) });
     if (caminho === "/id/recuperar/existe" && req.method === "POST") return json(await existeConta(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
     if (caminho === "/id/recuperar/pergunta" && req.method === "POST") return json(await perguntaSecreta(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
     if (caminho === "/id/recuperar/segredo" && req.method === "POST") return json(await recuperarPorSegredo(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
     if (caminho === "/id/recuperar/pedir" && req.method === "POST") return json(await pedirRecuperacao(env, await corpo(req), req.headers.get("cf-connecting-ip") || ""));
-    if (caminho === "/id/recuperar/confirmar" && req.method === "POST") return json(await confirmarRecuperacao(env, await corpo(req)));
+    if (caminho === "/id/recuperar/confirmar" && req.method === "POST") return json(await confirmarRecuperacao(env, { ...(await corpo(req)), ip: req.headers.get("cf-connecting-ip") || "" }));
     if (caminho === "/id/reativar" && req.method === "POST") return json(await reativar(env, tokenDoPedido(req), (await corpo(req)).encerrar));
 
     const ctx = await validarSessao(env, req, {});

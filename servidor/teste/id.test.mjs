@@ -475,3 +475,16 @@ test("/id/github: só o administrador recebe o token de leitura do GitHub (Vynx 
   const semToken = await tratarId(req(dono.token, "https://v.test/id/github", { method: "GET" }), { ...env, GITHUB_TOKEN: "" }, new URL("https://v.test/id/github"), "/id/github");
   assert.equal(semToken.status, 503);
 });
+
+test("tentar senhas em muitos e-mails diferentes pela mesma rede é barrado (limite por IP)", async () => {
+  const env = ENV();
+  await conta(env);
+  // cada e-mail erra pouco (não bate no limite por e-mail), mas a rede é a mesma
+  for (let i = 0; i < 40; i++) assert.equal((await erro(entrar(env, { email: `alvo${i}@exemplo.com`, senha: "chute-chute-1", dispositivo: disp(1), ip: "7.7.7.7" }, T0 + i))).codigo, "credenciais");
+  assert.equal((await erro(entrar(env, { email: "toni@exemplo.com", senha: "senha-forte-1", dispositivo: disp(1), ip: "7.7.7.7" }, T0 + 100))).codigo, "muitas_tentativas");
+  // outra rede não é afetada, e quem acerta não conta como falha
+  const ok = await entrar(env, { email: "toni@exemplo.com", senha: "senha-forte-1", dispositivo: disp(1), ip: "8.8.8.8" }, T0 + 101);
+  assert.ok(ok.token);
+  // depois de 15 minutos a rede volta a poder tentar
+  assert.ok((await entrar(env, { email: "toni@exemplo.com", senha: "senha-forte-1", dispositivo: disp(1), ip: "7.7.7.7" }, T0 + 16 * 60_000)).token);
+});

@@ -53,6 +53,20 @@ async function limitarTentativas(env, chave, agora, max = 8) {
   if (n.n >= max) throw new ErroId(429, "muitas_tentativas", "Muitas tentativas. Espere alguns minutos e tente de novo.");
 }
 
+/**
+ * Limite por rede (IP): quem tenta senhas em muitos e-mails diferentes não é barrado pelo limite por e-mail.
+ * Conta só as FALHAS; 40 em 15 minutos (folga para 4G, hotel e wi-fi de casa, que dividem IP). Sem IP conhecido, não limita.
+ */
+export const MAX_FALHAS_POR_IP = 40;
+async function limitarPorIp(env, tipo, ip, agora) {
+  if (!ip) return;
+  await limitarTentativas(env, `${tipo}:${ip}`, agora, MAX_FALHAS_POR_IP);
+}
+async function anotarPorIp(env, tipo, ip, agora) {
+  if (!ip) return;
+  await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`${tipo}:${ip}`, agora).run();
+}
+
 export async function cadastrar(env, { email, senha, nome, dispositivo, app, lojaExistente, telefone, exigirTelefone = false, ip = "", recuperacao = null }, agora = Date.now()) {
   email = emailLimpo(email);
   const fone = telefoneLimpo(telefone);
@@ -113,15 +127,17 @@ export async function encerrarSessao(env, usuario, sessao, motivo = "encerrada")
   return r.meta.changes > 0;
 }
 
-export async function entrar(env, { email, senha, dispositivo, encerrar, remover, app: appPedido }, agora = Date.now()) {
+export async function entrar(env, { email, senha, dispositivo, encerrar, remover, app: appPedido, ip = "" }, agora = Date.now()) {
   email = emailLimpo(email);
   const app = appDeLogin(appPedido, dispositivo && dispositivo.id);
   const d = lerDispositivo(dispositivo);
   await limitarTentativas(env, `login:${email}`, agora);
+  await limitarPorIp(env, "loginip", ip, agora);
   const u = await env.DB.prepare("SELECT * FROM usuarios WHERE email = ?").bind(email).first();
   const hash = await hashSenha(String(senha || ""), u ? u.salt : "00".repeat(16)); // tempo parecido com ou sem conta
   if (!u || !iguais(hash, u.senha_hash)) {
     await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`login:${email}`, agora).run();
+    await anotarPorIp(env, "loginip", ip, agora);
     throw new ErroId(401, "credenciais", "E-mail ou senha incorretos.");
   }
   if (u.bloqueado) throw new ErroId(403, "conta_bloqueada", "Esta conta foi bloqueada pela administração da Vetorial Tech.");
@@ -311,10 +327,11 @@ export async function existeConta(env, { email }, ip = "", agora = Date.now()) {
   return { ok: true, existe: !!u };
 }
 
-export async function confirmarRecuperacao(env, { email, codigo, novaSenha }, agora = Date.now()) {
+export async function confirmarRecuperacao(env, { email, codigo, novaSenha, ip = "" }, agora = Date.now()) {
   email = emailLimpo(email);
   if (String(novaSenha || "").length < 8) throw new ErroId(400, "senha_curta", "A senha precisa ter pelo menos 8 caracteres.");
   await limitarTentativas(env, `recc:${email}`, agora);
+  await limitarPorIp(env, "reccip", ip, agora);
   const u = await env.DB.prepare("SELECT * FROM usuarios WHERE email = ?").bind(email).first();
   const r = u ? await env.DB.prepare("SELECT * FROM id_recuperacao WHERE usuario = ?").bind(u.id).first() : null;
   const falha = () => new ErroId(400, "codigo_invalido", "Código errado ou vencido. Peça outro.");
@@ -322,6 +339,7 @@ export async function confirmarRecuperacao(env, { email, codigo, novaSenha }, ag
   if (!iguais(await sha256Hex(`rec:${u.id}:${String(codigo || "").replace(/\D/g, "")}`), r.codigo_hash)) {
     await env.DB.prepare("UPDATE id_recuperacao SET tentativas = tentativas + 1 WHERE usuario = ?").bind(u.id).run();
     await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recc:${email}`, agora).run();
+    await anotarPorIp(env, "reccip", ip, agora);
     throw falha();
   }
   const salt = aleatorio(16);

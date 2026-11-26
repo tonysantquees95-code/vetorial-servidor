@@ -130,6 +130,11 @@ export default {
       }
       if (caminho === "/chat" && req.method === "OPTIONS") return chatPreflight();
       if (caminho === "/chat" && req.method === "POST") {
+        // rota pública: limite por rede (30 por minuto) para ninguém gastar as chaves de IA
+        if (env.LIMITADOR) {
+          const ip = req.headers.get("cf-connecting-ip") || "?";
+          if (!(await env.LIMITADOR.limit({ key: `chat:${ip}` })).success) return json({ error: "Muitas mensagens em pouco tempo. Espere um minuto." }, 429);
+        }
         const r = await chat(req, envIA);
         if (env.DB && r.ok) ctx.waitUntil(r.clone().json().then((d) => registrarUso(env, { provedor: d.provider, tarefa: "conversa", uso: null })).catch(() => {}));
         return r;
@@ -266,7 +271,8 @@ async function cobrancaAviso(req, env) {
       const transacao = texto(c.transaction_nsu);
       await env.DB.prepare(
         "INSERT INTO cobranca_avisos (order_nsu, slug, transaction_nsu, corpo, criado) VALUES (?, ?, ?, ?, ?) " +
-          "ON CONFLICT(order_nsu) DO UPDATE SET slug = excluded.slug, transaction_nsu = excluded.transaction_nsu, corpo = excluded.corpo",
+          "ON CONFLICT(order_nsu) DO UPDATE SET slug = excluded.slug, transaction_nsu = excluded.transaction_nsu, corpo = excluded.corpo " +
+          "WHERE cobranca_avisos.transaction_nsu IS NULL OR cobranca_avisos.transaction_nsu = ''",
       ).bind(ref, slug, transacao, JSON.stringify(c).slice(0, 4000), Date.now()).run();
     }
   } catch (e) {
