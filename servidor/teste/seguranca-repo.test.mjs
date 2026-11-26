@@ -1,3 +1,4 @@
+// (Na publicação, CI=true: só os arquivos versionados; no computador, também os novos ainda não versionados.)
 // Teste de segurança do app (igual em todos os apps da suíte Vetorial; rode: npm test).
 // Confere o REPOSITÓRIO inteiro: segredos no código, arquivos que nunca podem ser versionados,
 // configuração insegura (CSP do Tauri, manifesto do Android) e código perigoso.
@@ -17,7 +18,7 @@ while (!existsSync(join(raiz, "CLAUDE.md")) && !existsSync(join(raiz, ".git")) &
 const IGNORAR = /(^|\/)(node_modules|target|dist|dist-demo|build|www|\.git|\.gradle|coverage|legado|public-pdf|ocr)(\/|$)|package-lock\.json$|Cargo\.lock$|\.(png|jpe?g|gif|webp|ico|icns|woff2?|ttf|otf|wasm|gz|zip|mp3|ogg|wav|mp4|pdf|traineddata|bin|apk|aab|jar)$/i;
 function arquivos() {
   try {
-    const l = execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], { cwd: raiz, maxBuffer: 1 << 28 }).toString().split("\0").filter(Boolean);
+    const l = execFileSync("git", ["ls-files", "-z", "--cached", ...(process.env.CI ? [] : ["--others", "--exclude-standard"])], { cwd: raiz, maxBuffer: 1 << 28 }).toString().split("\0").filter(Boolean);
     return l.filter((f) => !IGNORAR.test(f) && existsSync(join(raiz, f)));
   } catch {
     const fora = [];
@@ -28,7 +29,7 @@ function arquivos() {
 const ARQ = arquivos();
 const lerTexto = (f) => { try { const b = readFileSync(join(raiz, f)); return b.length > 2_000_000 || b.includes(0) ? "" : b.toString("utf8"); } catch { return ""; } };
 const permitidos = existsSync(join(aqui, "seguranca.permitidos.json")) ? JSON.parse(readFileSync(join(aqui, "seguranca.permitidos.json"), "utf8")) : [];
-const liberado = (regra, f, linha) => permitidos.some((p) => p.regra === regra && f.endsWith(p.arquivo) && linha.includes(p.trecho) && String(p.motivo || "").length > 8);
+const liberado = (regra, f, linha) => permitidos.some((p) => p.regra === regra && (f.endsWith(p.arquivo) || (p.arquivo.endsWith("/") && f.includes(p.arquivo))) && linha.includes(p.trecho) && String(p.motivo || "").length > 8);
 const EH_TESTE = /(^|\/)(teste|teste-visual|test|tests|__tests__)\//i;
 const EH_CODIGO = /\.(m?[jt]sx?|kt|java|rs)$/;
 
