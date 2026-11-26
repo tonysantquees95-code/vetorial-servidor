@@ -1,0 +1,26 @@
+[
+  {
+    "regra": "html",
+    "arquivo": "site/simulador.js",
+    "trecho": "",
+    "motivo": "simulador da home: HTML montado só com textos fixos do próprio arquivo; o texto digitado pela pessoa passa por esc()"
+  },
+  {
+    "regra": "html",
+    "arquivo": "site/logos-animados.js",
+    "trecho": "",
+    "motivo": "logos animados: SVG fixo do próprio arquivo, sem dado de fora"
+  },
+  {
+    "regra": "html",
+    "arquivo": "site/conta.js",
+    "trecho": "diasDeTesteRestantes",
+    "motivo": "número vindo do nosso servidor, convertido com Number()"
+  },
+  {
+    "regra": "http",
+    "arquivo": "src/vortex/steam.js",
+    "trecho": "specs.openid.net",
+    "motivo": "é o identificador (namespace) do protocolo OpenID, definido pela especificação como http; nenhuma conexão é feita a esse endereço"
+  }
+]

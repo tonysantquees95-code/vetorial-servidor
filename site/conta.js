@@ -53,7 +53,7 @@
     const pacote = l && l.pacote && NOMES[l.pacote] ? NOMES[l.pacote] : "Vênus";
     if (!l || l.plano === "sem_loja") { e.className = "aviso"; e.textContent = "Sua conta está pronta. Abra a Vênus e entre para começar o teste grátis."; return; }
     if (l.plano === "dono") { e.className = "aviso ok"; e.textContent = "Conta do dono da Vetorial Tech: acesso total, sem limites."; $("acoes").hidden = true; return; }
-    if (l.emTeste) { e.className = "aviso ok"; e.innerHTML = `🎁 Você está nos <b>7 dias grátis</b> com Vênus e Vindex: faltam ${l.diasDeTesteRestantes} dia(s).`; return; }
+    if (l.emTeste) { e.className = "aviso ok"; e.innerHTML = `🎁 Você está nos <b>7 dias grátis</b> com Vênus e Vindex: faltam ${Number(l.diasDeTesteRestantes) || 0} dia(s).`; return; }
     if (l.acesso) { e.className = "aviso ok"; e.textContent = `Assinatura ativa: ${pacote}. Faltam ${l.diasPagosRestantes} dia(s) pagos.`; return; }
     e.className = "aviso al"; e.textContent = "O seu período grátis acabou. Escolha um pacote para continuar.";
   }
