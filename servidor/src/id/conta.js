@@ -335,7 +335,7 @@ export async function confirmarRecuperacao(env, { email, codigo, novaSenha, ip =
   const u = await env.DB.prepare("SELECT * FROM usuarios WHERE email = ?").bind(email).first();
   const r = u ? await env.DB.prepare("SELECT * FROM id_recuperacao WHERE usuario = ?").bind(u.id).first() : null;
   const falha = () => new ErroId(400, "codigo_invalido", "Código errado ou vencido. Peça outro.");
-  if (!u || !r || r.expira < agora || r.tentativas >= 5) throw falha();
+  if (!u || !r || r.expira < agora || r.tentativas >= 5) { await anotarPorIp(env, "reccip", ip, agora); throw falha(); }
   if (!iguais(await sha256Hex(`rec:${u.id}:${String(codigo || "").replace(/\D/g, "")}`), r.codigo_hash)) {
     await env.DB.prepare("UPDATE id_recuperacao SET tentativas = tentativas + 1 WHERE usuario = ?").bind(u.id).run();
     await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(`recc:${email}`, agora).run();
