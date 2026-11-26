@@ -1,7 +1,8 @@
 // Voxix (chat para gamers) — rotas do servidor. Login = Vetorial ID. Aqui moram perfis (apelido), bloqueios, denúncias, a
 // entrega ao vivo e o histórico das conversas (guardado no banco, igual em todos os aparelhos da conta).
 //   GET  /voxix/perfil                    → { apelido, nome } (ou { apelido: null })
-//   PUT  /voxix/perfil {apelido, nome}    → cria o perfil (o apelido não muda depois)
+//   PUT  /voxix/perfil {apelido, nome}    → cria o perfil
+//   PUT  /voxix/perfil/apelido {apelido}  → troca o @ (1 vez a cada 30 dias; ver presenca.js, que também tem "jogando agora", conquistas e privacidade)
 //   GET  /voxix/buscar?apelido=           → { apelido, nome } da pessoa (só busca exata, nada de lista)
 //   POST /voxix/mensagens {para, corpo, idLocal} → entrega na caixa de quem recebe
 //   GET  /voxix/historico?desde=&limite=  → mensagens da conta (enviadas e recebidas) depois de "desde"
@@ -19,11 +20,12 @@ import { aleatorio } from "../loja/cripto.js";
 import { ErroId, validarSessao } from "../id/conta.js";
 import { tratarComunidades } from "./comunidades.js";
 import { entrarNaEspera } from "./espera.js";
+import { trocarApelido, apelidoReservadoPorOutro, definirPresenca, jogando, definirConquistas, perfilPublico, presencaDe } from "./presenca.js";
 
 export const ehRotaVoxix = (c) => c.startsWith("/voxix/");
 export const MAX_TEXTO = 2000;
 export const MAX_AUDIO = 1_000_000; // ~1 MB: ditado curto
-export const LIMITE_DIARIO = { denuncia: 20, transcricao: 60, mensagem: 3000, comunidade: 10, pontuacao: 400 };
+export const LIMITE_DIARIO = { denuncia: 20, transcricao: 60, mensagem: 3000, comunidade: 10, pontuacao: 400, troca_apelido: 20, presenca: 1800, conquistas: 200 };
 const RESERVADOS = new Set(["admin", "administrador", "voxix", "vetorial", "suporte", "moderador", "sistema", "root", "ajuda", "oficial"]);
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS" };
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS } });
@@ -91,9 +93,9 @@ export async function gastar(env, usuario, tipo, agora = Date.now()) {
 }
 
 export async function criarPerfil(env, usuario, d, nomeConta) {
-  if (await perfilDe(env, usuario)) throw new ErroLoja(409, "perfil_existe", "Você já tem um perfil no Voxix. O apelido não muda.");
+  if (await perfilDe(env, usuario)) throw new ErroLoja(409, "perfil_existe", "Você já tem um perfil no Voxix. Para mudar o @, use Trocar @.");
   const apelido = apelidoValido(d.apelido);
-  if (await perfilPorApelido(env, apelido)) throw new ErroLoja(409, "apelido_em_uso", "Esse apelido já está em uso.");
+  if (await perfilPorApelido(env, apelido) || await apelidoReservadoPorOutro(env, usuario, apelido)) throw new ErroLoja(409, "apelido_em_uso", "Esse apelido já está em uso.");
   const nome = nomeLimpo(d.nome, nomeConta || apelido);
   await env.DB.prepare("INSERT INTO voxix_perfis (usuario, apelido, nome, criado) VALUES (?, ?, ?, ?)").bind(usuario, apelido, nome, Date.now()).run();
   return { apelido, nome };
@@ -248,8 +250,15 @@ export async function tratarVoxix(req, env, url, caminho) {
     }
     const ctx = await validarSessao(env, pedido, {});
     const u = ctx.usuario.id;
-    if (caminho === "/voxix/perfil" && req.method === "GET") { const p = await perfilDe(env, u); return json(p ? { apelido: p.apelido, nome: p.nome, avatar: p.avatar || null } : { apelido: null, nomeSugerido: ctx.usuario.nome || "" }); }
+    if (caminho === "/voxix/perfil" && req.method === "GET") { const p = await perfilDe(env, u); return json(p ? { apelido: p.apelido, nome: p.nome, avatar: p.avatar || null, presenca: p.presenca || "amigos", proximaTroca: p.apelido_trocado ? p.apelido_trocado + 30 * 86_400_000 : null } : { apelido: null, nomeSugerido: ctx.usuario.nome || "" }); }
     if (caminho === "/voxix/perfil/avatar" && req.method === "PUT") return json(await definirAvatar(env, u, (await corpo(req)).avatar));
+    if (caminho === "/voxix/perfil/apelido" && req.method === "PUT") { await gastar(env, u, "troca_apelido"); return json(await trocarApelido(env, u, apelidoValido((await corpo(req)).apelido))); }
+    if (caminho === "/voxix/privacidade" && req.method === "PUT") return json(await definirPresenca(env, u, (await corpo(req)).presenca));
+    if (caminho === "/voxix/jogando" && req.method === "PUT") { await gastar(env, u, "presenca"); return json(await jogando(env, u, await corpo(req, 2000))); }
+    if (caminho === "/voxix/conquistas" && req.method === "PUT") { await gastar(env, u, "conquistas"); return json(await definirConquistas(env, u, (await corpo(req, 20_000)).itens)); }
+    if (caminho === "/voxix/presenca" && req.method === "GET") return json(await presencaDe(env, u, url.searchParams.get("apelidos")));
+    const pes = /^\/voxix\/pessoas\/([A-Za-z0-9_]{3,20})$/.exec(caminho);
+    if (pes && req.method === "GET") return json(await perfilPublico(env, u, pes[1].toLowerCase()));
     if (caminho === "/voxix/avatares" && req.method === "GET") return json({ avatares: await avatares(env, url.searchParams.get("apelidos")) });
     if (caminho === "/voxix/perfil" && req.method === "PUT") return json(await criarPerfil(env, u, await corpo(req), ctx.usuario.nome), 201);
     if (caminho === "/voxix/buscar" && req.method === "GET") {
