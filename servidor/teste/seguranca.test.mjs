@@ -195,3 +195,15 @@ test("arquivos sensíveis do projeto não são servidos", async () => {
     assert.ok(!(r.s === 200 && /(database_id|CLOUDFLARE_API_TOKEN|CHAVE_COFRE|GITHUB_TOKEN)/i.test(r.tx)), p);
   }
 });
+
+test("baixar pelo site exige o Vetorial ID: sem token, token falso e app inválido não entregam arquivo", async () => {
+  const env = novoAmbiente();
+  assert.equal((await chamar(env, "POST", "/baixar?app=vortex-android")).s, 401);
+  assert.equal((await chamar(env, "POST", "/baixar?app=vortex-android", { t: "lixo.lixo.lixo" })).s, 401);
+  const alg = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url");
+  const corpo = Buffer.from(JSON.stringify({ sub: "1", exp: 9999999999 })).toString("base64url");
+  assert.equal((await chamar(env, "POST", "/baixar?app=vortex-android", { t: `${alg}.${corpo}.` })).s, 401);
+  const conta = await cadastrar(env, "baixa@x.com", 5);
+  assert.equal((await chamar(env, "POST", "/baixar?app=../../etc", { t: conta })).s, 400);
+  assert.equal((await chamar(env, "GET", "/baixar?app=vortex-android", { t: conta })).s, 404);
+});

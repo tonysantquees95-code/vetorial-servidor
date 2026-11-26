@@ -26,6 +26,7 @@ import { registrarVisita, registrarDownload } from "./dev/visitas.js";
 import { ehAtalho, responderAtalho } from "./atalhos.js";
 import { ehRotaVindex, tratarVindex } from "./vindex/rotas.js";
 import { ehRotaPdf, tratarPdf } from "./pdf/uso.js";
+import { ehRotaBaixar, tratarBaixar } from "./baixar.js";
 import { ehRotaDeLinks, tratarLinks } from "./ferramentas/links.js";
 import { ehRotaDePanfleto, tratarPanfleto } from "./panfleto/uso.js";
 import { ehRotaDeLogo, tratarLogo } from "./ferramentas/logo.js";
@@ -111,6 +112,7 @@ export default {
       if (ehRotaVortex(caminho)) return await tratarVortex(req, env, url, caminho);
       if (ehRotaDrive(caminho)) return await tratarDrive(req, env, url, caminho);
       if (ehRotaPdf(caminho)) return await tratarPdf(req, env, url, caminho);
+      if (ehRotaBaixar(caminho)) return await tratarBaixar(req, env, url, { entregar: (u) => atualizacao(u, env, ctx), registrar: (e, r, app) => registrarDownload(e, r, app) });
       if (ehRotaDeCardapio(caminho)) return await tratarCardapio(req, envIA, url, caminho);
       if (ehRotaDeCatalogo(caminho)) return await tratarCatalogo(req, env, url, caminho);
       if (ehRotaDeSiteVitrine(caminho)) return await tratarSiteVitrine(req, env, url, caminho);
