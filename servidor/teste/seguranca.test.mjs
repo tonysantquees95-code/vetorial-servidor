@@ -45,6 +45,16 @@ test("áreas de administração: sem login e com conta comum são barradas", asy
   assert.ok(barrado((await chamar(env, "DELETE", "/dev/fases/1", { t: atacante })).s));
 });
 
+test("backup das chaves de assinatura: sem login e com conta comum nada exporta nem restaura", async () => {
+  const { env, atacante } = await duasContas();
+  for (const p of ["/dev/cofre/backup", "/dev/cofre/backup-estado", "/dev/cofre/restaurar"]) {
+    const corpo = { frase: "frase-do-atacante-123", senha: "qualquer-senha-123", arquivo: {} };
+    assert.ok(barrado((await chamar(env, "POST", p, { corpo })).s), `${p} sem login`);
+    const r = await chamar(env, "POST", p, { t: atacante, corpo });
+    assert.ok(barrado(r.s), `${p} com conta comum`);
+  }
+});
+
 test("token falso nunca vale: alg none, assinatura trocada, lixo e dono trocado", async () => {
   const { env, vitima, atacante } = await duasContas();
   const [cab, corpo, ass] = atacante.split(".");

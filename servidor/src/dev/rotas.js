@@ -3,6 +3,7 @@ import { listarAlertas, marcarAlerta } from "./alertas.js";
 import { resumoDeVisitas } from "./visitas.js";
 import { resumoDeAssinaturas } from "./assinaturas.js";
 import { manualComCache } from "./manual.js";
+import { anotarBackup, gerarBackup, restaurarBackup, situacaoDoBackup } from "./backup.js";
 import { ErroId, encerrarSessao, removerDispositivo, tokenDoPedido, validarSessao, MAX_ATIVAS, MAX_DISPOSITIVOS, TTL_ATIVA_MS } from "../id/conta.js";
 import { verificar } from "../id/jwt.js";
 import { ErroLoja } from "../loja/lojas.js";
@@ -18,9 +19,9 @@ const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...CORS } });
 export const ehRotaDev = (c) => c === "/dev" || c.startsWith("/dev/");
 
-async function corpo(req) {
+async function corpo(req, max = 50_000) {
   const t = await req.text();
-  if (t.length > 50_000) throw new ErroId(413, "corpo_grande", "Pedido grande demais.");
+  if (t.length > max) throw new ErroId(413, "corpo_grande", "Pedido grande demais.");
   try {
     const d = JSON.parse(t || "{}");
     if (!d || typeof d !== "object" || Array.isArray(d)) throw 0;
@@ -351,8 +352,11 @@ export async function tratarDev(req, env, url, caminho) {
     if (caminho === "/dev/cofre/estado" && req.method === "GET") return json({ ...(await cofre.estado(env, agora)), sugeridas: cofre.CHAVES_SUGERIDAS });
     if (caminho === "/dev/cofre/iniciar" && req.method === "POST") return json(await cofre.iniciar(env, (await corpo(req)).senha, agora), 201);
     if (caminho.startsWith("/dev/cofre/") && req.method === "POST") {
-      const d = await corpo(req);
+      const d = await corpo(req, caminho === "/dev/cofre/restaurar" ? 500_000 : 50_000);
       await cofre.conferir(env, d.senha, agora);
+      if (caminho === "/dev/cofre/backup-estado") return json(await situacaoDoBackup(env));
+      if (caminho === "/dev/cofre/backup") { const arq = await gerarBackup(env, d.frase, agora); await anotarBackup(env, agora); return json(arq); }
+      if (caminho === "/dev/cofre/restaurar") return json(await restaurarBackup(env, d.arquivo, d.frase, agora));
       if (caminho === "/dev/cofre/listar") return json({ chaves: await cofre.listar(env, agora), historico: await cofre.historico(env, 20) });
       if (caminho === "/dev/cofre/guardar") return json(await cofre.guardar(env, d, agora));
       if (caminho === "/dev/cofre/codigo") return json(await cofre.gerarCodigo(env, agora));
