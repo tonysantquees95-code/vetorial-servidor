@@ -12,6 +12,7 @@
 import { ErroId, validarSessao } from "../id/conta.js";
 import { appsLiberados } from "../loja/assinatura.js";
 import { backendD1 } from "./d1.js";
+import { ehAdmin } from "../dev/admin.js";
 
 export const ehRotaDrive = (c) => c.startsWith("/drive/");
 export const COTA_PADRAO = 3 * 1024 ** 3;
@@ -33,6 +34,7 @@ const limitesDe = (env, b) => ({
 });
 
 async function liberado(env, usuario, agora) {
+  if (ehAdmin(env, usuario.email)) return true; // o administrador usa tudo, sem depender do plano da loja
   if (!usuario.loja) return false;
   const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(usuario.loja).first();
   if (!loja) return false;

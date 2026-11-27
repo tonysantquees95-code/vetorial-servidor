@@ -148,3 +148,10 @@ test("só o dono usa o Drive por enquanto (DRIVE_PUBLICO abre para todos)", asyn
   await env.DB.prepare("UPDATE lojas SET plano = 'dono'").run();
   assert.equal((await chamar(env, token, "GET", "/drive/arquivos")).status, 200);
 });
+
+test("o administrador abre o Drive mesmo sem o plano dono; conta comum continua barrada", async () => {
+  const adm = await mundo({ DRIVE_PUBLICO: undefined, ADMIN_EMAIL: "jogador@exemplo.com" }, true);
+  assert.equal((await chamar(adm.env, adm.token, "GET", "/drive/arquivos")).status, 200);
+  const comum = await mundo({ DRIVE_PUBLICO: undefined, ADMIN_EMAIL: "outro@exemplo.com" }, true);
+  assert.equal((await chamar(comum.env, comum.token, "GET", "/drive/arquivos")).status, 402);
+});
