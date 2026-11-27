@@ -1,0 +1,42 @@
+name: Backup do banco (criptografado)
+
+# Cópia semanal do banco D1 (contas, planos, lojas, chaves cifradas) para FORA do Cloudflare.
+# O arquivo sai criptografado (gpg AES256) com a frase do segredo BACKUP_FRASE e fica como artefato por 30 dias.
+# Segredos do repositório: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID e BACKUP_FRASE (12+ caracteres; guarde a frase também fora do GitHub).
+# Sem BACKUP_FRASE o fluxo FALHA de propósito: o Painel Dev avisa "build quebrado" e ninguém acha que há backup sem ter.
+# Para abrir: gpg --decrypt venus-AAAA-MM-DD.sql.gpg > venus.sql   (o .sql restaura com `wrangler d1 execute venus --remote --file venus.sql`).
+on:
+  schedule:
+    - cron: "23 6 * * 0"   # domingo 03:23 em Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BACKUP_FRASE: ${{ secrets.BACKUP_FRASE }}
+    steps:
+      - name: Conferir a frase
+        run: |
+          if [ "${#BACKUP_FRASE}" -lt 12 ]; then echo "::error::Cadastre o segredo BACKUP_FRASE (12+ caracteres) nos Secrets do repositório."; exit 1; fi
+      - name: Exportar o banco
+        run: |
+          data=$(date -u +%F)
+          id=$(npx --yes wrangler@4 d1 list --json | jq -r '.[] | select(.name=="venus") | .uuid' | head -1)
+          test -n "$id" || { echo "::error::Banco venus não encontrado."; exit 1; }
+          npx --yes wrangler@4 d1 export venus --remote --output "venus-$data.sql"
+          test -s "venus-$data.sql" || { echo "::error::Exportação vazia."; exit 1; }
+          printf '%s' "$BACKUP_FRASE" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback --symmetric --cipher-algo AES256 -o "venus-$data.sql.gpg" "venus-$data.sql"
+          rm -f "venus-$data.sql"
+          ls -l venus-*.gpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backup-banco
+          path: venus-*.sql.gpg
+          retention-days: 30
+          if-no-files-found: error
