@@ -53,3 +53,19 @@ test("backup: lembra a data da última cópia", async () => {
   assert.equal(s.ultimoBackup, 12345);
   assert.deepEqual(s.repositorios, ["dono/app-a"]);
 });
+
+import { verificarConfiguracao } from "../src/dev/alertas.js";
+import { guardar as guardarNoCofre, iniciar } from "../src/dev/cofre.js";
+
+test("aviso: Mercado Pago ligado sem segredo de webhook gera um aviso só e some quando o segredo entra", async () => {
+  const env = novoEnv();
+  assert.equal(await verificarConfiguracao(env, 1), 0); // sem Mercado Pago, nada a avisar
+  await iniciar(env, "senha-do-cofre-123", 1);
+  await guardarNoCofre(env, { nome: "MERCADOPAGO_ACCESS_TOKEN", valor: "APP_USR-teste-123456789" }, 2);
+  assert.equal(await verificarConfiguracao(env, 3), 1);
+  assert.equal(await verificarConfiguracao(env, 4), 0); // não repete
+  env.MERCADOPAGO_WEBHOOK_SECRET = "segredo";
+  await verificarConfiguracao(env, 5);
+  const a = await env.DB.prepare("SELECT status FROM dev_alertas WHERE chave = 'config:mp-webhook-secret'").first();
+  assert.equal(a.status, "resolvido");
+});

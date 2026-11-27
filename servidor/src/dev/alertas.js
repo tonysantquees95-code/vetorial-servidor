@@ -3,6 +3,7 @@ import { PROJETOS, buildsDoRepo } from "./github.js";
 import { APPS } from "../feedback/dados.js";
 import { verificarCadastros, verificarDownloads, limparVisitas } from "./visitas.js";
 import { verificarPagamentos } from "./assinaturas.js";
+import { tokenMercadoPago } from "../loja/assinatura.js";
 
 export const LIMITE_ERRO_EM_ALTA = 3; // relatos de problema do mesmo app na última hora
 const HORA = 3600000;
@@ -63,6 +64,19 @@ export async function verificarRelatos(env, agora = Date.now()) {
   return novos;
 }
 
+/** Aviso de configuração: Mercado Pago ligado mas sem o segredo que confere a assinatura dos webhooks. Some sozinho quando o segredo entra. */
+export async function verificarConfiguracao(env, agora = Date.now()) {
+  const chave = "config:mp-webhook-secret";
+  const ligado = !!(await tokenMercadoPago(env).catch(() => null));
+  if (ligado && !env.MERCADOPAGO_WEBHOOK_SECRET) {
+    const r = await env.DB.prepare("INSERT OR IGNORE INTO dev_alertas (criado, tipo, app, grupo, titulo, detalhe, chave) VALUES (?, 'cobranca', 'servidor', '', ?, ?, ?)")
+      .bind(agora, "Mercado Pago sem segredo de webhook", "Sem o segredo, o servidor só confia na conferência na API do Mercado Pago. Cadastre MERCADOPAGO_WEBHOOK_SECRET (Mercado Pago › Webhooks › chave secreta) nos Secrets do servidor.", chave).run();
+    return r.meta.changes ? 1 : 0;
+  }
+  await env.DB.prepare("UPDATE dev_alertas SET status = 'resolvido', resolvido_em = ? WHERE chave = ? AND status != 'resolvido'").bind(agora, chave).run();
+  return 0;
+}
+
 export async function verificarAlertas(env, agora = Date.now()) {
   let n = 0;
   try { if (env.GITHUB_TOKEN) n += await verificarBuilds(env, agora); } catch (e) { console.error("alertas builds", e); }
@@ -70,6 +84,7 @@ export async function verificarAlertas(env, agora = Date.now()) {
   try { n += await verificarCadastros(env, agora); } catch (e) { console.error("alertas cadastros", e); }
   try { n += await verificarDownloads(env, agora); } catch (e) { console.error("alertas downloads", e); }
   try { n += await verificarPagamentos(env, agora); } catch (e) { console.error("alertas pagamentos", e); }
+  try { n += await verificarConfiguracao(env, agora); } catch (e) { console.error("alertas configuracao", e); }
   try { await limparVisitas(env, agora); } catch (e) { console.error("limpar visitas", e); }
   await env.DB.prepare("DELETE FROM dev_alertas WHERE criado < ?").bind(agora - 30 * 86400000).run();
   return n;
