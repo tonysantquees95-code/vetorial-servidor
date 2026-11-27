@@ -2,6 +2,7 @@
 import { PROJETOS, buildsDoRepo } from "./github.js";
 import { APPS } from "../feedback/dados.js";
 import { verificarCadastros, verificarDownloads, limparVisitas } from "./visitas.js";
+import { verificarPagamentos } from "./assinaturas.js";
 
 export const LIMITE_ERRO_EM_ALTA = 3; // relatos de problema do mesmo app na última hora
 const HORA = 3600000;
@@ -68,6 +69,7 @@ export async function verificarAlertas(env, agora = Date.now()) {
   try { n += await verificarRelatos(env, agora); } catch (e) { console.error("alertas relatos", e); }
   try { n += await verificarCadastros(env, agora); } catch (e) { console.error("alertas cadastros", e); }
   try { n += await verificarDownloads(env, agora); } catch (e) { console.error("alertas downloads", e); }
+  try { n += await verificarPagamentos(env, agora); } catch (e) { console.error("alertas pagamentos", e); }
   try { await limparVisitas(env, agora); } catch (e) { console.error("limpar visitas", e); }
   await env.DB.prepare("DELETE FROM dev_alertas WHERE criado < ?").bind(agora - 30 * 86400000).run();
   return n;

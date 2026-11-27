@@ -1,6 +1,7 @@
 // Rotas do Painel Dev: /dev/* (só o superadministrador, exceto entrar, primeiro acesso e telemetria do Vindex).
 import { listarAlertas, marcarAlerta } from "./alertas.js";
 import { resumoDeVisitas } from "./visitas.js";
+import { resumoDeAssinaturas } from "./assinaturas.js";
 import { ErroId, encerrarSessao, removerDispositivo, tokenDoPedido, validarSessao, MAX_ATIVAS, MAX_DISPOSITIVOS, TTL_ATIVA_MS } from "../id/conta.js";
 import { verificar } from "../id/jwt.js";
 import { ErroLoja } from "../loja/lojas.js";
@@ -280,6 +281,7 @@ export async function tratarDev(req, env, url, caminho) {
     if (caminho === "/dev/trafego" && req.method === "GET") return json(await listarTrafego(env, { desde: Number(url.searchParams.get("desde")) || 0, limite: Number(url.searchParams.get("limite")) || 60 }, agora));
     if (caminho === "/dev/feedback" && req.method === "GET") return json(await listarRelatos(env, { status: url.searchParams.get("status") || "", app: url.searchParams.get("app") || "", tipo: url.searchParams.get("tipo") || "", limite: Number(url.searchParams.get("limite")) || 200 }));
     if (caminho === "/dev/visitas" && req.method === "GET") return json(await resumoDeVisitas(env, Number(url.searchParams.get("dias")) || 14, agora));
+    if (caminho === "/dev/assinaturas" && req.method === "GET") return json(await resumoDeAssinaturas(env, agora));
     if (caminho === "/dev/alertas" && req.method === "GET") return json(await listarAlertas(env, { status: url.searchParams.get("status") || "" }));
     if (caminho === "/dev/alertas" && req.method === "POST") return json(await marcarAlerta(env, 0, await corpo(req)));
     const al = /^\/dev\/alertas\/(\d{1,10})$/.exec(caminho);
