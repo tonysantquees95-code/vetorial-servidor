@@ -59,3 +59,8 @@
 - Além deste arquivo, o servidor tem `servidor/teste/seguranca.test.mjs` (ataques simulados contra o Worker). Os dois rodam na publicação.
 
 - Baixar pelo site exige o Vetorial ID (decisão de 2026-11-26: a Vetorial Tech precisa saber quem baixa, inclusive os apps grátis): `site/baixar.js` (incluído depois de `config.js` em todas as páginas) pega todo clique em link `/atualizacao?app=…&baixar=1`, abre a janela `/id` se a pessoa não entrou e chama `POST /baixar?app=<app>` (`servidor/src/baixar.js`: confere a sessão, conta o download e devolve `{url}` do arquivo). `/atualizacao?…&baixar=1` continua aberta de propósito (os apps se atualizam por dentro por ela, e os repositórios são públicos); os atalhos `/<app>/android|windows` de `atalhos.js` também seguem diretos. Teste de ataque em `seguranca.test.mjs`.
+
+
+## Manual do app (aparece no botão "Manual" do Painel Dev)
+- `MANUAL.md` na raiz explica o app: pastas, onde fica cada coisa, como voltar atrás. É público: só diz ONDE ficam as chaves, nunca os valores.
+- Mudança importante (função nova, pasta nova, arquivo que passa a mandar em algo, regra nova, decisão): acrescente uma linha NO TOPO da tabela "Movimentações importantes" do `MANUAL.md` (data, o que mudou, onde) e ajuste o trecho que ficou velho. Os últimos commits o Painel Dev já mostra sozinho; o manual guarda o que vale lembrar.
