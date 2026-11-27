@@ -38,7 +38,7 @@ const barrado = (s) => s === 401 || s === 403 || s === 404;
 
 test("áreas de administração: sem login e com conta comum são barradas", async () => {
   const { env, atacante } = await duasContas();
-  for (const p of ["/dev/usuarios", "/dev/alertas", "/dev/feedback", "/dev/visitas?dias=7", "/dev/assinaturas", "/dev/cofre", "/dev/fases", "/id/github"]) {
+  for (const p of ["/dev/usuarios", "/dev/alertas", "/dev/feedback", "/dev/visitas?dias=7", "/dev/assinaturas", "/dev/manual?projeto=venus", "/dev/cofre", "/dev/fases", "/id/github"]) {
     assert.ok(barrado((await chamar(env, "GET", p)).s), `${p} sem login`);
     assert.ok(barrado((await chamar(env, "GET", p, { t: atacante })).s), `${p} com conta comum`);
   }
