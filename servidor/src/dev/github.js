@@ -11,6 +11,8 @@ export const REPO_VYNX = "tonysantquees95-code/vynx";
 export const REPO_VSPACE = "tonysantquees95-code/v-space";
 export const REPO_VETOGOSHI = "tonysantquees95-code/vetogoshi";
 export const REPO_DEV_CENTER = "tonysantquees95-code/vetorial-dev-center";
+export const REPO_SERVIDOR = "tonysantquees95-code/vetorial-servidor";
+export const REPO_DESEJO = "tonysantquees95-code/desejo-de-intimidade";
 
 /** Projetos do ecossistema. Vindex e Vortex ganham repositório pelo painel (dev_config "repo:<id>") ou pela variável do Worker. */
 export const PROJETOS = [
@@ -63,6 +65,8 @@ export const PROJETOS = [
   { id: "vynx", nome: "Vynx OS · Espaço para devs", repo: REPO_VYNX, descricao: "Laboratórios Linux descartáveis (WSL2) e Painel Dev com GitHub para desenvolvedores (Windows).", apks: [
       { app: "vynx-windows", rotulo: "Vynx OS (Windows)", tag: /^v?1\.(\d+)$/, arquivo: (n) => /^VynxSetup\.exe$/i.test(n) },
     ] },
+  { id: "servidor", nome: "Servidor · Vetorial Tech", repo: REPO_SERVIDOR, descricao: "O servidor único (login, assinaturas, IA, atualização dos apps, Painel Dev) e o site vetorial.tech. Se ele cair, tudo para: fique de olho no build.", apks: [] },
+  { id: "desejo", nome: "Desejo de Intimidade", repo: REPO_DESEJO, descricao: "Loja online (site, banco e cobrança) e app de celular da loja. O app baixa pelo próprio site da loja.", apks: [] },
 ];
 
 export const REPO_VALIDO = /^[A-Za-z0-9_.-]{1,60}\/[A-Za-z0-9_.-]{1,100}$/;
