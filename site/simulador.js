@@ -211,7 +211,7 @@ TELAS.vyntem = function (t) {
 TELAS.voxix = function (t) {
   var salas = { geral: [["Duda", "Alguém joga hoje à noite?"], ["Rafa", "Eu entro às 21h 🎮"]], retro: [["Lia", "Terminei Cave Runner ontem!"]], dicas: [["Theo", "Dica: salve antes do chefe final."]] }, sala = "geral", amigos = ["Duda", "Rafa", "Lia", "Theo"], respostas = ["Boa! 🔥", "Bora!", "Também acho 😄", "Chama a galera!"];
   function desenha() {
-    t.innerHTML = '<div class="flex items-center gap-2 px-4 pb-2">' + iconeApp("voxix") + '<b class="text-base">Voxix</b><span class="ml-auto rounded-full bg-azul/20 px-2 py-0.5 text-[11px] text-azul">Prévia · em breve</span></div>' +
+    t.innerHTML = '<div class="flex items-center gap-2 px-4 pb-2">' + iconeApp("voxix") + '<b class="text-base">Voxix</b><span class="ml-auto rounded-full bg-azul/20 px-2 py-0.5 text-[11px] text-azul">Dentro do Vortex</span></div>' +
       '<div class="sim-abas-apps flex gap-2 overflow-x-auto px-4 pb-2" role="group" aria-label="Salas">' + Object.keys(salas).map(function (s) { return '<button type="button" class="sim-chip" data-s="' + s + '" aria-pressed="' + (s === sala) + '"># ' + s + '</button>'; }).join("") + '</div>' +
       '<div class="px-4 pb-2 text-xs text-suave"><span class="text-verde">●</span> 4 online agora</div>' +
       '<div id="vx-m" class="sim-rolagem flex-1 space-y-2 px-3 pb-2">' + salas[sala].map(msg).join("") + '</div>' +

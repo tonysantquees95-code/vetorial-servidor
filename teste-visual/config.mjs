@@ -9,6 +9,15 @@ export default {
   porta: 4191,
   cenarios: [
     ["home", "", async () => {}],
+    ["rodape-legal", "", async (p) => {
+      for (const [href, txt] of [["privacidade.html", "Privacidade"], ["termos.html", "Termos e reembolso"], ["mailto:vetorialtech.dev@gmail.com", "vetorialtech.dev@gmail.com"]]) {
+        if ((await p.locator(`footer a[href="${href}"]`).count()) < 1) throw new Error(`o rodapé deveria ter o link ${txt}`);
+      }
+      await p.locator("footer").scrollIntoViewIfNeeded();
+    }],
+    ["voxix-sem-em-breve", "gaming.html", async (p) => {
+      if (/em breve/i.test(await p.locator("body").innerText())) throw new Error("o Voxix não é mais 'em breve': tire o aviso");
+    }],
     ["aprender-videos", "aprender.html", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
       if ((await p.locator(".ap-video video").count()) !== 3) throw new Error("a página Aprender deveria ter 3 vídeos");
@@ -451,7 +460,7 @@ export default {
       if (!/7 cliques/.test(await p.locator("#fr-lista").innerText())) throw new Error("a contagem de cliques não apareceu");
       await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
     }],
-    ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "gratis", "quem-somos", "seguranca", "conta", "proposta", "aprender"].map((n) => pagina(n, `${n}.html`)),
+    ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "gratis", "quem-somos", "seguranca", "privacidade", "termos", "conta", "proposta", "aprender"].map((n) => pagina(n, `${n}.html`)),
     ["vitrine", "vitrine/", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
       if (await p.locator("nav.abas-m, header.topo, .faixa-ig").count()) throw new Error("a Vênus Vitrine ainda mostra o menu do site da Vetorial Tech");
