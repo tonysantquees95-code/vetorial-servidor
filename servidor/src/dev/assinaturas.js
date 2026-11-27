@@ -52,3 +52,25 @@ export async function resumoDeAssinaturas(env, agora = Date.now()) {
     recentes: recentes.map((p) => ({ id: p.id, email: p.email || "", valor: p.valor, pacote: nomeDoPacote(p.pacote), gateway: p.gateway, quando: p.atualizado, aguardandoLiberacao: p.status === "pago" })),
   };
 }
+
+const PROBLEMAS = {
+  rejected: "Pagamento recusado", cancelled: "Pagamento cancelado", charged_back: "Pagamento contestado (chargeback)", refunded: "Pagamento devolvido",
+  recycling: "Cobrança da assinatura recusada", paused: "Assinatura pausada", assinatura_cancelled: "Assinatura cancelada",
+};
+export const ehProblemaDePagamento = (status) => Object.prototype.hasOwnProperty.call(PROBLEMAS, status);
+
+/**
+ * Avisa o Painel Dev de um problema de cobrança vindo do Mercado Pago (recusa, estorno, assinatura pausada ou cancelada).
+ * `referencia` é o nosso id de pagamento (external_reference); a chave evita avisar duas vezes do mesmo fato. Nunca derruba o webhook.
+ */
+export async function avisarProblemaDePagamento(env, { quem, status, referencia, detalhe = "", agora = Date.now() }) {
+  try {
+    const titulo = PROBLEMAS[status];
+    if (!titulo) return false;
+    const u = await env.DB.prepare("SELECT u.email FROM pagamentos p JOIN usuarios u ON u.loja = p.loja WHERE p.id = ? ORDER BY u.criado LIMIT 1").bind(String(referencia || "")).first();
+    const texto = [u && u.email ? u.email : "conta não encontrada", detalhe].filter(Boolean).join(" · ").slice(0, 160);
+    const r = await env.DB.prepare("INSERT OR IGNORE INTO dev_alertas (criado, tipo, app, grupo, titulo, detalhe, chave) VALUES (?, 'cobranca', 'venus', '', ?, ?, ?)")
+      .bind(agora, titulo, texto, `cobranca:${String(quem).slice(0, 80)}:${status}`).run();
+    return !!(r.meta && r.meta.changes > 0);
+  } catch (e) { console.error("aviso de cobrança", e); return false; }
+}

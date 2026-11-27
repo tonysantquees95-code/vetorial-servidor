@@ -3,6 +3,7 @@
 import { aleatorio, cifrar, decifrar, hmacHex, iguais } from "./cripto.js";
 import { ErroLoja, acessoLiberado } from "./lojas.js";
 import { lerSegredo } from "../dev/cofre.js";
+import { avisarProblemaDePagamento, ehProblemaDePagamento } from "../dev/assinaturas.js";
 import { conferirTotp, novoSegredo, uriOtp } from "./totp.js";
 
 export const PRECO_CENTAVOS = 4990;
@@ -195,19 +196,36 @@ export async function assinaturaMercadoPagoValida(env, req, dataId) {
 export async function webhookMercadoPago(env, req, corpo, url) {
   const dataId = corpo?.data?.id || url.searchParams.get("data.id") || url.searchParams.get("id");
   const tipo = corpo?.type || corpo?.topic || url.searchParams.get("type") || url.searchParams.get("topic");
-  if (!dataId || !["payment", "subscription_authorized_payment"].includes(tipo)) return { ignorado: true };
+  if (!dataId || !["payment", "subscription_authorized_payment", "subscription_preapproval"].includes(tipo)) return { ignorado: true };
   if (!(await assinaturaMercadoPagoValida(env, req, dataId))) throw new ErroLoja(401, "assinatura", "Assinatura inválida.");
   const cab = { headers: { authorization: `Bearer ${await tokenMercadoPago(env)}` } };
+  if (tipo === "subscription_preapproval") {
+    // a própria assinatura mudou: só interessa se foi pausada ou cancelada (quem cancela, em geral, é o cliente pelo Mercado Pago). Só avisa o Painel Dev.
+    const pre = await http(`https://api.mercadopago.com/preapproval/${encodeURIComponent(dataId)}`, cab);
+    const status = pre.status === "cancelled" ? "assinatura_cancelled" : pre.status;
+    if (pre.external_reference && ehProblemaDePagamento(status)) await avisarProblemaDePagamento(env, { quem: `pre${dataId}`, status, referencia: pre.external_reference });
+    return { pago: false };
+  }
   if (tipo === "subscription_authorized_payment") {
     // cobrança de uma assinatura: confere na API do Mercado Pago, não no corpo do aviso
     const ap = await http(`https://api.mercadopago.com/authorized_payments/${encodeURIComponent(dataId)}`, cab);
     const aprovado = ap.status === "processed" || (ap.payment && ap.payment.status === "approved");
-    if (!aprovado || !ap.preapproval_id) return { pago: false };
+    if (!ap.preapproval_id) return { pago: false };
+    if (!aprovado) {
+      // o Mercado Pago tenta de novo sozinho (recycling); o aviso sai uma vez por tentativa
+      const recusado = ap.status === "recycling" || (ap.payment && ap.payment.status === "rejected");
+      if (recusado) {
+        const pre = await http(`https://api.mercadopago.com/preapproval/${encodeURIComponent(ap.preapproval_id)}`, cab);
+        if (pre.external_reference) await avisarProblemaDePagamento(env, { quem: `ap${ap.id || dataId}:${ap.retry_attempt || 0}`, status: "recycling", referencia: pre.external_reference, detalhe: ap.payment && ap.payment.status_detail ? String(ap.payment.status_detail) : "" });
+      }
+      return { pago: false };
+    }
     const pre = await http(`https://api.mercadopago.com/preapproval/${encodeURIComponent(ap.preapproval_id)}`, cab);
     if (!pre.external_reference) return { pago: false };
     return { pago: await confirmarPagamento(env, String(pre.external_reference), Math.round(Number(ap.transaction_amount) * 100), `ap${ap.id || dataId}`) };
   }
   const d = await http(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`, cab);
+  if (d.external_reference && ehProblemaDePagamento(d.status)) await avisarProblemaDePagamento(env, { quem: `pg${d.id}`, status: d.status, referencia: d.external_reference, detalhe: d.status_detail ? String(d.status_detail) : "" });
   if (d.status !== "approved" || !d.external_reference) return { pago: false };
   const ok = await confirmarPagamento(env, String(d.external_reference), Math.round(Number(d.transaction_amount) * 100), String(d.id));
   return { pago: ok };

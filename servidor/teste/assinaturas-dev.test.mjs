@@ -48,3 +48,43 @@ test("assinaturas: resumo separa assinantes, teste, vencidos, testadores e dono;
   assert.equal(r.recentes[0].pacote, "Vênus + Vindex + Vortex");
   assert.equal(r.pacotes.length, 2);
 });
+
+import { tratarLoja } from "../src/loja/rotas.js";
+import { hmacHex } from "../src/loja/cripto.js";
+
+test("assinaturas: recusa, estorno e cancelamento no Mercado Pago avisam o Painel Dev (uma vez só) e não liberam acesso", async () => {
+  const env = { DB: bancoDeTeste(), MERCADOPAGO_ACCESS_TOKEN: "tk", MERCADOPAGO_WEBHOOK_SECRET: "wh" };
+  await conta(env, "l1", "ana@teste.com", { ativo: T + 10 * DIA });
+  await pagto(env, "ref1", "l1", "aguardando", T);
+  const orig = globalThis.fetch;
+  let mp = {};
+  globalThis.fetch = async (url) => {
+    url = String(url);
+    const r = (d) => new Response(JSON.stringify(d));
+    if (url.includes("/v1/payments/")) return r({ id: 9, status: mp.pagamento, status_detail: "cc_rejected_insufficient_amount", external_reference: "ref1", transaction_amount: 49.9 });
+    if (url.includes("/authorized_payments/")) return r({ id: 7, status: mp.cobranca, retry_attempt: 1, preapproval_id: "pre1", payment: { status: "rejected", status_detail: "cc_rejected_other_reason" }, transaction_amount: 49.9 });
+    if (url.includes("/preapproval/")) return r({ id: "pre1", status: mp.assinatura, external_reference: "ref1" });
+    return new Response("{}", { status: 500 });
+  };
+  const aviso = async (type, id) => {
+    const ts = "1700000000";
+    const sig = await hmacHex("wh", `id:${id};request-id:r1;ts:${ts};`);
+    const req = new Request("https://x.test/assinatura/webhook/mercadopago", { method: "POST", headers: { "x-signature": `ts=${ts},v1=${sig}`, "x-request-id": "r1" }, body: JSON.stringify({ type, data: { id } }) });
+    return (await tratarLoja(req, env, {}, new URL(req.url), "/assinatura/webhook/mercadopago")).status;
+  };
+  try {
+    mp = { pagamento: "rejected" };
+    assert.equal(await aviso("payment", "9"), 200); assert.equal(await aviso("payment", "9"), 200);
+    mp = { cobranca: "recycling", assinatura: "authorized" };
+    assert.equal(await aviso("subscription_authorized_payment", "7"), 200);
+    mp = { assinatura: "cancelled" };
+    assert.equal(await aviso("subscription_preapproval", "pre1"), 200);
+    mp = { assinatura: "authorized" };
+    assert.equal(await aviso("subscription_preapproval", "pre1"), 200); // ativa: nada a avisar
+    const { alertas } = await listarAlertas(env);
+    assert.deepEqual(alertas.map((a) => a.titulo).sort(), ["Assinatura cancelada", "Cobrança da assinatura recusada", "Pagamento recusado"]);
+    assert.ok(alertas.every((a) => a.tipo === "cobranca" && /ana@teste\.com/.test(a.detalhe)));
+    const p = env.DB._db.prepare("SELECT status FROM pagamentos WHERE id = 'ref1'").get();
+    assert.equal(p.status, "aguardando"); // nenhum desses avisos libera nada
+  } finally { globalThis.fetch = orig; }
+});
