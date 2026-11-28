@@ -25,6 +25,7 @@ Uma linha por mudança que valha lembrar (a mais nova em cima). O Painel Dev tam
 
 | Data | O que mudou | Onde |
 | --- | --- | --- |
+| 2026-11-28 | Backup do banco mudou: sai do anexo do GitHub e vai criptografado para o bucket privado `venus-backups` (R2), apagado após 30 dias. A saída do wrangler fica escondida (a exportação imprime um link do banco sem criptografia). Falta ativar o R2, dar ao token a permissão de R2 e criar a `BACKUP_FRASE`. | `.github/workflows/backup-banco.yml`, `servidor/teste/backup-banco.test.mjs` |
 | 2026-11-28 | Vexperyon: painel em `/vexperyon` com login de administrador e histórico real das rodadas (a página não tem dados; tudo vem de `/dev/*` depois do login). Botão Testar e envio em PDF ainda desligados. | `servidor/src/vexperyon/painel.js` |
 | 2026-11-28 | Vexperyon: recebe as capturas do laboratório (identidade do GitHub, só o repositório vexperyon), guarda 3 rodadas por app e só o administrador lê. Conta @teste.invalid não abre o Drive. | `servidor/src/vexperyon/`, migração 0050 |
 | 2026-11-27 | Backup semanal do banco D1, criptografado (gpg), como artefato por 30 dias. Precisa do segredo `BACKUP_FRASE`; sem ele o fluxo falha de propósito. | `.github/workflows/backup-banco.yml` |

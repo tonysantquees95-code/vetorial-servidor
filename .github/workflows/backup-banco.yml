@@ -1,10 +1,15 @@
 name: Backup do banco (criptografado)
 
-# Cópia semanal do banco D1 (contas, planos, lojas, chaves cifradas) para FORA do Cloudflare.
-# O arquivo sai criptografado (gpg AES256) com a frase do segredo BACKUP_FRASE e fica como artefato por 30 dias.
-# Segredos do repositório: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID e BACKUP_FRASE (12+ caracteres; guarde a frase também fora do GitHub).
-# Sem BACKUP_FRASE o fluxo FALHA de propósito: o Painel Dev avisa "build quebrado" e ninguém acha que há backup sem ter.
+# Cópia semanal do banco D1 (contas, planos, lojas, chaves cifradas).
+# O arquivo sai criptografado (gpg AES256) com a frase do segredo BACKUP_FRASE e vai para o bucket PRIVADO "venus-backups" no Cloudflare R2,
+# que apaga sozinho o que tiver mais de 30 dias. NADA vai como anexo do GitHub: o repositório é público.
+# Este histórico também é público: a saída do wrangler fica escondida (a exportação do D1 imprime um link para baixar o banco SEM criptografia).
+# Precisa: R2 ativado na conta Cloudflare, CLOUDFLARE_API_TOKEN com permissão "Workers R2 Storage: Edit", CLOUDFLARE_ACCOUNT_ID e BACKUP_FRASE
+# (12+ caracteres; use 20 ou mais, aleatória, e guarde também fora do GitHub). Sem qualquer um deles o fluxo FALHA de propósito:
+# o Painel Dev avisa "build quebrado" e ninguém acha que há backup sem ter.
+# Atenção: banco e cópia ficam na mesma conta Cloudflare; de vez em quando baixe uma cópia (R2 › venus-backups) e guarde fora dela.
 # Para abrir: gpg --decrypt venus-AAAA-MM-DD.sql.gpg > venus.sql   (o .sql restaura com `wrangler d1 execute venus --remote --file venus.sql`).
+# Regras testadas em servidor/teste/backup-banco.test.mjs.
 on:
   schedule:
     - cron: "23 6 * * 0"   # domingo 03:23 em Brasília
@@ -21,22 +26,31 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       BACKUP_FRASE: ${{ secrets.BACKUP_FRASE }}
     steps:
-      - name: Conferir a frase
+      - name: Exportar, criptografar e guardar no R2 privado
         run: |
-          if [ "${#BACKUP_FRASE}" -lt 12 ]; then echo "::error::Cadastre o segredo BACKUP_FRASE (12+ caracteres) nos Secrets do repositório."; exit 1; fi
-      - name: Exportar o banco
-        run: |
-          data=$(date -u +%F)
-          id=$(npx --yes wrangler@4 d1 list --json | jq -r '.[] | select(.name=="venus") | .uuid' | head -1)
-          test -n "$id" || { echo "::error::Banco venus não encontrado."; exit 1; }
-          npx --yes wrangler@4 d1 export venus --remote --output "venus-$data.sql"
-          test -s "venus-$data.sql" || { echo "::error::Exportação vazia."; exit 1; }
-          printf '%s' "$BACKUP_FRASE" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback --symmetric --cipher-algo AES256 -o "venus-$data.sql.gpg" "venus-$data.sql"
-          rm -f "venus-$data.sql"
-          ls -l venus-*.gpg
-      - uses: actions/upload-artifact@v4
-        with:
-          name: backup-banco
-          path: venus-*.sql.gpg
-          retention-days: 30
-          if-no-files-found: error
+          falhar() { echo "::error::$1"; exit 1; }
+          wr() { npx --yes wrangler@4 "$@"; }
+          [ "${#BACKUP_FRASE}" -ge 12 ] || falhar "Cadastre o segredo BACKUP_FRASE (12+ caracteres) nos Secrets do repositório."
+
+          # 1) O bucket precisa existir, estar fechado ao público e apagar cópias velhas. Só depois o banco é exportado.
+          b=venus-backups
+          lista=$(wr r2 bucket list 2>/dev/null) || falhar "R2 indisponível: ative o R2 no Cloudflare e dê ao token a permissão Workers R2 Storage: Edit."
+          grep -q "$b" <<<"$lista" || wr r2 bucket create "$b" >/dev/null 2>&1 || falhar "Não consegui criar o bucket $b."
+          endereco=$(wr r2 bucket dev-url get "$b" 2>/dev/null) || falhar "Não consegui conferir o acesso público do bucket."
+          grep -q "r2.dev URL is disabled" <<<"$endereco" || falhar "O bucket $b está com endereço público (r2.dev). Desligue no Cloudflare."
+          dominios=$(wr r2 bucket domain list "$b" 2>/dev/null) || falhar "Não consegui conferir os domínios do bucket."
+          grep -q "no custom domains" <<<"$dominios" || falhar "O bucket $b tem domínio ligado. Remova no Cloudflare."
+          regras=$(wr r2 bucket lifecycle list "$b" 2>/dev/null) || falhar "Não consegui conferir a regra de expiração."
+          grep -q "apagar-30-dias" <<<"$regras" || wr r2 bucket lifecycle add "$b" apagar-30-dias --expire-days 30 --force >/dev/null 2>&1 || falhar "Não consegui criar a regra de apagar após 30 dias."
+
+          # 2) Exportação numa pasta temporária, apagada ao sair (mesmo com erro).
+          umask 077
+          pasta=$(mktemp -d "${RUNNER_TEMP:-/tmp}/venus-XXXXXX")
+          trap 'rm -rf "$pasta"' EXIT
+          arquivo="venus-$(date -u +%F).sql"
+          wr d1 export venus --remote --output "$pasta/$arquivo" >/dev/null 2>&1 || falhar "A exportação do banco falhou."
+          [ -s "$pasta/$arquivo" ] || falhar "Exportação vazia."
+          printf '%s' "$BACKUP_FRASE" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback --symmetric --cipher-algo AES256 -o "$pasta/$arquivo.gpg" "$pasta/$arquivo" 2>/dev/null || falhar "Não consegui criptografar."
+          rm -f "$pasta/$arquivo"
+          wr r2 object put "$b/$arquivo.gpg" --file "$pasta/$arquivo.gpg" --remote >/dev/null 2>&1 || falhar "O envio ao R2 falhou."
+          echo "Backup guardado no R2 privado: $arquivo.gpg"
