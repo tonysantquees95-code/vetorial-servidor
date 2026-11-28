@@ -35,6 +35,8 @@ const limitesDe = (env, b) => ({
 
 async function liberado(env, usuario, agora) {
   if (ehAdmin(env, usuario.email)) return true; // o administrador usa tudo, sem depender do plano da loja
+  // a conta-robô do Vexperyon é testadora, mas nunca entra no Drive
+  if (String(usuario.email).toLowerCase().endsWith("@teste.invalid")) return false;
   if (!usuario.loja) return false;
   const loja = await env.DB.prepare("SELECT * FROM lojas WHERE id = ?").bind(usuario.loja).first();
   if (!loja) return false;

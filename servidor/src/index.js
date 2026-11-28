@@ -39,6 +39,7 @@ import { ehRotaIcone, tratarIcone } from "./icone.js";
 import { ehRotaVortex, tratarVortex } from "./vortex/saves.js";
 import { ehRotaDrive, tratarDrive, limparDrive } from "./drive/drive.js";
 import { ehRotaCi, tratarCi } from "./ci/assinatura.js";
+import { ehRotaVexperyon, tratarVexperyon } from "./vexperyon/resultados.js";
 import { ehRotaFinancas, tratarFinancas } from "./financas/ia.js";
 import { ehRotaCaixa, tratarCaixa } from "./financas/caixa.js";
 import { ehRotaOrganizar, tratarOrganizar } from "./organizar.js";
@@ -109,6 +110,7 @@ export default {
       if (ehRotaOrganizar(caminho)) return await tratarOrganizar(req, envIA, ctx);
       if (ehRotaDoId(caminho)) return await tratarId(req, env, url, caminho);
       if (ehRotaCi(caminho)) return await tratarCi(req, env, url, caminho);
+      if (ehRotaVexperyon(caminho)) return await tratarVexperyon(req, env, url, caminho);
       if (ehRotaVortex(caminho)) return await tratarVortex(req, env, url, caminho);
       if (ehRotaDrive(caminho)) return await tratarDrive(req, env, url, caminho);
       if (ehRotaPdf(caminho)) return await tratarPdf(req, env, url, caminho);

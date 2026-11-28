@@ -17,7 +17,8 @@ const deB64u = (s) => Uint8Array.from(atob(String(s).replace(/-/g, "+").replace(
 const texto = (s) => new TextDecoder().decode(deB64u(s));
 
 /** Confere um token OIDC do GitHub Actions. `chaves` é a lista de chaves públicas (JWKS) do GitHub. Devolve as informações ou null. */
-export async function verificarOidc(token, chaves, agora = Date.now() / 1000) {
+export async function verificarOidc(token, chaves, agora = Date.now() / 1000, regras = {}) {
+  const { publico = PUBLICO, repos = REPOS_PERMITIDOS, apelidos = APELIDOS } = regras;
   try {
     const [h, p, s] = String(token).split(".");
     if (!h || !p || !s) return null;
@@ -29,10 +30,10 @@ export async function verificarOidc(token, chaves, agora = Date.now() / 1000) {
     const ok = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", chave, deB64u(s), new TextEncoder().encode(`${h}.${p}`));
     if (!ok) return null;
     const c = JSON.parse(texto(p));
-    if (c.iss !== EMISSOR || c.aud !== PUBLICO || !(c.exp > agora) || (c.nbf && c.nbf > agora + 60)) return null;
+    if (c.iss !== EMISSOR || c.aud !== publico || !(c.exp > agora) || (c.nbf && c.nbf > agora + 60)) return null;
     // o GitHub não diferencia maiúsculas nos nomes de repositório (o nome pode vir como "Velox-..." ou "velox-..."): vale o nome da lista
     const nomeLower = String(c.repository || "").toLowerCase();
-    const permitido = REPOS_PERMITIDOS.find((r) => r.toLowerCase() === nomeLower) ?? APELIDOS[nomeLower];
+    const permitido = repos.find((r) => r.toLowerCase() === nomeLower) ?? apelidos[nomeLower];
     if (!permitido || c.ref !== "refs/heads/main" || !EVENTOS.includes(c.event_name)) return null;
     return { repo: permitido, ref: c.ref, evento: c.event_name };
   } catch {
@@ -41,7 +42,7 @@ export async function verificarOidc(token, chaves, agora = Date.now() / 1000) {
 }
 
 let guardadas = { quando: 0, chaves: null };
-async function chavesDoGithub(buscar = fetch) {
+export async function chavesDoGithub(buscar = fetch) {
   if (guardadas.chaves && Date.now() - guardadas.quando < 3_600_000) return guardadas.chaves;
   const r = await buscar(`${EMISSOR}/.well-known/jwks`);
   if (!r.ok) throw new Error("jwks");

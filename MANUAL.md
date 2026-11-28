@@ -25,6 +25,7 @@ Uma linha por mudança que valha lembrar (a mais nova em cima). O Painel Dev tam
 
 | Data | O que mudou | Onde |
 | --- | --- | --- |
+| 2026-11-28 | Vexperyon: recebe as capturas do laboratório (identidade do GitHub, só o repositório vexperyon), guarda 3 rodadas por app e só o administrador lê. Conta @teste.invalid não abre o Drive. | `servidor/src/vexperyon/`, migração 0050 |
 | 2026-11-27 | Backup semanal do banco D1, criptografado (gpg), como artefato por 30 dias. Precisa do segredo `BACKUP_FRASE`; sem ele o fluxo falha de propósito. | `.github/workflows/backup-banco.yml` |
 | 2026-11-27 | Aviso no Painel Dev quando o Mercado Pago está ligado mas falta `MERCADOPAGO_WEBHOOK_SECRET` (some sozinho quando o segredo entra). | `servidor/src/dev/alertas.js` (`verificarConfiguracao`) |
 | 2026-11-27 | Backup criptografado das chaves de assinatura dos APKs (frase só do dono; restaurar nunca sobrescreve chave existente). Painel Dev › Cofre › Backup das chaves dos APKs. Servidor e Desejo de Intimidade entraram no Painel Dev. | `servidor/src/dev/backup.js`, `dev/rotas.js`, `dev/github.js` |

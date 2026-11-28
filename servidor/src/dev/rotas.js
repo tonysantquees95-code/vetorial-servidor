@@ -13,6 +13,7 @@ import { PROJETOS, REPO_VALIDO, apksDoProjeto, buildsDoRepo, falhaDosBuilds, fal
 import { bi, esquecerProvedores, listarTrafego } from "./uso.js";
 import { listarRelatos, marcarRelato } from "../feedback/dados.js";
 import * as cofre from "./cofre.js";
+import { listarRodadas, lerArquivo } from "../vexperyon/resultados.js";
 import { lerSegredo } from "./cofre.js";
 
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization,content-type", "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS" };
@@ -282,6 +283,9 @@ export async function tratarDev(req, env, url, caminho) {
     if (caminho === "/dev/ferramentas" && req.method === "GET") return json(await ferramentas(env, agora));
     if (caminho === "/dev/trafego" && req.method === "GET") return json(await listarTrafego(env, { desde: Number(url.searchParams.get("desde")) || 0, limite: Number(url.searchParams.get("limite")) || 60 }, agora));
     if (caminho === "/dev/feedback" && req.method === "GET") return json(await listarRelatos(env, { status: url.searchParams.get("status") || "", app: url.searchParams.get("app") || "", tipo: url.searchParams.get("tipo") || "", limite: Number(url.searchParams.get("limite")) || 200 }));
+    if (caminho === "/dev/vexperyon/rodadas" && req.method === "GET") return json(await listarRodadas(env));
+    const vx = /^\/dev\/vexperyon\/rodadas\/(\d{1,16})\/([a-z0-9.]{1,20})$/.exec(caminho);
+    if (vx && req.method === "GET") return (await lerArquivo(env, vx[1], vx[2], CORS)) || json({ error: "arquivo não encontrado" }, 404);
     if (caminho === "/dev/visitas" && req.method === "GET") return json(await resumoDeVisitas(env, Number(url.searchParams.get("dias")) || 14, agora));
     if (caminho === "/dev/manual" && req.method === "GET") {
       const alvo = PROJETOS.find((p) => p.id === (url.searchParams.get("projeto") || ""));
