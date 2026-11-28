@@ -25,6 +25,7 @@ Uma linha por mudança que valha lembrar (a mais nova em cima). O Painel Dev tam
 
 | Data | O que mudou | Onde |
 | --- | --- | --- |
+| 28/11/2026 | Pós-venda dos 60 dias: o Painel Dev guarda quando o lojista assinou e avisa a hora de enviar as mensagens do dia seguinte, dia 7 e dia 50 (o servidor não envia nada ao lojista) | `servidor/src/dev/acompanhamento.js` |
 | 2026-11-28 | Cortesia da Vênus por 60 dias: só o administrador libera, por conta, depois do pagamento da montagem. Uma vez por conta, sem cobrança automática, não conta como assinante. | `servidor/src/dev/cortesia.js`, migração 0052 |
 | 2026-11-28 | Apagar conta (LGPD): a própria pessoa apaga em Minha conta (senha + a palavra APAGAR). Corrigido: a exclusão antiga do Painel Dev deixava para trás loja, clientes da agenda, site, catálogo, links e comunidades. Com cobrança automática ou plano pago ativo, não apaga | `servidor/src/id/apagar.js`, `POST /id/apagar-conta`, `site/conta.html` |
 | 2026-11-28 | Velocidade: índices no banco, tempo limite em todo serviço de fora e imagens do site em WebP (bem mais leves). Chamada nova a serviço externo usa `comPrazo` (o teste cobra). | `servidor/migrations/0051_indices_velocidade.sql`, `servidor/src/prazo.js`, `servidor/teste/desempenho.test.mjs`, `site/*.webp` |

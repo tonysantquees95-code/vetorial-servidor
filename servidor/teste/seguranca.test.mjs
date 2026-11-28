@@ -235,3 +235,13 @@ test("apagar conta: sem login, senha errada, sem confirmar e força bruta nada a
   assert.equal((await pedir(atacante, { senha: "senha-forte-123", confirmacao: "APAGAR", usuario: idVitima, id: idVitima, email: "vitima@x.com" })).s, 200);
   assert.equal(env.DB._db.prepare("SELECT email FROM usuarios").get().email, "vitima@x.com", "só a própria conta sai");
 });
+
+test("cortesia e pós-venda: conta comum não libera, não retira e não vê as datas de ninguém", async () => {
+  const { env, vitima, atacante } = await duasContas();
+  const id = env.DB._db.prepare("SELECT id FROM usuarios WHERE email = ?").get("vitima@x.com").id;
+  for (const t of [undefined, atacante, vitima]) {
+    for (const m of ["POST", "DELETE"]) assert.ok(barrado((await chamar(env, m, `/dev/usuarios/${id}/cortesia`, { t })).s));
+    assert.ok(barrado((await chamar(env, "GET", "/dev/usuarios", { t })).s));
+  }
+  assert.equal(env.DB._db.prepare("SELECT COUNT(*) AS n FROM cortesias").get().n, 0);
+});

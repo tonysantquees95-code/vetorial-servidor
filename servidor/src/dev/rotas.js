@@ -1,5 +1,6 @@
 // Rotas do Painel Dev: /dev/* (só o superadministrador, exceto entrar, primeiro acesso e telemetria do Vindex).
 import { darCortesia, tirarCortesia, emCortesia } from "./cortesia.js";
+import { mensagensDe } from "./acompanhamento.js";
 import { apagarConta } from "../id/apagar.js";
 import { listarAlertas, marcarAlerta } from "./alertas.js";
 import { resumoDeVisitas } from "./visitas.js";
@@ -194,7 +195,9 @@ async function usuarios(env, agora = Date.now()) {
     q("SELECT id, usuario, app, nome, plataforma, criado, ultimo FROM dispositivos ORDER BY ultimo DESC LIMIT 3000"),
     q("SELECT s.id AS sessao, s.usuario, s.app, s.dispositivo AS dispositivoId, d.nome, d.plataforma, s.ultimo_ping AS ultimoPing FROM sessoes s JOIN dispositivos d ON d.id = s.dispositivo WHERE s.encerrada = 0 AND s.ultimo_ping > ? ORDER BY s.ultimo_ping DESC LIMIT 1000", agora - TTL_ATIVA_MS),
   ]);
+  const liberacoes = new Map((await q("SELECT usuario, inicio, fim FROM cortesias WHERE revogada = 0")).map((x) => [x.usuario, x]));
   const lista = contas.map((c) => {
+    const lib = liberacoes.get(c.id);
     const admin = ehAdmin(env, c.email) || c.plano === "dono";
     const situacao = admin ? "admin" : testadores.has(String(c.email).toLowerCase()) ? "testador" : emCortesia(c.plano, c.ativoAte, agora) ? "cortesia" : c.plano !== "cortesia" && agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
     const apps = {};
@@ -207,6 +210,7 @@ async function usuarios(env, agora = Date.now()) {
     return {
       id: c.id, email: c.email, nome: c.nome, telefone: c.telefone, criado: c.criado, recuperacao: !!c.rec,
       situacao, admin, bloqueado: !!c.bloqueado, pagante: situacao === "pagante", pacote: situacao === "pagante" ? c.pacote : "", ativoAte: c.ativoAte || 0,
+      liberacao: lib ? { inicio: lib.inicio, fim: lib.fim, mensagens: mensagensDe(lib.inicio, lib.fim) } : null,
       apps, sessoes: sess.filter((x) => x.usuario === c.id).map(({ usuario, dispositivoId, ...resto }) => resto),
     };
   });
@@ -316,7 +320,7 @@ export async function tratarDev(req, env, url, caminho) {
       const alvo = await env.DB.prepare("SELECT u.id, u.email, u.loja, l.plano FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja WHERE u.id = ?").bind(m[1]).first();
       if (!alvo) throw new ErroLoja(404, "usuario_inexistente", "Usuário não encontrado.");
       if (ehAdmin(env, alvo.email) || alvo.plano === "dono") throw new ErroLoja(400, "usuario_protegido", "O administrador já usa tudo sem limites.");
-      return json(req.method === "POST" ? await darCortesia(env, alvo, ctx.usuario.id, agora) : await tirarCortesia(env, alvo));
+      return json(req.method === "POST" ? await darCortesia(env, alvo, ctx.usuario.id, agora) : await tirarCortesia(env, alvo, agora));
     }
     m = /^\/dev\/usuarios\/([a-f0-9]{16,64})(?:\/(bloquear|desbloquear))?$/.exec(caminho);
     if (m) {

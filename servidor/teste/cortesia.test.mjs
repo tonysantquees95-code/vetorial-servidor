@@ -9,6 +9,7 @@ import { resumoDeAssinaturas } from "../src/dev/assinaturas.js";
 import { comPrivilegios, acessoLiberado } from "../src/loja/lojas.js";
 import { confirmarPagamento } from "../src/loja/assinatura.js";
 import { semLimite } from "../src/pdf/uso.js";
+import { verificarAcompanhamentos, mensagensDe, dataBR } from "../src/dev/acompanhamento.js";
 
 process.removeAllListeners("warning");
 const B = "https://v.test", DIA = 86_400_000;
@@ -140,4 +141,59 @@ test("depois dos 2 meses o site e o catálogo continuam no ar e dá para editar 
   assert.equal((await chamar(env, "POST", "/sitev", { t: lojista.token, corpo: site })).s, 200);
   const treze = await chamar(env, "POST", "/catalogo", { t: lojista.token, corpo: cat(13) });
   console.log("# 13 produtos depois do prazo:", treze.s, JSON.stringify(treze.j).slice(0, 200));
+});
+
+const avisos = (env) => env.DB._db.prepare("SELECT * FROM dev_alertas WHERE tipo = 'acompanhamento' ORDER BY id").all();
+
+test("o painel mostra quando assinou e avisa na hora de cada mensagem, uma vez só", async () => {
+  const { env, adm, lojista, outro } = await preparo();
+  const { j } = await chamar(env, "POST", `/dev/usuarios/${lojista.id}/cortesia`, { t: adm });
+  const u = await usuariosDoPainel(env, adm);
+  const lib = u.usuarios.find((x) => x.id === lojista.id).liberacao;
+  assert.equal(u.usuarios.find((x) => x.id === outro.id).liberacao, null);
+  assert.equal(lib.fim, j.fim);
+  assert.deepEqual(lib.mensagens.map((m) => m.dia), [1, 7, 50]);
+  assert.ok(lib.mensagens[2].texto.includes(dataBR(j.fim)));
+  assert.equal(await verificarAcompanhamentos(env, lib.inicio), 0); // no dia da venda não há aviso
+  let total = 0;
+  for (const m of lib.mensagens) {
+    assert.equal(await verificarAcompanhamentos(env, m.quando - 60_000), 0);
+    total += await verificarAcompanhamentos(env, m.quando);
+    assert.equal(await verificarAcompanhamentos(env, m.quando + 600_000), 0);
+  }
+  assert.equal(total, 3);
+  assert.ok(avisos(env).every((a) => a.detalhe.includes("lojista@x.com") && a.detalhe.includes(`assinou em ${dataBR(lib.inicio)}`)));
+});
+
+test("horário das mensagens: 9h de Brasília, também quando a venda é tarde da noite", () => {
+  const inicio = Date.parse("2026-11-30T23:30:00-03:00");
+  const m = mensagensDe(inicio, inicio + 60 * DIA);
+  assert.equal(m[0].quando, Date.parse("2026-12-01T09:00:00-03:00"));
+  assert.equal(m[1].quando, Date.parse("2026-12-07T09:00:00-03:00"));
+  assert.equal(dataBR(inicio), "30/11/2026");
+});
+
+test("quem já pagou não recebe a pergunta do dia 50; retirar a cortesia encerra os lembretes", async () => {
+  const { env, adm, lojista, outro } = await preparo();
+  for (const c of [lojista, outro]) await chamar(env, "POST", `/dev/usuarios/${c.id}/cortesia`, { t: adm });
+  const inicio = env.DB._db.prepare("SELECT inicio FROM cortesias WHERE usuario = ?").get(lojista.id).inicio;
+  const m = mensagensDe(inicio, inicio + 60 * DIA);
+  assert.equal(await verificarAcompanhamentos(env, m[0].quando), 2);
+  await chamar(env, "DELETE", `/dev/usuarios/${outro.id}/cortesia`, { t: adm });
+  const abertos = avisos(env).filter((a) => a.status !== "resolvido");
+  assert.equal(abertos.length, 1);
+  assert.ok(abertos[0].detalhe.includes("lojista@x.com"));
+  env.DB._db.prepare("INSERT INTO pagamentos (id, loja, gateway, valor_centavos, status, criado, atualizado, pacote) VALUES ('avu_x', ?, 'mercadopago', 4990, 'pago', ?, ?, 'venus')").run(lojista.loja, inicio + DIA, inicio + DIA);
+  assert.equal(await verificarAcompanhamentos(env, m[2].quando), 0);
+});
+
+test("apagar a conta leva junto os avisos que têm o e-mail", async () => {
+  const { env, adm, lojista } = await preparo();
+  await chamar(env, "POST", `/dev/usuarios/${lojista.id}/cortesia`, { t: adm });
+  const inicio = env.DB._db.prepare("SELECT inicio FROM cortesias").get().inicio;
+  await verificarAcompanhamentos(env, mensagensDe(inicio, inicio)[0].quando);
+  assert.equal(avisos(env).length, 1);
+  const r = await chamar(env, "DELETE", `/dev/usuarios/${lojista.id}`, { t: adm });
+  assert.equal(r.s, 200, r.tx);
+  assert.equal(avisos(env).length, 0);
 });

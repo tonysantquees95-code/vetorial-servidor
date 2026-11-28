@@ -31,12 +31,14 @@ export async function darCortesia(env, alvo, quem, agora = Date.now()) {
 }
 
 /** Desfaz uma cortesia dada por engano. Se a pessoa já pagou depois, o plano pago não é tocado. */
-export async function tirarCortesia(env, alvo) {
+export async function tirarCortesia(env, alvo, agora = Date.now()) {
   const c = await env.DB.prepare("SELECT * FROM cortesias WHERE usuario = ? AND revogada = 0").bind(alvo.id).first();
   if (!c) throw new ErroLoja(404, "sem_cortesia", "Essa conta não tem cortesia.");
   const r = await env.DB.prepare("UPDATE lojas SET ativo_ate = 0, plano = ?, pacote = ? WHERE id = ? AND plano = 'cortesia' AND ativo_ate = ?")
     .bind(c.plano_antes, c.pacote_antes, c.loja, c.fim).run();
   if (r.meta.changes !== 1) throw new ErroLoja(409, "ja_tem_plano", "O plano dessa conta mudou depois da cortesia: nada foi alterado.");
   await env.DB.prepare("UPDATE cortesias SET revogada = 1 WHERE id = ?").bind(c.id).run();
+  // os lembretes de mensagem dessa liberação deixam de valer
+  await env.DB.prepare("UPDATE dev_alertas SET status = 'resolvido', resolvido_em = ? WHERE grupo = ? AND status != 'resolvido'").bind(agora, `acomp:${c.id}`).run();
   return { ok: true };
 }
