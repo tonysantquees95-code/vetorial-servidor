@@ -76,7 +76,7 @@ export const CLIENTE = String.raw`
 const NOME={passou:"✓ Passou",falhou:"✕ Falhou","não testado":"Não testado"};
 const CLASSE={passou:"passou",falhou:"falhou","não testado":"nao"};
 const SITUACAO={success:["✓ Passou","passou"],failure:["✕ Falhou","falhou"],enviando:["● Incompleta ou enviando","andando"]};
-const APPS={vindex:"Vindex",venus:"Vênus",vortex:"Vortex",velox:"Velox",vyntem:"Vyntem"};
+const APPS={vindex:"Vindex",venus:"Vênus",vortex:"Vortex",velox:"Velox",vyntem:"Vyntem",voxix:"Voxix",vspace:"V-Space",drive:"Vetorial Drive",vetogoshi:"Vetogoshi"};
 const ICON={inicio:["M7 5l12 7-12 7z"],rodada:["M4 4h16v16H4z","M8 12l3 3 5-6"],historico:["M4 12a8 8 0 1 0 16 0a8 8 0 1 0-16 0","M12 8v4l3 2"]};
 const $=s=>document.querySelector(s);
 function h(tag,props,...filhos){const e=document.createElement(tag);for(const [k,v] of Object.entries(props||{})){if(v===false||v==null)continue;if(k==="class")e.className=v;else if(k==="onclick"||k==="onsubmit")e[k]=v;else e.setAttribute(k,v===true?"":v)}for(const f of filhos.flat())if(f!=null&&f!==false)e.append(f);return e}
