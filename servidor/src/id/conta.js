@@ -403,7 +403,7 @@ export async function apagarPropriaConta(env, ctx, { senha, confirmacao }, agora
   if (String(confirmacao || "").trim() !== "APAGAR") throw new ErroId(400, "confirmacao", "Para confirmar, escreva APAGAR em letras maiúsculas.");
   if (ehAdmin(env, u.email) || u.plano === "dono") throw new ErroId(400, "usuario_protegido", "A conta de administrador não pode ser apagada.");
   // conta paga: apagar sem cancelar poderia deixar a cobrança automática correndo
-  if (u.plano !== "testador" && agora < (u.ativoAte || 0)) {
+  if (u.plano !== "testador" && u.plano !== "cortesia" && agora < (u.ativoAte || 0)) {
     throw new ErroId(409, "assinatura_ativa", "Esta conta tem um plano pago em andamento. Para não ficar nenhuma cobrança ligada, peça a exclusão pelo e-mail vetorialtech.dev@gmail.com, a partir do e-mail da conta.");
   }
   if (u.loja) {

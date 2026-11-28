@@ -111,7 +111,7 @@ export async function bi(env, dias = 30, agora = Date.now()) {
     q("SELECT criado FROM lojas WHERE criado > ? AND id IN (SELECT loja FROM usuarios WHERE loja IS NOT NULL)", inicio),
     q("SELECT criado FROM usuarios WHERE criado > ?", inicio),
     q("SELECT hora, provedor, requisicoes, tokens_entrada, tokens_saida, erros, cache FROM dev_uso_ia WHERE hora > ?", Math.floor(inicio / HORA)),
-    q("SELECT COUNT(*) AS total, SUM(CASE WHEN (plano = 'trial' AND trial_fim > ?) OR ativo_ate > ? THEN 1 ELSE 0 END) AS ativas, SUM(CASE WHEN ativo_ate > ? THEN 1 ELSE 0 END) AS pagantes FROM lojas WHERE id IN (SELECT loja FROM usuarios WHERE loja IS NOT NULL)", agora, agora, agora),
+    q("SELECT COUNT(*) AS total, SUM(CASE WHEN (plano = 'trial' AND trial_fim > ?) OR ativo_ate > ? THEN 1 ELSE 0 END) AS ativas, SUM(CASE WHEN ativo_ate > ? AND plano != 'cortesia' THEN 1 ELSE 0 END) AS pagantes FROM lojas WHERE id IN (SELECT loja FROM usuarios WHERE loja IS NOT NULL)", agora, agora, agora),
     q("SELECT COUNT(*) AS n, COALESCE(SUM(valor_centavos), 0) AS soma FROM pagamentos WHERE status IN ('pago', 'liberado')"),
   ]);
   const provedores = ["groq", "deepseek", "gemini"];

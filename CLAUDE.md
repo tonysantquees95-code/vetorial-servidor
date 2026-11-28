@@ -65,3 +65,5 @@
 ## Manual do app (aparece no botão "Manual" do Painel Dev)
 - `MANUAL.md` na raiz explica o app: pastas, onde fica cada coisa, como voltar atrás. É público: só diz ONDE ficam as chaves, nunca os valores.
 - Mudança importante (função nova, pasta nova, arquivo que passa a mandar em algo, regra nova, decisão): acrescente uma linha NO TOPO da tabela "Movimentações importantes" do `MANUAL.md` (data, o que mudou, onde) e ajuste o trecho que ficou velho. Os últimos commits o Painel Dev já mostra sozinho; o manual guarda o que vale lembrar.
+
+- Cortesia da Vênus (`servidor/src/dev/cortesia.js`, migração 0052, tabela `cortesias`): `POST`/`DELETE /dev/usuarios/<id>/cortesia` (só admin) grava `plano='cortesia'`, `pacote='venus'` e `ativo_ate` = 60 dias; uma por conta (índice único; retirada por engano libera de novo); recusa quem já tem plano, testador e admin. Não conta em assinantes, pagantes nem receita, não impede apagar a conta e o primeiro pagamento depois dela NÃO pula o 2FA. Vencida, o acesso fecha sozinho; catálogo (`/c/`) e site (`/w/`) continuam no ar e voltam aos limites grátis na próxima edição. Testes em `teste/cortesia.test.mjs`.

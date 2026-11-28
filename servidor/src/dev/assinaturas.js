@@ -29,10 +29,12 @@ export async function resumoDeAssinaturas(env, agora = Date.now()) {
   const q = async (sql, ...a) => (await env.DB.prepare(sql).bind(...a).all()).results || [];
   const testadores = new Set((await q("SELECT email FROM testadores")).map((x) => String(x.email).toLowerCase()));
   const contas = await q("SELECT u.email, l.plano, l.pacote, l.ativo_ate AS ativoAte, l.trial_fim AS trialFim FROM usuarios u JOIN lojas l ON l.id = u.loja");
-  const r = { assinantes: 0, emTeste: 0, vencendoEm7: 0, venceram: 0, semTeste: 0, testadores: 0, porPacote: {} };
+  const r = { assinantes: 0, emTeste: 0, vencendoEm7: 0, venceram: 0, semTeste: 0, testadores: 0, cortesias: 0, porPacote: {} };
   for (const c of contas) {
     if (c.plano === "dono") continue;
     if (testadores.has(String(c.email).toLowerCase())) { r.testadores++; continue; }
+    // cortesia não é assinatura: conta à parte enquanto vale e, vencida, não vira "assinante que saiu"
+    if (c.plano === "cortesia") { if ((c.ativoAte || 0) > agora) r.cortesias++; continue; }
     if ((c.ativoAte || 0) > agora) {
       r.assinantes++;
       r.porPacote[c.pacote] = (r.porPacote[c.pacote] || 0) + 1;

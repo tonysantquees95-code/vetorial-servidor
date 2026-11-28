@@ -156,8 +156,9 @@ export async function confirmarPagamento(env, id, valorCentavos, refGateway, ago
   }
   // Pix/débito avulso de quem já teve o acesso liberado uma vez (2FA feito): soma mais 30 dias na hora, sem pedir o código de novo
   if ((String(p.id).startsWith("avu_") || String(p.id).startsWith("anu_")) && p.status === "aguardando") {
-    const loja = await env.DB.prepare("SELECT ativo_ate FROM lojas WHERE id = ?").bind(p.loja).first();
-    if (loja && (loja.ativo_ate || 0) > 0) {
+    const loja = await env.DB.prepare("SELECT ativo_ate, plano FROM lojas WHERE id = ?").bind(p.loja).first();
+    // a cortesia não passou pelo 2FA: o primeiro pagamento de quem a recebeu segue o caminho normal
+    if (loja && (loja.ativo_ate || 0) > 0 && loja.plano !== "cortesia") {
       const ate = Math.max(agora, loja.ativo_ate) + diasDoPagamento(p.id) * DIA;
       await env.DB.batch([
         env.DB.prepare("UPDATE lojas SET ativo_ate = ?, plano = 'fundadores', pacote = ? WHERE id = ?").bind(ate, pacoteDe(p.pacote), p.loja),

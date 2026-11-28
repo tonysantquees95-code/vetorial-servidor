@@ -1,4 +1,5 @@
 // Rotas do Painel Dev: /dev/* (só o superadministrador, exceto entrar, primeiro acesso e telemetria do Vindex).
+import { darCortesia, tirarCortesia, emCortesia } from "./cortesia.js";
 import { apagarConta } from "../id/apagar.js";
 import { listarAlertas, marcarAlerta } from "./alertas.js";
 import { resumoDeVisitas } from "./visitas.js";
@@ -195,7 +196,7 @@ async function usuarios(env, agora = Date.now()) {
   ]);
   const lista = contas.map((c) => {
     const admin = ehAdmin(env, c.email) || c.plano === "dono";
-    const situacao = admin ? "admin" : testadores.has(String(c.email).toLowerCase()) ? "testador" : agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
+    const situacao = admin ? "admin" : testadores.has(String(c.email).toLowerCase()) ? "testador" : emCortesia(c.plano, c.ativoAte, agora) ? "cortesia" : c.plano !== "cortesia" && agora < (c.ativoAte || 0) ? "pagante" : agora < (c.trialFim || 0) ? "teste" : "gratis";
     const apps = {};
     for (const d of devs.filter((x) => x.usuario === c.id)) {
       const a = (apps[d.app] ||= { dispositivos: 0, ativas: 0, ultimo: 0, aparelhos: [] });
@@ -310,6 +311,13 @@ export async function tratarDev(req, env, url, caminho) {
     }
     m = /^\/dev\/usuarios\/([a-f0-9]{16,64})\/aparelhos\/([a-f0-9]{64})$/.exec(caminho);
     if (m && req.method === "DELETE") return json({ ok: await removerDispositivo(env, m[1], m[2]) });
+    m = /^\/dev\/usuarios\/([a-f0-9]{16,64})\/cortesia$/.exec(caminho);
+    if (m && (req.method === "POST" || req.method === "DELETE")) {
+      const alvo = await env.DB.prepare("SELECT u.id, u.email, u.loja, l.plano FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja WHERE u.id = ?").bind(m[1]).first();
+      if (!alvo) throw new ErroLoja(404, "usuario_inexistente", "Usuário não encontrado.");
+      if (ehAdmin(env, alvo.email) || alvo.plano === "dono") throw new ErroLoja(400, "usuario_protegido", "O administrador já usa tudo sem limites.");
+      return json(req.method === "POST" ? await darCortesia(env, alvo, ctx.usuario.id, agora) : await tirarCortesia(env, alvo));
+    }
     m = /^\/dev\/usuarios\/([a-f0-9]{16,64})(?:\/(bloquear|desbloquear))?$/.exec(caminho);
     if (m) {
       const alvo = await env.DB.prepare("SELECT u.id, u.email, u.loja, l.plano, l.ativo_ate AS ativoAte FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja WHERE u.id = ?").bind(m[1]).first();
@@ -322,7 +330,7 @@ export async function tratarDev(req, env, url, caminho) {
         return json({ ok: true, bloqueado: bloquear });
       }
       if (!m[2] && req.method === "DELETE") {
-        if (agora < (alvo.ativoAte || 0)) throw new ErroLoja(400, "usuario_pagante", "Esse perfil é pagante. Bloqueie em vez de excluir.");
+        if (agora < (alvo.ativoAte || 0) && alvo.plano !== "cortesia") throw new ErroLoja(400, "usuario_pagante", "Esse perfil é pagante. Bloqueie em vez de excluir.");
         await apagarConta(env, alvo.id, agora);
         return json({ ok: true });
       }

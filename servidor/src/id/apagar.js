@@ -6,7 +6,7 @@
 import { avisarSala } from "../voxix/comunidades.js";
 
 export const POR_USUARIO = [
-  "drive_envios", "drive_arquivos", "dispositivos", "sessoes", "sync_docs", "id_recuperacao", "vindex_comandos", "vindex_presenca",
+  "cortesias", "drive_envios", "drive_arquivos", "dispositivos", "sessoes", "sync_docs", "id_recuperacao", "vindex_comandos", "vindex_presenca",
   "vortex_comandos", "vortex_presenca", "vortex_steam", "vortex_steam_login", "cofre_pessoal",
   "voxix_perfis", "voxix_bloqueios", "voxix_uso", "voxix_membros", "voxix_expulsos", "voxix_limpezas", "voxix_jogando", "voxix_jogos",
   "voxix_conquistas", "voxix_apelidos_reservados",
@@ -14,7 +14,7 @@ export const POR_USUARIO = [
 ];
 /** pagamentos fica de propósito (registro financeiro). */
 export const POR_LOJA = [
-  "canais", "produtos", "pedidos", "eventos_estoque", "links", "fila_posts", "publicacao_destinos", "post_log", "vitrine_itens", "vitrine_fotos",
+  "cortesias", "canais", "produtos", "pedidos", "eventos_estoque", "links", "fila_posts", "publicacao_destinos", "post_log", "vitrine_itens", "vitrine_fotos",
   "agenda_config", "agenda_servicos", "agenda_profissionais", "agenda_bloqueios", "agenda_reservas", "site_config", "site_fotos",
 ];
 export const LOJA_MANTIDAS = ["pagamentos"];
