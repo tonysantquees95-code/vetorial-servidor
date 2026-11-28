@@ -461,6 +461,14 @@ export default {
       await p.locator("#fr-resultado").scrollIntoViewIfNeeded();
     }],
     ...["vindex", "vortex", "velox", "vyntem", "voxix", "enterprises", "gaming", "gratis", "quem-somos", "seguranca", "privacidade", "termos", "conta", "proposta", "aprender"].map((n) => pagina(n, `${n}.html`)),
+    ["conta-apagar", "conta.html", async (p) => {
+      await ESPERA(p);
+      await p.evaluate(() => { for (const [id, some] of [["carregando", true], ["deslogado", true], ["logado", false]]) document.getElementById(id).hidden = some; });
+      await p.click("#apagar-caixa summary");
+      await p.fill("#apagar-senha", "uma-senha-qualquer"); await p.fill("#apagar-palavra", "apagar"); await p.click("#apagar-botao");
+      if (!/APAGAR/.test(await p.locator("#msg-apagar").innerText())) throw new Error("não pediu a palavra em maiúsculas");
+      await p.locator("#apagar-botao").scrollIntoViewIfNeeded();
+    }],
     ["vitrine", "vitrine/", async (p) => {
       await p.evaluate(() => document.querySelectorAll(".rev").forEach((e) => e.classList.add("on", "in", "visivel")));
       if (await p.locator("nav.abas-m, header.topo, .faixa-ig").count()) throw new Error("a Vênus Vitrine ainda mostra o menu do site da Vetorial Tech");

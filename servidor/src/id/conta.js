@@ -3,6 +3,9 @@ import { aleatorio, iguais, sha256Hex } from "../loja/cripto.js";
 import { ErroLoja, registrarLoja } from "../loja/lojas.js";
 import { assinar, hashSenha, verificar } from "./jwt.js";
 import { canaisDisponiveis, enviarCodigo } from "./envio.js";
+import { ehAdmin } from "../dev/admin.js";
+import { apagarConta } from "./apagar.js";
+import { cobrancaAutomatica } from "../loja/assinatura.js";
 
 export const MAX_DISPOSITIVOS = 3;
 export const MAX_ATIVAS = 2;
@@ -385,6 +388,30 @@ export async function definirRecuperacao(env, ctx, { senhaAtual, ...resto }, ago
     throw new ErroId(401, "credenciais", "A senha atual está errada.");
   }
   await gravarRecuperacao(env, u.id, resto);
+  return { ok: true };
+}
+
+/** A própria pessoa apaga a conta: pede a senha de novo (token roubado não basta) e a palavra APAGAR. */
+export async function apagarPropriaConta(env, ctx, { senha, confirmacao }, agora = Date.now()) {
+  const chave = `apagar:${ctx.usuario.id}`;
+  await limitarTentativas(env, chave, agora, 6);
+  const u = await env.DB.prepare("SELECT u.*, l.plano, l.ativo_ate AS ativoAte FROM usuarios u LEFT JOIN lojas l ON l.id = u.loja WHERE u.id = ?").bind(ctx.usuario.id).first();
+  if (!u || !iguais(await hashSenha(String(senha || ""), u.salt), u.senha_hash)) {
+    await env.DB.prepare("INSERT INTO id_tentativas (chave, quando) VALUES (?, ?)").bind(chave, agora).run();
+    throw new ErroId(401, "credenciais", "A senha está errada.");
+  }
+  if (String(confirmacao || "").trim() !== "APAGAR") throw new ErroId(400, "confirmacao", "Para confirmar, escreva APAGAR em letras maiúsculas.");
+  if (ehAdmin(env, u.email) || u.plano === "dono") throw new ErroId(400, "usuario_protegido", "A conta de administrador não pode ser apagada.");
+  // conta paga: apagar sem cancelar poderia deixar a cobrança automática correndo
+  if (u.plano !== "testador" && agora < (u.ativoAte || 0)) {
+    throw new ErroId(409, "assinatura_ativa", "Esta conta tem um plano pago em andamento. Para não ficar nenhuma cobrança ligada, peça a exclusão pelo e-mail vetorialtech.dev@gmail.com, a partir do e-mail da conta.");
+  }
+  if (u.loja) {
+    const cobranca = await cobrancaAutomatica(env, u.loja);
+    if (cobranca === "sim") throw new ErroId(409, "cobranca_ativa", "Há uma assinatura com cobrança automática no Mercado Pago. Cancele a assinatura por lá primeiro e depois apague a conta.");
+    if (cobranca === "nao_sei") throw new ErroId(503, "cobranca_sem_resposta", "Não consegui confirmar no Mercado Pago se há cobrança ligada. Tente de novo em alguns minutos ou escreva para vetorialtech.dev@gmail.com.");
+  }
+  await apagarConta(env, u.id, agora);
   return { ok: true };
 }
 

@@ -4,7 +4,7 @@ import { ErroLoja, comPrivilegios } from "../loja/lojas.js";
 import { contaComAcesso, MSG_SEM_ACESSO } from "./acesso.js";
 import { emitirSelo, chavePublicaDoSelo } from "./selo.js";
 import { canaisDisponiveis } from "./envio.js";
-import { ErroId, conferirRecuperacao, definirRecuperacao, estadoDaRecuperacao, perguntaSecreta, recuperarPorSegredo, cadastrar, confirmarRecuperacao, existeConta, pedirRecuperacao, salvarTelefone, perfilPublico, salvarPerfil, tokenDeApp, encerrarSessao, entrar, gravarSync, lerSync, listarDispositivos, reativar, removerDispositivo, renovarToken, tokenDoPedido, validarSessao } from "./conta.js";
+import { ErroId, conferirRecuperacao, definirRecuperacao, estadoDaRecuperacao, apagarPropriaConta, perguntaSecreta, recuperarPorSegredo, cadastrar, confirmarRecuperacao, existeConta, pedirRecuperacao, salvarTelefone, perfilPublico, salvarPerfil, tokenDeApp, encerrarSessao, entrar, gravarSync, lerSync, listarDispositivos, reativar, removerDispositivo, renovarToken, tokenDoPedido, validarSessao } from "./conta.js";
 import { paginaDeLogin, paginaSso } from "./pagina.js";
 import { ehAdmin } from "../dev/admin.js";
 
@@ -90,6 +90,7 @@ export async function tratarId(req, env, url, caminho) {
       const lic = await licenca(env, ctx.usuario, origem, false);
       return json({ usuario: perfilPublico(ctx.usuario), licenca: lic, sessao: ctx.sessao, dispositivo: ctx.dispositivo, admin: ehAdmin(env, ctx.usuario.email), recuperacao: (await estadoDaRecuperacao(env, ctx.usuario.id)).configurada });
     }
+    if (caminho === "/id/apagar-conta" && req.method === "POST") return json(await apagarPropriaConta(env, ctx, await corpo(req)));
     if (caminho === "/id/recuperacao" && req.method === "GET") return json(await estadoDaRecuperacao(env, ctx.usuario.id));
     if (caminho === "/id/recuperacao" && req.method === "PUT") return json(await definirRecuperacao(env, ctx, await corpo(req)));
     if (caminho === "/id/telefone" && req.method === "PUT") return json(await salvarTelefone(env, ctx, (await corpo(req)).telefone));

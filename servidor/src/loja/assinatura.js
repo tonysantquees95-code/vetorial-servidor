@@ -284,3 +284,25 @@ export async function estadoDaAssinatura(env, loja, agora = Date.now()) {
     pagamentoAguardandoLiberacao: pend.n > 0, doisFatores: !!loja.totp_ativo,
   };
 }
+
+/**
+ * Há cobrança automática ligada para esta loja? Pergunta ao Mercado Pago (não guardamos o código da assinatura dele).
+ * Devolve "nao", "sim" ou "nao_sei" (sem token ou o Mercado Pago não respondeu). Só consulta: nunca cancela nada.
+ */
+export async function cobrancaAutomatica(env, loja) {
+  // avulsos (avu_/anu_) e InfinitePay são pagamentos únicos
+  const { results } = await env.DB.prepare("SELECT id FROM pagamentos WHERE loja = ? AND gateway = 'mercadopago' AND substr(id, 1, 4) NOT IN ('avu_', 'anu_') ORDER BY criado DESC LIMIT 20").bind(loja).all();
+  if (!results.length) return "nao";
+  try {
+    const token = await tokenMercadoPago(env);
+    if (!token) return "nao_sei";
+    for (const p of results) {
+      const d = await http(`https://api.mercadopago.com/preapproval/search?external_reference=${encodeURIComponent(p.id)}`, { headers: { authorization: `Bearer ${token}` } });
+      if (!Array.isArray(d.results)) return "nao_sei";
+      if (d.results.some((a) => a.external_reference === p.id && (a.status === "authorized" || a.status === "paused"))) return "sim";
+    }
+    return "nao";
+  } catch {
+    return "nao_sei";
+  }
+}

@@ -127,6 +127,21 @@
       $("rec").reset(); recuperacaoEstado({ configurada: true }); msg.textContent = "Pronto! A recuperação de senha foi salva.";
     } catch (e) { msg.textContent = e.message; } finally { botao.disabled = false; }
   });
+  $("apagar-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const msg = $("msg-apagar"), botao = $("apagar-botao");
+    if ($("apagar-palavra").value.trim() !== "APAGAR") { msg.textContent = "Escreva APAGAR, em letras maiúsculas."; return; }
+    botao.disabled = true; msg.textContent = "Apagando…";
+    try {
+      const r = await fetch(A.api + "/id/apagar-conta", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + ler() }, body: JSON.stringify({ senha: $("apagar-senha").value, confirmacao: $("apagar-palavra").value.trim() }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Não consegui apagar. Tente de novo.");
+      apagar();
+      try { localStorage.removeItem("vid_token"); localStorage.removeItem("ferramentas.token"); } catch (e) {}
+      $("apagar-form").reset(); mostrar("d");
+      $("deslogado").querySelector("p").textContent = "A sua conta foi apagada.";
+    } catch (e) { msg.textContent = e.message; botao.disabled = false; }
+  });
   $("sair").addEventListener("click", (ev) => { ev.preventDefault(); apagar(); mostrar("d"); });
   iniciar();
 })();

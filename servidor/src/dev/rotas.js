@@ -1,4 +1,5 @@
 // Rotas do Painel Dev: /dev/* (só o superadministrador, exceto entrar, primeiro acesso e telemetria do Vindex).
+import { apagarConta } from "../id/apagar.js";
 import { listarAlertas, marcarAlerta } from "./alertas.js";
 import { resumoDeVisitas } from "./visitas.js";
 import { resumoDeAssinaturas } from "./assinaturas.js";
@@ -182,16 +183,6 @@ async function dispositivos(env, agora = Date.now()) {
   };
 }
 
-/** Apaga o perfil e o que é só dele (aparelhos, sessões, sincronia, arquivos do Drive, Voxix...). A loja fica: pode ter pedidos e pagamentos. */
-export async function excluirUsuario(env, id) {
-  const run = (sql, ...a) => env.DB.prepare(sql).bind(...a).run();
-  await run("DELETE FROM drive_pedacos WHERE envio IN (SELECT envio FROM drive_envios WHERE usuario = ?)", id);
-  for (const tabela of ["drive_envios", "drive_arquivos", "dispositivos", "sessoes", "sync_docs", "id_recuperacao", "vindex_comandos", "vindex_presenca", "vortex_comandos", "vortex_presenca", "vortex_steam", "vortex_steam_login", "cofre_pessoal", "voxix_perfis", "voxix_bloqueios", "voxix_uso", "voxix_membros", "voxix_expulsos", "voxix_limpezas"]) await run(`DELETE FROM ${tabela} WHERE usuario = ?`, id);
-  await run("DELETE FROM voxix_mensagens WHERE de = ? OR para = ?", id, id);
-  await run("DELETE FROM voxix_denuncias WHERE de = ?", id);
-  await run("DELETE FROM usuarios WHERE id = ?", id);
-}
-
 // ------------------------------------------------------------------ usuários (quem usa os produtos, por aplicativo)
 const APPS_DO_PAINEL = ["venus", "vindex", "vortex", "vyntem", "velox", "drive", "voxix"];
 async function usuarios(env, agora = Date.now()) {
@@ -332,7 +323,7 @@ export async function tratarDev(req, env, url, caminho) {
       }
       if (!m[2] && req.method === "DELETE") {
         if (agora < (alvo.ativoAte || 0)) throw new ErroLoja(400, "usuario_pagante", "Esse perfil é pagante. Bloqueie em vez de excluir.");
-        await excluirUsuario(env, alvo.id);
+        await apagarConta(env, alvo.id, agora);
         return json({ ok: true });
       }
     }

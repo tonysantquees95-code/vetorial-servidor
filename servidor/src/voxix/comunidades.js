@@ -73,7 +73,7 @@ function salaDO(env, salaId) {
   if (!env.VOXIX_SALA) throw new ErroLoja(503, "indisponivel", "As salas ao vivo ainda não estão ligadas no servidor.");
   return env.VOXIX_SALA.get(env.VOXIX_SALA.idFromName(salaId));
 }
-const avisarSala = async (env, salaId, rota, corpo) => {
+export const avisarSala = async (env, salaId, rota, corpo) => {
   if (!env.VOXIX_SALA) return;
   try { await salaDO(env, salaId).fetch(`https://sala${rota}`, { method: "POST", body: JSON.stringify(corpo || {}) }); } catch { /* a sala dorme: nada a avisar */ }
 };

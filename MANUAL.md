@@ -25,6 +25,7 @@ Uma linha por mudança que valha lembrar (a mais nova em cima). O Painel Dev tam
 
 | Data | O que mudou | Onde |
 | --- | --- | --- |
+| 2026-11-28 | Apagar conta (LGPD): a própria pessoa apaga em Minha conta (senha + a palavra APAGAR). Corrigido: a exclusão antiga do Painel Dev deixava para trás loja, clientes da agenda, site, catálogo, links e comunidades. Com cobrança automática ou plano pago ativo, não apaga | `servidor/src/id/apagar.js`, `POST /id/apagar-conta`, `site/conta.html` |
 | 2026-11-28 | Velocidade: índices no banco, tempo limite em todo serviço de fora e imagens do site em WebP (bem mais leves). Chamada nova a serviço externo usa `comPrazo` (o teste cobra). | `servidor/migrations/0051_indices_velocidade.sql`, `servidor/src/prazo.js`, `servidor/teste/desempenho.test.mjs`, `site/*.webp` |
 | 2026-11-28 | Backup do banco mudou: sai do anexo do GitHub e vai criptografado para o bucket privado `venus-backups` (R2), apagado após 30 dias. A saída do wrangler fica escondida (a exportação imprime um link do banco sem criptografia). Falta ativar o R2, dar ao token a permissão de R2 e criar a `BACKUP_FRASE`. | `.github/workflows/backup-banco.yml`, `servidor/teste/backup-banco.test.mjs` |
 | 2026-11-28 | Vexperyon: painel em `/vexperyon` com login de administrador e histórico real das rodadas (a página não tem dados; tudo vem de `/dev/*` depois do login). Botão Testar e envio em PDF ainda desligados. | `servidor/src/vexperyon/painel.js` |

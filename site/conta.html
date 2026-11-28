@@ -110,12 +110,27 @@
 
     <h2 class="s">5. Já tem loja?</h2>
     <p style="color:var(--suave)">Conecte seus canais de venda (como Nuvemshop e Mercado Livre) em <b>Central da loja</b>. O estoque fica único e a Vênus cuida das respostas e da divulgação.</p>
+
+    <h2 class="s" id="apagar">Apagar minha conta</h2>
+    <details id="apagar-caixa">
+      <summary class="btn sec">Quero apagar a minha conta</summary>
+      <div class="aviso al">
+        <p style="margin-top:0"><b>Não tem como desfazer.</b> Saem a conta e os dados dela em todos os apps da Vetorial Tech: o que foi sincronizado, arquivos e saves na nuvem, cofre, mensagens do Voxix, sua loja (com os produtos, a agenda e os clientes cadastrados nela), o site, o catálogo e os links curtos.</p>
+        <p style="margin-bottom:0">Ficam os registros de pagamento, que precisamos guardar, e um código embaralhado que impede repetir o teste grátis. Comunidade do Voxix criada por você passa para o membro mais antigo. O que está salvo só no seu aparelho continua nele.</p>
+      </div>
+      <form id="apagar-form" class="faixa" style="gap:10px;flex-direction:column;align-items:stretch" autocomplete="off">
+        <input class="campo" id="apagar-senha" type="password" autocomplete="current-password" placeholder="Sua senha" aria-label="Sua senha" required>
+        <input class="campo" id="apagar-palavra" placeholder="Escreva APAGAR para confirmar" aria-label="Escreva APAGAR para confirmar" autocapitalize="characters" required>
+        <button class="btn sec" type="submit" id="apagar-botao" style="border-color:#ff7a8a;color:#ffb3bd">Apagar para sempre</button>
+      </form>
+      <p class="nota" id="msg-apagar" role="status"></p>
+    </details>
   </div>
 </main>
 
 <footer><div class="wrap"><b>VETORIAL TECH</b><br><small><a href="privacidade.html">Privacidade</a> · <a href="termos.html">Termos e reembolso</a> · <a href="mailto:vetorialtech.dev@gmail.com">vetorialtech.dev@gmail.com</a></small></div></footer>
 <script src="config.js"></script>
 <script src="baixar.js" defer></script>
-<script src="conta.js"></script>
+<script src="conta.js?v=2"></script>
 </body>
 </html>

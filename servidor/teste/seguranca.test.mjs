@@ -217,3 +217,21 @@ test("baixar pelo site exige o Vetorial ID: sem token, token falso e app inváli
   assert.equal((await chamar(env, "POST", "/baixar?app=../../etc", { t: conta })).s, 400);
   assert.equal((await chamar(env, "GET", "/baixar?app=vortex-android", { t: conta })).s, 404);
 });
+
+test("apagar conta: sem login, senha errada, sem confirmar e força bruta nada apagam; nunca apaga outra conta", async () => {
+  const { env, vitima, atacante } = await duasContas();
+  const total = () => env.DB._db.prepare("SELECT COUNT(*) AS n FROM usuarios").get().n;
+  const idVitima = env.DB._db.prepare("SELECT id FROM usuarios WHERE email = 'vitima@x.com'").get().id;
+  const pedir = (t, corpo) => chamar(env, "POST", "/id/apagar-conta", { t, corpo });
+  assert.equal((await pedir(undefined, { senha: "senha-forte-123", confirmacao: "APAGAR" })).s, 401);
+  assert.equal((await pedir(vitima, { senha: "errada-123", confirmacao: "APAGAR" })).s, 401, "token roubado sem a senha não basta");
+  assert.equal((await pedir(vitima, { senha: "senha-forte-123", confirmacao: "sim" })).s, 400);
+  assert.equal((await chamar(env, "GET", "/id/apagar-conta", { t: vitima })).s, 404);
+  assert.equal(total(), 2);
+  for (let i = 0; i < 6; i++) await pedir(atacante, { senha: `chute-${i}-123456`, confirmacao: "APAGAR", usuario: idVitima, id: idVitima, email: "vitima@x.com" });
+  assert.equal((await pedir(atacante, { senha: "senha-forte-123", confirmacao: "APAGAR" })).s, 429, "depois de 6 erros, espera");
+  assert.equal(total(), 2);
+  env.DB._db.prepare("DELETE FROM id_tentativas").run();
+  assert.equal((await pedir(atacante, { senha: "senha-forte-123", confirmacao: "APAGAR", usuario: idVitima, id: idVitima, email: "vitima@x.com" })).s, 200);
+  assert.equal(env.DB._db.prepare("SELECT email FROM usuarios").get().email, "vitima@x.com", "só a própria conta sai");
+});
