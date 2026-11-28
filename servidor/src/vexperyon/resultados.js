@@ -4,6 +4,7 @@
 //   POST /vexperyon/envio?rodada=N&app=vindex&arquivo=01.png   (corpo = o arquivo)
 //   POST /vexperyon/envio?rodada=N&app=vindex&fim=success|failure
 import { verificarOidc, chavesDoGithub } from "../ci/assinatura.js";
+import { responderPainel } from "./painel.js";
 
 export const PUBLICO_VEXPERYON = "vexperyon-resultados";
 export const REGRAS_OIDC = { publico: PUBLICO_VEXPERYON, repos: ["tonysantquees95-code/vexperyon"], apelidos: {} };
@@ -14,10 +15,11 @@ const NOME = /^(\d{2}\.(png|txt)|resultado\.json|quedas\.txt|versao\.txt)$/;
 const APP = /^[a-z][a-z0-9-]{1,30}$/;
 const TIPOS = { png: "image/png", txt: "text/plain; charset=utf-8", json: "application/json; charset=utf-8" };
 
-export const ehRotaVexperyon = (c) => c === "/vexperyon/envio";
+export const ehRotaVexperyon = (c) => c === "/vexperyon/envio" || c === "/vexperyon";
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 
 export async function tratarVexperyon(req, env, url, caminho, opcoes = {}) {
+  if (caminho === "/vexperyon") return req.method === "GET" ? responderPainel() : json({ error: "método não permitido" }, 405);
   if (!env.DB) return json({ error: "sem banco" }, 503);
   if (req.method !== "POST") return json({ error: "método não permitido" }, 405);
   const auth = req.headers.get("authorization") || "";

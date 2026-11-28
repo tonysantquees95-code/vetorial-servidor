@@ -25,6 +25,7 @@ Uma linha por mudança que valha lembrar (a mais nova em cima). O Painel Dev tam
 
 | Data | O que mudou | Onde |
 | --- | --- | --- |
+| 2026-11-28 | Vexperyon: painel em `/vexperyon` com login de administrador e histórico real das rodadas (a página não tem dados; tudo vem de `/dev/*` depois do login). Botão Testar e envio em PDF ainda desligados. | `servidor/src/vexperyon/painel.js` |
 | 2026-11-28 | Vexperyon: recebe as capturas do laboratório (identidade do GitHub, só o repositório vexperyon), guarda 3 rodadas por app e só o administrador lê. Conta @teste.invalid não abre o Drive. | `servidor/src/vexperyon/`, migração 0050 |
 | 2026-11-27 | Backup semanal do banco D1, criptografado (gpg), como artefato por 30 dias. Precisa do segredo `BACKUP_FRASE`; sem ele o fluxo falha de propósito. | `.github/workflows/backup-banco.yml` |
 | 2026-11-27 | Aviso no Painel Dev quando o Mercado Pago está ligado mas falta `MERCADOPAGO_WEBHOOK_SECRET` (some sozinho quando o segredo entra). | `servidor/src/dev/alertas.js` (`verificarConfiguracao`) |

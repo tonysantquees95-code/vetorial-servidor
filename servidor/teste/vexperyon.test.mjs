@@ -49,3 +49,19 @@ test("vexperyon: guarda os bytes, recusa nome e tamanho errados e mantém 3 roda
   assert.deepEqual([...new Uint8Array(await arq.arrayBuffer())], [137, 80, 5]);
   assert.equal(await lerArquivo(env, 1, "01.png"), null);
 });
+
+test("vexperyon: a página do painel abre sem dados, com CSP fechada, e não aceita outro método", async () => {
+  const env = { DB: bancoDeTeste() };
+  await enviar(env, "rodada=7&app=vindex&arquivo=resultado.json", "SEGREDO-DA-RODADA");
+  const url = new URL("https://x/vexperyon");
+  const r = await tratarVexperyon(new Request(url), env, url, url.pathname);
+  const html = await r.text();
+  assert.equal(r.status, 200);
+  assert.ok(!html.includes("SEGREDO-DA-RODADA"));
+  const csp = r.headers.get("content-security-policy");
+  const nonce = /script-src 'nonce-([^']+)'/.exec(csp)[1];
+  assert.ok(html.includes(`<script nonce="${nonce}">`));
+  for (const regra of ["default-src 'none'", "connect-src 'self'", "frame-ancestors 'none'"]) assert.ok(csp.includes(regra), regra);
+  new Function(/<script[^>]*>([\s\S]*)<\/script>/.exec(html)[1]); // o script da página não tem erro de sintaxe
+  assert.equal((await tratarVexperyon(new Request(url, { method: "POST" }), env, url, url.pathname)).status, 405);
+});
