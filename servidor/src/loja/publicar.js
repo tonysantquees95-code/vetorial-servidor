@@ -1,6 +1,7 @@
 // Publicação automática dos posts da Central de Marketing: Instagram (API oficial da Meta) ou webhook (ex.: Vênus Robô).
 import { cifrar, decifrar, hmacHex, aleatorio } from "./cripto.js";
 import { ErroLoja } from "./lojas.js";
+import { comPrazo } from "../prazo.js";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 export const MAX_TENTATIVAS = 3;
@@ -32,7 +33,7 @@ export async function destinos(env, loja) {
 }
 
 async function http(f, url, init) {
-  const r = await f(url, init);
+  const r = await comPrazo(url, init, 60000, f);
   const t = await r.text();
   let d = {};
   try { d = t ? JSON.parse(t) : {}; } catch { /* resposta não JSON */ }

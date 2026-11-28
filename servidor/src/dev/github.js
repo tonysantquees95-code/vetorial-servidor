@@ -1,5 +1,6 @@
 // Dados dos repositórios para o Painel Dev: métricas de código, estado dos builds e APKs publicados.
 // Usa o GITHUB_TOKEN (só leitura) do Worker. Tudo guardado em cache por alguns minutos.
+import { comPrazo } from "../prazo.js";
 export const REPO_VENUS = "tonysantquees95-code/Venus-core";
 export const REPO_VINDEX = "tonysantquees95-code/Vindex-";
 export const REPO_VORTEX = "tonysantquees95-code/Vortex";
@@ -72,10 +73,10 @@ export const PROJETOS = [
 export const REPO_VALIDO = /^[A-Za-z0-9_.-]{1,60}\/[A-Za-z0-9_.-]{1,100}$/;
 
 export function gh(env, caminho, extra = {}) {
-  return fetch(`https://api.github.com${caminho}`, {
+  return comPrazo(`https://api.github.com${caminho}`, {
     ...extra,
     headers: { Authorization: `Bearer ${env.GITHUB_TOKEN}`, "User-Agent": "venus-servidor", "X-GitHub-Api-Version": "2022-11-28", Accept: "application/vnd.github+json", ...(extra.headers || {}) },
-  });
+  }, 20000);
 }
 
 /** Cache de poucos minutos na borda (some em testes, onde não há caches.default). */
@@ -111,7 +112,7 @@ export function estimarPelaArvore(arvore) {
 async function baixarAsset(env, repo, asset) {
   const r = await gh(env, `/repos/${repo}/releases/assets/${asset.id}`, { headers: { Accept: "application/octet-stream" }, redirect: "manual" });
   const link = r.headers.get("location");
-  return link ? fetch(link) : r;
+  return link ? comPrazo(link, {}, 20000) : r;
 }
 
 /** Métricas de código: o CI publica o número exato (release "metricas"); sem ele, estimativa pela árvore do Git. */

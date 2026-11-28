@@ -13,7 +13,7 @@ import config from "./config.mjs";
 const SITE = fileURLToPath(new URL("../site/", import.meta.url));
 const FOTOS = fileURLToPath(new URL("./fotos/", import.meta.url));
 mkdirSync(FOTOS, { recursive: true });
-const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml", ".pdf": "application/pdf", ".mp4": "video/mp4", ".jpg": "image/jpeg" };
+const TIPOS = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".webp": "image/webp", ".svg": "image/svg+xml", ".pdf": "application/pdf", ".mp4": "video/mp4", ".jpg": "image/jpeg" };
 const servidor = createServer((q, r) => {
   let c = decodeURIComponent(new URL(q.url, "http://x").pathname);
   if (c === "/icone/venus.png") c = "/icone-venus.png";

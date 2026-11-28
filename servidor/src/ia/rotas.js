@@ -12,6 +12,7 @@ import { buscarNoCache, cacheViavel, gravarNoCache, sha } from "./cache.js";
 import { decidir, ErroHttp, ordemDeTentativas, TABELA } from "./roteador.js";
 import { executar } from "./provedores.js";
 import { provedoresDesligados, registrarUso } from "../dev/uso.js";
+import { comPrazo } from "../prazo.js";
 
 const VERSAO = "1.0.0";
 const MAX_CORPO = 12 * 1024 * 1024;
@@ -170,7 +171,7 @@ async function transcrever(request, env) {
   form.append("temperature", "0");
   let r;
   try {
-    r = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", headers: { authorization: `Bearer ${env.GROQ_API_KEY}` }, body: form });
+    r = await comPrazo("https://api.groq.com/openai/v1/audio/transcriptions", { method: "POST", headers: { authorization: `Bearer ${env.GROQ_API_KEY}` }, body: form }, 90000);
   } catch {
     throw new ErroHttp(502, "transcricao_falhou", "Não consegui falar com o serviço de voz.");
   }

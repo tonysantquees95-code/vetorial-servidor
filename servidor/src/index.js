@@ -59,6 +59,7 @@ import { ehRotaDev, tratarDev } from "./dev/rotas.js";
 import { limparTrafego, registrarTrafego, registrarUso } from "./dev/uso.js";
 import { publicarVencidos } from "./loja/publicar.js";
 import { appConhecido, escolherVersao } from "./atualizacao.js";
+import { comPrazo } from "./prazo.js";
 
 export { CaixaVoxix } from "./voxix/caixa.js";
 export { SalaVoxix } from "./voxix/sala.js";
@@ -168,7 +169,7 @@ export default {
 
 // ------------------------------------------------------------------ canal de atualização
 function gh(env, caminho, extra = {}) {
-  return fetch(`https://api.github.com${caminho}`, {
+  return comPrazo(`https://api.github.com${caminho}`, {
     ...extra,
     headers: {
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
@@ -177,7 +178,7 @@ function gh(env, caminho, extra = {}) {
       Accept: "application/vnd.github+json",
       ...(extra.headers || {}),
     },
-  });
+  }, 20000);
 }
 
 function notas(corpo) {
@@ -196,7 +197,7 @@ async function publicacoes(env, ctx, repo = REPO, publico = false) {
   const guardada = await cache.match(chave);
   if (guardada) return guardada.json();
   const r = publico
-    ? await fetch(`https://api.github.com/repos/${repo}/releases?per_page=100`, { headers: { "User-Agent": "venus-servidor", Accept: "application/vnd.github+json", ...(env.GITHUB_TOKEN ? { Authorization: `Bearer ${env.GITHUB_TOKEN}` } : {}) } })
+    ? await comPrazo(`https://api.github.com/repos/${repo}/releases?per_page=100`, { headers: { "User-Agent": "venus-servidor", Accept: "application/vnd.github+json", ...(env.GITHUB_TOKEN ? { Authorization: `Bearer ${env.GITHUB_TOKEN}` } : {}) } }, 20000)
     : await gh(env, `/repos/${repo}/releases?per_page=100`);
   if (!r.ok) throw new Error(`GitHub ${r.status}`);
   const lista = await r.json();
@@ -292,11 +293,11 @@ async function cobrancaStatus(url, env) {
   if (ref.length < 12 || !handle) return json(nada, 400);
   const aviso = await env.DB.prepare("SELECT * FROM cobranca_avisos WHERE order_nsu = ?").bind(ref).first();
   if (!aviso || !aviso.slug || !aviso.transaction_nsu) return json(nada);
-  const r = await fetch("https://api.checkout.infinitepay.io/payment_check", {
+  const r = await comPrazo("https://api.checkout.infinitepay.io/payment_check", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ handle, order_nsu: ref, transaction_nsu: aviso.transaction_nsu, slug: aviso.slug }),
-  });
+  }, 15000);
   const d = await r.json().catch(() => ({}));
   let corpo = {};
   try {

@@ -10,10 +10,10 @@ function ir(id, app) { var a = document.getElementById(id); if (a) a.scrollIntoV
 function iconeApp(id, p) {
   var m = {
     venus: '<img src="/icone/venus.png" alt="" width="40" height="40">',
-    vindex: '<span class="anim anim-vindex"><img src="anim-vindex.png" alt="" width="40" height="40"></span>',
-    vortex: '<span class="anim anim-vortex"><img src="anim-vortex.png" alt="" width="40" height="40"></span>',
+    vindex: '<span class="anim anim-vindex"><img src="anim-vindex.webp" alt="" width="40" height="40"></span>',
+    vortex: '<span class="anim anim-vortex"><img src="anim-vortex.webp" alt="" width="40" height="40"></span>',
     velox: '<span class="anim anim-velox" role="img" aria-label="Velox"></span>',
-    vyntem: '<img class="icone-img" src="icone-vyntem.png" alt="" width="40" height="40">',
+    vyntem: '<img class="icone-img" src="icone-vyntem.webp" alt="" width="40" height="40">',
     voxix: '<span class="anim anim-voxix" role="img" aria-label="Voxix"></span>'
   };
   return '<span class="sim-ic' + (p ? " sim-ic-p" : "") + '" aria-hidden="true">' + m[id] + '</span>';

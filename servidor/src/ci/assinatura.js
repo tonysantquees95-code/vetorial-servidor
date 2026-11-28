@@ -3,6 +3,7 @@
 //   GET /ci/assinatura  → { existe: false } ou { existe: true, keystore, senha }
 //   PUT /ci/assinatura  { keystore, senha } → guarda se ainda não houver (409 se já existir)
 import { cifrar, decifrar } from "../loja/cripto.js";
+import { comPrazo } from "../prazo.js";
 
 export const ehRotaCi = (c) => c === "/ci/assinatura";
 export const REPOS_PERMITIDOS = ["tonysantquees95-code/vetorial-dev-center", "tonysantquees95-code/Vindex-", "tonysantquees95-code/Vortex", "tonysantquees95-code/velox-gaming-search", "tonysantquees95-code/Vetorial-Drive", "tonysantquees95-code/voxix", "tonysantquees95-code/Vyntem", "tonysantquees95-code/v-space", "tonysantquees95-code/vetogoshi"];
@@ -44,7 +45,7 @@ export async function verificarOidc(token, chaves, agora = Date.now() / 1000, re
 let guardadas = { quando: 0, chaves: null };
 export async function chavesDoGithub(buscar = fetch) {
   if (guardadas.chaves && Date.now() - guardadas.quando < 3_600_000) return guardadas.chaves;
-  const r = await buscar(`${EMISSOR}/.well-known/jwks`);
+  const r = await comPrazo(`${EMISSOR}/.well-known/jwks`, {}, 10000, buscar);
   if (!r.ok) throw new Error("jwks");
   const { keys } = await r.json();
   guardadas = { quando: Date.now(), chaves: keys };

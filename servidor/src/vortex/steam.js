@@ -6,6 +6,7 @@
 //   GET    /vortex/steam/jogos    → jogos da conta { jogos: [{ appid, nome, minutos }] }
 // A lista usa a chave da Steam (STEAM_API_KEY, grátis) quando há; sem ela lê a página pública do perfil.
 import { ErroId } from "../id/conta.js";
+import { comPrazo } from "../prazo.js";
 
 const OPENID = "https://steamcommunity.com/openid/login";
 const ID_STEAM = /^https:\/\/steamcommunity\.com\/openid\/id\/(\d{17})$/;
@@ -75,12 +76,12 @@ export async function jogos(env, usuario, buscar = fetch) {
   if (!steamid) throw new ErroId(409, "steam_nao_ligada", "Entre com a sua conta Steam primeiro.");
   let lista = [];
   if (env.STEAM_API_KEY) {
-    const r = await buscar(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${encodeURIComponent(env.STEAM_API_KEY)}&steamid=${steamid}&include_appinfo=1&include_played_free_games=1&format=json`);
-    const j = r.ok ? await r.json().catch(() => null) : null;
+    const r = await comPrazo(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${encodeURIComponent(env.STEAM_API_KEY)}&steamid=${steamid}&include_appinfo=1&include_played_free_games=1&format=json`, {}, 12000, buscar).catch(() => null);
+    const j = r?.ok ? await r.json().catch(() => null) : null;
     lista = (j?.response?.games ?? []).map((g) => ({ appid: g.appid, nome: String(g.name || ""), minutos: Number(g.playtime_forever) || 0 })).filter((g) => g.nome);
   }
   if (!lista.length) {
-    const r = await buscar(`https://steamcommunity.com/profiles/${steamid}/games?tab=all&xml=1`).catch(() => null);
+    const r = await comPrazo(`https://steamcommunity.com/profiles/${steamid}/games?tab=all&xml=1`, {}, 12000, buscar).catch(() => null);
     lista = r && r.ok ? lerXml(await r.text()) : [];
   }
   if (!lista.length) throw new ErroId(422, "steam_perfil_privado", PRIVADO);
